@@ -1,0 +1,29 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
+  username: <%= ENV["DATABASE_USERNAME"] %>
+  password: <%= ENV["DATABASE_PASSWORD"] %>
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+
+development:
+  <<: *default
+  database: wine_sharing_development
+
+test:
+  <<: *default
+  database: wine_sharing_test
+
+production:
+  primary: &primary_production
+    <<: *default
+    database: wine_sharing_production
+  cache:
+    <<: *primary_production
+    database: wine_sharing_production_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_production
+    database: wine_sharing_production_queue
+    migrations_paths: db/queue_migrate

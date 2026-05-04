@@ -1,0 +1,54 @@
+@import "tailwindcss" source(none);
+@source "../../../public/*.html";
+@source "../../../app/helpers/**/*.rb";
+@source "../../../app/javascript/**/*.js";
+@source "../../../app/views/**/*";
+
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "wine";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: oklch(97% 0.01 20);
+  --color-base-200: oklch(94% 0.015 20);
+  --color-base-300: oklch(90% 0.02 20);
+  --color-base-content: oklch(25% 0.02 20);
+
+  --color-primary: oklch(40% 0.2 15);
+  --color-primary-content: oklch(97% 0.01 15);
+
+  --color-secondary: oklch(55% 0.15 50);
+  --color-secondary-content: oklch(97% 0.01 50);
+
+  --color-accent: oklch(60% 0.18 80);
+  --color-accent-content: oklch(20% 0.02 80);
+
+  --color-neutral: oklch(35% 0.03 20);
+  --color-neutral-content: oklch(97% 0.01 20);
+
+  --color-info: oklch(65% 0.15 240);
+  --color-info-content: oklch(97% 0.01 240);
+
+  --color-success: oklch(60% 0.2 145);
+  --color-success-content: oklch(97% 0.01 145);
+
+  --color-warning: oklch(75% 0.18 75);
+  --color-warning-content: oklch(25% 0.03 75);
+
+  --color-error: oklch(55% 0.25 25);
+  --color-error-content: oklch(97% 0.01 25);
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}

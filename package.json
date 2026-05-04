@@ -1,0 +1,7 @@
+{
+  "name": "wine-sharing",
+  "private": true,
+  "dependencies": {
+    "daisyui": "^5.5.19"
+  }
+}

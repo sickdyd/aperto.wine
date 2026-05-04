@@ -1,0 +1,13 @@
+en:
+  app_name: "Wine Sharing"
+  nav:
+    home: "Home"
+    wines: "Wines"
+    orders: "My Orders"
+  shared:
+    back: "Back"
+    save: "Save"
+    cancel: "Cancel"
+    confirm: "Confirm"
+    loading: "Loading..."
+    sold_out: "Sold out"
