@@ -2,6 +2,7 @@ class User < ApplicationRecord
   has_secure_password
 
   has_many :restaurants, dependent: :destroy
+  has_many :orders, foreign_key: :customer_id, dependent: :destroy
 
   enum :role, { customer: 0, owner: 1, admin: 2 }
 

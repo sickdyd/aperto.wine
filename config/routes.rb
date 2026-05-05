@@ -13,10 +13,20 @@ Rails.application.routes.draw do
     get "sign_up", to: "registrations#new", as: :sign_up
     post "sign_up", to: "registrations#create"
 
+    # Public menu (customer-facing, no auth required)
+    get "menu/:id", to: "menus#show", as: :menu
+
     # Owner namespace
     namespace :owner do
       resources :restaurants do
-        resources :wines, except: [:show]
+        resources :wines, except: [ :show ]
+        resource :qr_code, only: [ :show ], controller: "qr_codes"
+        resources :orders, only: [ :index, :show ] do
+          member do
+            patch :approve
+            patch :cancel
+          end
+        end
       end
     end
   end

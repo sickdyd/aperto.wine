@@ -31,6 +31,29 @@
       </div>
     </nav>
 
+    <%# Restaurant sub-nav %>
+    <% if @restaurant %>
+      <nav class="border-b border-base-content/5 bg-base-200/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 h-10 overflow-x-auto">
+          <a href="<%= owner_restaurant_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'restaurants' && action_name == 'show' ? 'btn-active' : '' %>">
+            <%= @restaurant.name %>
+          </a>
+          <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'wines' ? 'btn-active' : '' %>">
+            <%= icon "wine", css: "size-3.5" %>
+            <%= t("owner.restaurants.wine_list") %>
+          </a>
+          <a href="<%= owner_restaurant_orders_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'orders' ? 'btn-active' : '' %>">
+            <%= icon "receipt", css: "size-3.5" %>
+            <%= t("owner.restaurants.orders") %>
+          </a>
+          <a href="<%= owner_restaurant_qr_code_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'qr_codes' ? 'btn-active' : '' %>">
+            <%= icon "qr-code", css: "size-3.5" %>
+            <%= t("owner.restaurants.qr_code") %>
+          </a>
+        </div>
+      </nav>
+    <% end %>
+
     <%# Flash messages %>
     <% if notice %>
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">

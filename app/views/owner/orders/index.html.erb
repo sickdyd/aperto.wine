@@ -1,0 +1,69 @@
+<% content_for(:title) { "#{@restaurant.name} — #{t('owner.orders.title')}" } %>
+
+<div class="mb-8">
+  <a href="<%= owner_restaurant_path(@restaurant) %>" class="text-sm text-base-content/50 hover:text-primary flex items-center gap-1 mb-4">
+    <%= icon "arrow-left", css: "size-3.5" %>
+    <%= @restaurant.name %>
+  </a>
+
+  <div class="flex items-center justify-between">
+    <h1 class="font-display text-3xl font-light"><%= t("owner.orders.title") %></h1>
+  </div>
+</div>
+
+<%# Status filter tabs %>
+<div role="tablist" class="tabs tabs-bordered mb-6">
+  <a role="tab" href="<%= owner_restaurant_orders_path(@restaurant) %>"
+     class="tab font-body text-xs uppercase tracking-wider <%= params[:status].blank? ? 'tab-active' : '' %>">
+    <%= t("owner.orders.all") %>
+  </a>
+  <% %w[pending approved cancelled].each do |status| %>
+    <a role="tab" href="<%= owner_restaurant_orders_path(@restaurant, status: status) %>"
+       class="tab font-body text-xs uppercase tracking-wider <%= params[:status] == status ? 'tab-active' : '' %>">
+      <%= t("owner.orders.statuses.#{status}") %>
+    </a>
+  <% end %>
+</div>
+
+<% if @orders.any? %>
+  <div class="space-y-3">
+    <% @orders.each do |order| %>
+      <div class="p-4 rounded-lg border border-base-content/5 bg-base-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-3">
+              <span class="font-body font-medium text-sm">#<%= order.id %></span>
+              <span class="badge badge-sm <%= order_status_badge_class(order.status) %>"><%= t("owner.orders.statuses.#{order.status}") %></span>
+            </div>
+            <p class="text-xs text-base-content/50 mt-1">
+              <%= order.customer.name %> · <%= l(order.created_at, format: :short) %> · <%= format_cents(order.total_amount_cents) %>
+            </p>
+            <p class="text-xs text-base-content/40 mt-1">
+              <%= order.order_items.map { |i| "#{i.quantity}× #{i.wine.name} (#{i.glass_size_ml}ml)" }.join(", ") %>
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <% if order.pending? %>
+              <%= button_to approve_owner_restaurant_order_path(@restaurant, order), method: :patch, class: "btn btn-success btn-sm btn-outline" do %>
+                <%= icon "check", css: "size-4" %>
+                <%= t("owner.orders.approve") %>
+              <% end %>
+              <%= button_to cancel_owner_restaurant_order_path(@restaurant, order), method: :patch, class: "btn btn-error btn-sm btn-outline", data: { turbo_confirm: t("owner.orders.confirm_cancel") } do %>
+                <%= icon "x", css: "size-4" %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="text-center py-16">
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
+      <%= icon "receipt", css: "size-7 text-base-content/30" %>
+    </div>
+    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.orders.empty_title") %></h2>
+    <p class="text-base-content/50"><%= t("owner.orders.empty_description") %></p>
+  </div>
+<% end %>

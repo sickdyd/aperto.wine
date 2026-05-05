@@ -68,3 +68,5 @@ group :test do
 end
 
 gem "rails_icons", "~> 1.8"
+
+gem "rqrcode", "~> 3.2"

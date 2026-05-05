@@ -1,0 +1,64 @@
+<% content_for(:title) { "#{t('owner.orders.order')} ##{@order.id}" } %>
+
+<div class="mb-8">
+  <a href="<%= owner_restaurant_orders_path(@restaurant) %>" class="text-sm text-base-content/50 hover:text-primary flex items-center gap-1 mb-4">
+    <%= icon "arrow-left", css: "size-3.5" %>
+    <%= t("owner.orders.title") %>
+  </a>
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="font-display text-3xl font-light"><%= t("owner.orders.order") %> #<%= @order.id %></h1>
+      <p class="text-base-content/50 mt-1">
+        <%= @order.customer.name %> · <%= l(@order.created_at, format: :long) %>
+      </p>
+    </div>
+    <span class="badge <%= order_status_badge_class(@order.status) %>"><%= t("owner.orders.statuses.#{@order.status}") %></span>
+  </div>
+</div>
+
+<%# Order items %>
+<div class="border border-base-content/5 rounded-lg overflow-hidden mb-6">
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="font-body text-xs uppercase tracking-wider"><%= t("owner.orders.wine") %></th>
+        <th class="font-body text-xs uppercase tracking-wider"><%= t("owner.orders.glass_size") %></th>
+        <th class="font-body text-xs uppercase tracking-wider text-right"><%= t("owner.orders.quantity") %></th>
+        <th class="font-body text-xs uppercase tracking-wider text-right"><%= t("owner.orders.price") %></th>
+        <th class="font-body text-xs uppercase tracking-wider text-right"><%= t("owner.orders.subtotal") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @order.order_items.includes(:wine).each do |item| %>
+        <tr>
+          <td class="font-medium text-sm"><%= item.wine.name %></td>
+          <td class="text-sm"><%= item.glass_size_ml %>ml</td>
+          <td class="text-sm text-right"><%= item.quantity %></td>
+          <td class="text-sm text-right"><%= format_cents(item.unit_price_cents) %></td>
+          <td class="text-sm text-right font-medium"><%= format_cents(item.subtotal_cents) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4" class="text-right font-body text-xs uppercase tracking-wider"><%= t("owner.orders.total") %></td>
+        <td class="text-right font-display text-lg font-medium"><%= format_cents(@order.total_amount_cents) %></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<%# Actions %>
+<% if @order.pending? %>
+  <div class="flex items-center gap-3">
+    <%= button_to approve_owner_restaurant_order_path(@restaurant, @order), method: :patch, class: "btn-wine" do %>
+      <%= icon "check", css: "size-4" %>
+      <%= t("owner.orders.approve") %>
+    <% end %>
+    <%= button_to cancel_owner_restaurant_order_path(@restaurant, @order), method: :patch, class: "btn btn-outline btn-error", data: { turbo_confirm: t("owner.orders.confirm_cancel") } do %>
+      <%= icon "x", css: "size-4" %>
+      <%= t("owner.orders.cancel_order") %>
+    <% end %>
+  </div>
+<% end %>

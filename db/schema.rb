@@ -10,9 +10,34 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_004213) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_05_043122) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "order_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "glass_size_ml", null: false
+    t.bigint "order_id", null: false
+    t.integer "quantity", default: 1, null: false
+    t.integer "unit_price_cents", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "wine_id", null: false
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+    t.index ["wine_id"], name: "index_order_items_on_wine_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "customer_id", null: false
+    t.bigint "restaurant_id", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "total_amount_cents", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "status"], name: "index_orders_on_customer_id_and_status"
+    t.index ["customer_id"], name: "index_orders_on_customer_id"
+    t.index ["restaurant_id", "status"], name: "index_orders_on_restaurant_id_and_status"
+    t.index ["restaurant_id"], name: "index_orders_on_restaurant_id"
+  end
 
   create_table "restaurants", force: :cascade do |t|
     t.boolean "active", default: true, null: false
@@ -85,6 +110,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_004213) do
     t.index ["restaurant_id"], name: "index_wines_on_restaurant_id"
   end
 
+  add_foreign_key "order_items", "orders"
+  add_foreign_key "order_items", "wines"
+  add_foreign_key "orders", "restaurants"
+  add_foreign_key "orders", "users", column: "customer_id"
   add_foreign_key "restaurants", "users"
   add_foreign_key "wine_bottles", "wines"
   add_foreign_key "wines", "restaurants"
