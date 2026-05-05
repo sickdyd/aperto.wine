@@ -1,0 +1,65 @@
+<% content_for(:title) { t("auth.sign_up") } %>
+
+<div class="min-h-screen flex items-center justify-center px-6">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-10">
+      <a href="<%= root_path %>" class="font-display text-2xl font-semibold text-primary">Wine Sharing</a>
+      <h1 class="font-display text-3xl font-light mt-4"><%= t("auth.sign_up") %></h1>
+    </div>
+
+    <%# Role tabs %>
+    <div role="tablist" class="tabs tabs-bordered mb-8">
+      <a role="tab" href="<%= sign_up_path(tab: 'customer') %>"
+         class="tab font-body text-xs uppercase tracking-wider <%= @tab == 'customer' ? 'tab-active' : '' %>">
+        <%= t("auth.tab_customer") %>
+      </a>
+      <a role="tab" href="<%= sign_up_path(tab: 'owner') %>"
+         class="tab font-body text-xs uppercase tracking-wider <%= @tab == 'owner' ? 'tab-active' : '' %>">
+        <%= t("auth.tab_owner") %>
+      </a>
+    </div>
+
+    <% if @user.errors.any? %>
+      <div role="alert" class="alert alert-error mb-6 text-sm">
+        <%= icon "warning", css: "size-4" %>
+        <div>
+          <% @user.errors.full_messages.each do |msg| %>
+            <p><%= msg %></p>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%= form_with model: @user, url: sign_up_path, method: :post, class: "space-y-5" do |f| %>
+      <%= f.hidden_field :role, value: @tab %>
+
+      <div class="form-control">
+        <%= f.label :name, t("auth.name"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <%= f.text_field :name, required: true, autofocus: true, autocomplete: "name", class: "input input-bordered w-full font-body" %>
+      </div>
+
+      <div class="form-control">
+        <%= f.label :email, t("auth.email"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <%= f.email_field :email, required: true, autocomplete: "email", class: "input input-bordered w-full font-body", placeholder: "you@example.com" %>
+      </div>
+
+      <div class="form-control">
+        <%= f.label :password, t("auth.password"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <%= f.password_field :password, required: true, autocomplete: "new-password", class: "input input-bordered w-full font-body" %>
+        <p class="label text-xs text-base-content/40"><%= t("auth.password_hint") %></p>
+      </div>
+
+      <div class="form-control">
+        <%= f.label :password_confirmation, t("auth.password_confirmation"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "input input-bordered w-full font-body" %>
+      </div>
+
+      <%= f.submit t("auth.create_account"), class: "btn-wine w-full btn-md mt-2" %>
+    <% end %>
+
+    <p class="text-center mt-8 text-sm text-base-content/50">
+      <%= t("auth.have_account") %>
+      <a href="<%= sign_in_path %>" class="text-primary hover:underline"><%= t("auth.sign_in_link") %></a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<% content_for(:title) { "#{@restaurant.name} — #{t('owner.wines.title')}" } %>
+
+<div class="mb-8">
+  <a href="<%= owner_restaurant_path(@restaurant) %>" class="text-sm text-base-content/50 hover:text-primary flex items-center gap-1 mb-4">
+    <%= icon "arrow-left", css: "size-3.5" %>
+    <%= @restaurant.name %>
+  </a>
+
+  <div class="flex items-center justify-between">
+    <h1 class="font-display text-3xl font-light"><%= t("owner.wines.title") %></h1>
+    <a href="<%= new_owner_restaurant_wine_path(@restaurant) %>" class="btn-wine btn-sm">
+      <%= icon "plus", css: "size-4" %>
+      <%= t("owner.wines.add") %>
+    </a>
+  </div>
+</div>
+
+<% if @wines.any? %>
+  <% Wine.colors.keys.each do |color| %>
+    <% wines_by_color = @wines.select { |w| w.color == color } %>
+    <% next if wines_by_color.empty? %>
+
+    <div class="mb-8">
+      <h2 class="font-display text-lg font-medium mb-3 flex items-center gap-2">
+        <span class="inline-block w-3 h-3 rounded-full <%= wine_color_class(color) %>"></span>
+        <%= t("owner.wines.colors.#{color}") %>
+        <span class="text-xs text-base-content/40 font-body">(<%= wines_by_color.size %>)</span>
+      </h2>
+
+      <div class="space-y-2">
+        <% wines_by_color.each do |wine| %>
+          <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-body font-medium text-sm truncate"><%= wine.name %></span>
+                <% unless wine.active? %>
+                  <span class="badge badge-ghost badge-xs"><%= t("owner.restaurants.inactive") %></span>
+                <% end %>
+              </div>
+              <p class="text-xs text-base-content/50 truncate">
+                <%= [wine.producer, wine.grape_variety, wine.vintage_year].compact_blank.join(" · ") %>
+              </p>
+            </div>
+
+            <div class="flex items-center gap-4 ml-4">
+              <span class="text-xs text-base-content/50">
+                <%= wine.available_glasses %> <%= t("owner.wines.glasses_available") %>
+              </span>
+              <div class="flex items-center gap-1">
+                <a href="<%= edit_owner_restaurant_wine_path(@restaurant, wine) %>" class="btn btn-ghost btn-xs">
+                  <%= icon "pencil-simple", css: "size-3.5" %>
+                </a>
+                <%= button_to owner_restaurant_wine_path(@restaurant, wine), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wines.confirm_delete") } do %>
+                  <%= icon "trash", css: "size-3.5" %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="text-center py-20">
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
+      <%= icon "wine", css: "size-7 text-base-content/30" %>
+    </div>
+    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.wines.empty_title") %></h2>
+    <p class="text-base-content/50 mb-6"><%= t("owner.wines.empty_description") %></p>
+    <a href="<%= new_owner_restaurant_wine_path(@restaurant) %>" class="btn-wine"><%= t("owner.wines.add_first") %></a>
+  </div>
+<% end %>

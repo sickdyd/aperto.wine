@@ -1,0 +1,39 @@
+<% content_for(:title) { t("owner.restaurants.title") } %>
+
+<div class="flex items-center justify-between mb-8">
+  <h1 class="font-display text-3xl font-light"><%= t("owner.restaurants.title") %></h1>
+  <a href="<%= new_owner_restaurant_path %>" class="btn-wine btn-sm">
+    <%= icon "plus", css: "size-4" %>
+    <%= t("owner.restaurants.add") %>
+  </a>
+</div>
+
+<% if @restaurants.any? %>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <% @restaurants.each do |restaurant| %>
+      <a href="<%= owner_restaurant_path(restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/20 hover:shadow-sm transition-all">
+        <div class="flex items-start justify-between mb-3">
+          <h2 class="font-display text-xl font-medium"><%= restaurant.name %></h2>
+          <% if restaurant.active? %>
+            <span class="badge badge-success badge-sm"><%= t("owner.restaurants.active") %></span>
+          <% else %>
+            <span class="badge badge-ghost badge-sm"><%= t("owner.restaurants.inactive") %></span>
+          <% end %>
+        </div>
+        <p class="text-sm text-base-content/50 flex items-center gap-1">
+          <%= icon "map-pin", css: "size-3.5" %>
+          <%= restaurant.address %>
+        </p>
+      </a>
+    <% end %>
+  </div>
+<% else %>
+  <div class="text-center py-20">
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
+      <%= icon "storefront", css: "size-7 text-base-content/30" %>
+    </div>
+    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.restaurants.empty_title") %></h2>
+    <p class="text-base-content/50 mb-6"><%= t("owner.restaurants.empty_description") %></p>
+    <a href="<%= new_owner_restaurant_path %>" class="btn-wine"><%= t("owner.restaurants.add_first") %></a>
+  </div>
+<% end %>

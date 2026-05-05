@@ -1,0 +1,59 @@
+<%= form_with model: [:owner, restaurant], class: "space-y-6 max-w-xl" do |f| %>
+  <% if restaurant.errors.any? %>
+    <div role="alert" class="alert alert-error text-sm">
+      <%= icon "warning", css: "size-4" %>
+      <div>
+        <% restaurant.errors.full_messages.each do |msg| %>
+          <p><%= msg %></p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="form-control">
+    <%= f.label :name, t("owner.restaurants.form.name"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+    <%= f.text_field :name, required: true, class: "input input-bordered w-full font-body", placeholder: t("owner.restaurants.form.name_placeholder") %>
+  </div>
+
+  <div class="form-control">
+    <%= f.label :address, t("owner.restaurants.form.address"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+    <%= f.text_field :address, required: true, class: "input input-bordered w-full font-body", placeholder: t("owner.restaurants.form.address_placeholder") %>
+  </div>
+
+  <div class="form-control">
+    <%= f.label :description, t("owner.restaurants.form.description"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+    <%= f.text_area :description, rows: 3, class: "textarea textarea-bordered w-full font-body", placeholder: t("owner.restaurants.form.description_placeholder") %>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div class="form-control">
+      <%= f.label :latitude, t("owner.restaurants.form.latitude"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+      <%= f.number_field :latitude, step: "0.0000001", class: "input input-bordered w-full font-body" %>
+    </div>
+
+    <div class="form-control">
+      <%= f.label :longitude, t("owner.restaurants.form.longitude"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+      <%= f.number_field :longitude, step: "0.0000001", class: "input input-bordered w-full font-body" %>
+    </div>
+  </div>
+
+  <div class="form-control">
+    <%= f.label :proximity_radius_meters, t("owner.restaurants.form.proximity_radius"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+    <div class="flex items-center gap-2">
+      <%= f.number_field :proximity_radius_meters, min: 50, max: 1000, step: 50, class: "input input-bordered w-32 font-body" %>
+      <span class="text-sm text-base-content/50"><%= t("owner.restaurants.form.meters") %></span>
+    </div>
+  </div>
+
+  <div class="form-control">
+    <label class="label cursor-pointer justify-start gap-3">
+      <%= f.check_box :active, class: "toggle toggle-primary" %>
+      <span class="label-text font-body"><%= t("owner.restaurants.form.active_label") %></span>
+    </label>
+  </div>
+
+  <div class="flex items-center gap-3 pt-4">
+    <%= f.submit class: "btn-wine" %>
+    <a href="<%= owner_restaurants_path %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+  </div>
+<% end %>

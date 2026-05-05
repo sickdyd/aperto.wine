@@ -10,8 +10,13 @@
     </a>
 
     <div class="flex items-center gap-3">
-      <a href="#" class="btn-wine-outline btn-sm"><%= t("landing.sign_in") %></a>
-      <a href="#" class="btn-wine btn-sm"><%= t("landing.sign_up") %></a>
+      <% if signed_in? %>
+        <span class="text-sm text-base-content/60"><%= current_user.name %></span>
+        <%= button_to t("auth.sign_out"), sign_out_path, method: :delete, class: "btn-wine-outline btn-sm" %>
+      <% else %>
+        <a href="<%= sign_in_path %>" class="btn-wine-outline btn-sm"><%= t("landing.sign_in") %></a>
+        <a href="<%= sign_up_path %>" class="btn-wine btn-sm"><%= t("landing.sign_up") %></a>
+      <% end %>
     </div>
   </div>
 </nav>

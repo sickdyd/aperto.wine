@@ -1,0 +1,63 @@
+<% content_for(:title) { @restaurant.name } %>
+
+<div class="mb-8">
+  <a href="<%= owner_restaurants_path %>" class="text-sm text-base-content/50 hover:text-primary flex items-center gap-1 mb-4">
+    <%= icon "arrow-left", css: "size-3.5" %>
+    <%= t("owner.restaurants.title") %>
+  </a>
+
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="font-display text-3xl font-light"><%= @restaurant.name %></h1>
+      <p class="text-base-content/50 mt-1 flex items-center gap-1">
+        <%= icon "map-pin", css: "size-3.5" %>
+        <%= @restaurant.address %>
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="<%= edit_owner_restaurant_path(@restaurant) %>" class="btn btn-ghost btn-sm text-xs uppercase tracking-wider">
+        <%= icon "pencil-simple", css: "size-4" %>
+        <%= t("shared.edit") %>
+      </a>
+      <%= button_to owner_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm text-error text-xs uppercase tracking-wider", data: { turbo_confirm: t("owner.restaurants.confirm_delete") } do %>
+        <%= icon "trash", css: "size-4" %>
+        <%= t("shared.delete") %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%# Restaurant dashboard cards %>
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-8">
+  <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
+    <div class="flex items-center gap-3 mb-2">
+      <%= icon "wine", css: "size-5 text-primary/70" %>
+      <span class="font-body text-sm font-medium"><%= t("owner.restaurants.wine_list") %></span>
+    </div>
+    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.manage_wines") %></p>
+  </a>
+
+  <a href="#" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
+    <div class="flex items-center gap-3 mb-2">
+      <%= icon "receipt", css: "size-5 text-primary/70" %>
+      <span class="font-body text-sm font-medium"><%= t("owner.restaurants.orders") %></span>
+    </div>
+    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.manage_orders") %></p>
+  </a>
+
+  <a href="#" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
+    <div class="flex items-center gap-3 mb-2">
+      <%= icon "qr-code", css: "size-5 text-primary/70" %>
+      <span class="font-body text-sm font-medium"><%= t("owner.restaurants.qr_code") %></span>
+    </div>
+    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.qr_description") %></p>
+  </a>
+</div>
+
+<% if @restaurant.description.present? %>
+  <div class="mt-8 p-6 rounded-lg bg-base-200/50">
+    <h3 class="font-body text-xs uppercase tracking-wider text-base-content/50 mb-2"><%= t("owner.restaurants.form.description") %></h3>
+    <p class="text-sm text-base-content/70"><%= @restaurant.description %></p>
+  </div>
+<% end %>

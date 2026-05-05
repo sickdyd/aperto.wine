@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>" data-theme="wine">
+  <head>
+    <title><%= content_for(:title) || t("app_name") %> — <%= t("owner.dashboard") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-base-100 text-base-content font-body antialiased min-h-screen">
+    <%# Top navigation %>
+    <nav class="sticky top-0 z-50 bg-base-100 border-b border-base-content/5">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <div class="flex items-center gap-6">
+          <a href="<%= owner_restaurants_path %>" class="font-display text-xl font-semibold text-primary">Wine Sharing</a>
+          <span class="hidden sm:inline text-xs uppercase tracking-[0.15em] text-base-content/40 font-body"><%= t("owner.dashboard") %></span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-base-content/60"><%= current_user.name %></span>
+          <%= button_to t("auth.sign_out"), sign_out_path, method: :delete, class: "btn btn-ghost btn-sm text-xs uppercase tracking-wider" %>
+        </div>
+      </div>
+    </nav>
+
+    <%# Flash messages %>
+    <% if notice %>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div role="alert" class="alert alert-success text-sm">
+          <%= icon "check-circle", css: "size-4" %>
+          <span><%= notice %></span>
+        </div>
+      </div>
+    <% end %>
+    <% if alert %>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div role="alert" class="alert alert-error text-sm">
+          <%= icon "warning", css: "size-4" %>
+          <span><%= alert %></span>
+        </div>
+      </div>
+    <% end %>
+
+    <%# Main content %>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <%= yield %>
+    </main>
+  </body>
+</html>
