@@ -1,0 +1,74 @@
+require "application_system_test_case"
+
+class PublicMenuTest < ApplicationSystemTestCase
+  test "visitor can view public menu for a restaurant" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    assert_selector "h1", text: restaurant.name
+    assert_text restaurant.address
+  end
+
+  test "menu shows available wines" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    assert_text "Barolo Riserva"
+    assert_text "Gavi di Gavi"
+  end
+
+  test "menu displays wine producer and grape variety details" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    assert_text "Giacomo Conterno"
+    assert_text "Nebbiolo"
+    assert_text "La Scolca"
+    assert_text "Cortese"
+  end
+
+  test "menu shows glass size labels for available wines" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    # barolo has price_75ml_cents: 1500
+    assert_text "75ml"
+  end
+
+  test "sold out wine shows sold out badge" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    assert_text "Sold out"
+  end
+
+  test "menu has a search field" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    assert_selector "input[type='search']"
+  end
+
+  test "menu shows powered by Wine Sharing footer" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    assert_text "Powered by"
+    assert_link "Wine Sharing"
+  end
+
+  test "menu is accessible without authentication" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    assert_selector "h1", text: restaurant.name
+  end
+
+  test "Wine Sharing link in menu footer points to root" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    click_link "Wine Sharing"
+    assert_current_path root_path
+  end
+end

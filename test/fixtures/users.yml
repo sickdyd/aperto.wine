@@ -1,0 +1,27 @@
+owner:
+  email: owner@test.com
+  name: Test Owner
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: 1
+  confirmed_at: <%= Time.current %>
+
+customer:
+  email: customer@test.com
+  name: Test Customer
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: 0
+  confirmed_at: <%= Time.current %>
+
+admin:
+  email: admin@test.com
+  name: Test Admin
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: 2
+  confirmed_at: <%= Time.current %>
+
+unconfirmed:
+  email: unconfirmed@test.com
+  name: Unconfirmed User
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: 0
+  confirmed_at: null

@@ -1,0 +1,11 @@
+pending_order:
+  restaurant: osteria
+  customer: customer
+  status: 0
+  total_amount_cents: 3600
+
+approved_order:
+  restaurant: osteria
+  customer: customer
+  status: 1
+  total_amount_cents: 1800

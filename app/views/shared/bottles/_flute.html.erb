@@ -1,0 +1,51 @@
+<%# Flute (Alsace) bottle: tall, slender, gently sloping shoulders, elongated neck %>
+<%# Locals: fill_percent (0-100), sealed (boolean), wine_color (hex), bottle_id (unique id) %>
+<svg viewBox="0 0 60 180" xmlns="http://www.w3.org/2000/svg" class="bottle-svg" aria-hidden="true">
+  <defs>
+    <clipPath id="bottle-clip-<%= bottle_id %>">
+      <path d="
+        M 21,155
+        L 21,75
+        Q 21,55 25,45
+        L 26,10
+        L 34,10
+        L 35,45
+        Q 39,55 39,75
+        L 39,155
+        Z
+      " />
+    </clipPath>
+  </defs>
+
+  <%# Liquid fill %>
+  <% if fill_percent > 0 %>
+    <% fill_y = 155 - (fill_percent / 100.0 * 110) %>
+    <rect
+      x="19" y="<%= fill_y %>"
+      width="22" height="<%= 155 - fill_y %>"
+      fill="<%= wine_color %>"
+      clip-path="url(#bottle-clip-<%= bottle_id %>)"
+    />
+  <% end %>
+
+  <%# Bottle outline — tall slender shape %>
+  <path d="
+    M 26,8
+    L 26,42
+    Q 20,52 20,75
+    L 20,156
+    Q 20,162 25,162
+    L 35,162
+    Q 40,162 40,156
+    L 40,75
+    Q 40,52 34,42
+    L 34,8
+    Z
+  " fill="none" stroke="#2d2d2d" stroke-width="1.5" stroke-linejoin="round" />
+
+  <%# Cork / foil cap %>
+  <% if sealed %>
+    <rect x="25" y="2" width="10" height="8" rx="1" fill="#8B7355" stroke="#6B5740" stroke-width="0.5" />
+    <rect x="23" y="7" width="14" height="3" rx="0.5" fill="#C0A060" stroke="#A08040" stroke-width="0.5" />
+  <% end %>
+</svg>

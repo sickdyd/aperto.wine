@@ -32,7 +32,7 @@
     </nav>
 
     <%# Restaurant sub-nav %>
-    <% if @restaurant %>
+    <% if @restaurant&.persisted? %>
       <nav class="border-b border-base-content/5 bg-base-200/30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 h-10 overflow-x-auto">
           <a href="<%= owner_restaurant_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'restaurants' && action_name == 'show' ? 'btn-active' : '' %>">

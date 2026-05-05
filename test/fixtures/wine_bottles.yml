@@ -1,0 +1,10 @@
+sealed_barolo:
+  wine: barolo
+  status: 0
+  glasses_remaining: 10
+
+open_gavi:
+  wine: gavi
+  status: 1
+  opened_at: <%= 2.hours.ago %>
+  glasses_remaining: 5

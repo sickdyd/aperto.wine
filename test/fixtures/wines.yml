@@ -1,0 +1,41 @@
+barolo:
+  restaurant: osteria
+  name: Barolo Riserva
+  producer: Giacomo Conterno
+  grape_variety: Nebbiolo
+  vintage_year: 2018
+  color: 0
+  region: Piemonte
+  bottle_size_ml: 750
+  price_bottle_cents: 12000
+  price_75ml_cents: 1500
+  price_100ml_cents: 1800
+  price_125ml_cents: 2200
+  price_150ml_cents: 0
+  available_glasses: 10
+  position: 1
+  active: true
+
+gavi:
+  restaurant: osteria
+  name: Gavi di Gavi
+  producer: La Scolca
+  grape_variety: Cortese
+  vintage_year: 2022
+  color: 1
+  region: Piemonte
+  bottle_size_ml: 750
+  price_100ml_cents: 900
+  price_125ml_cents: 1100
+  available_glasses: 7
+  position: 1
+  active: true
+
+sold_out_wine:
+  restaurant: osteria
+  name: Sold Out Wine
+  color: 0
+  bottle_size_ml: 750
+  available_glasses: 0
+  position: 99
+  active: true

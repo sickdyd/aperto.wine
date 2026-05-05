@@ -1,0 +1,13 @@
+pending_barolo_glass:
+  order: pending_order
+  wine: barolo
+  glass_size_ml: 100
+  quantity: 2
+  unit_price_cents: 1800
+
+approved_gavi_glass:
+  order: approved_order
+  wine: gavi
+  glass_size_ml: 100
+  quantity: 2
+  unit_price_cents: 900

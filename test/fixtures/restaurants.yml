@@ -1,0 +1,15 @@
+osteria:
+  user: owner
+  name: Osteria del Borgo
+  address: Via Roma 42, Milano
+  description: Traditional Italian cuisine
+  latitude: 45.4642000
+  longitude: 9.1900000
+  proximity_radius_meters: 200
+  active: true
+
+inactive_restaurant:
+  user: owner
+  name: Closed Place
+  address: Via Chiusa 1, Roma
+  active: false
