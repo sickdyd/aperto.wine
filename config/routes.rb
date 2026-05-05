@@ -4,6 +4,6 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   scope "(:locale)", locale: /en|it/ do
-    # root "home#index"
+    root "home#index"
   end
 end
