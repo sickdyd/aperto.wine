@@ -24,8 +24,12 @@
 
         <div class="space-y-3">
           <% wines.each do |wine| %>
+            <% open_bottle = wine.wine_bottles.find_by(status: :open) %>
             <div class="p-4 rounded-lg border border-base-content/5 <%= wine.available? ? '' : 'opacity-50' %>">
               <div class="flex items-start justify-between">
+                <div class="shrink-0 mr-3 self-center">
+                  <%= bottle_icon(wine, bottle: open_bottle, size: :sm) %>
+                </div>
                 <div class="flex-1 min-w-0">
                   <h3 class="font-body font-medium text-sm"><%= wine.name %></h3>
                   <p class="text-xs text-base-content/50 mt-0.5">
@@ -54,7 +58,6 @@
               <% end %>
 
               <%# Show opened_at for open bottles %>
-              <% open_bottle = wine.wine_bottles.find_by(status: :open) %>
               <% if open_bottle&.opened_at %>
                 <p class="text-xs text-primary/60 mt-2 flex items-center gap-1">
                   <%= icon "clock", css: "size-3" %>

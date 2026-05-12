@@ -3,6 +3,9 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Temporary: bottle SVG preview (remove after design finalization)
+  get "bottles/preview", to: "bottles_preview#index" if Rails.env.development?
+
   scope "(:locale)", locale: /en|it/ do
     root "home#index"
 

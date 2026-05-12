@@ -1,0 +1,10 @@
+<%# Dispatcher: renders the correct bottle shape partial %>
+<%# Locals: shape (string), fill_percent (0-100), sealed (boolean), wine_color (hex), size (:sm/:md/:lg) %>
+<% bottle_id = "bottle-#{SecureRandom.hex(4)}" %>
+<div class="bottle-<%= size || :md %>">
+  <%= render "shared/bottles/#{shape}",
+    fill_percent: fill_percent,
+    sealed: sealed,
+    wine_color: wine_color,
+    bottle_id: bottle_id %>
+</div>

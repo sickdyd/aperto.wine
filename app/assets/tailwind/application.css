@@ -88,6 +88,24 @@
   .divider-wine {
     @apply w-12 h-px bg-primary/40 mx-auto;
   }
+
+  .bottle-sm {
+    @apply w-8 h-auto;
+  }
+
+  .bottle-md {
+    @apply w-12 h-auto;
+  }
+
+  .bottle-lg {
+    @apply w-20 h-auto;
+  }
+
+  .bottle-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
 }
 
 @layer utilities {
