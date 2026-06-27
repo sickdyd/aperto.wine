@@ -36,6 +36,17 @@ module Owner
       assert_match "<svg", response.body
     end
 
+    test "GET /owner/restaurants/:id/qr_code renders QR modules with a valid currentColor fill" do
+      sign_in_as @owner
+      get owner_restaurant_qr_code_path(restaurant_id: @restaurant)
+      assert_response :success
+      # rqrcode prefixes "#" to String colors, producing an invalid
+      # fill="#currentColor" that renders nothing. Passing :currentColor as a
+      # Symbol yields a valid fill="currentColor" so the QR is visible.
+      assert_match 'fill="currentColor"', response.body
+      assert_no_match 'fill="#currentColor"', response.body
+    end
+
     test "GET /owner/restaurants/:id/qr_code as admin for own restaurant renders successfully" do
       # Admin can access their own restaurants; here we sign in as owner of osteria
       # and confirm the page renders — admin with no restaurants gets 404 (expected behaviour)
