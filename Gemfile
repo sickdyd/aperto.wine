@@ -70,6 +70,6 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "rails_icons", "~> 1.8"
+gem "rails_icons", "~> 1.9"
 
 gem "rqrcode", "~> 3.2"
