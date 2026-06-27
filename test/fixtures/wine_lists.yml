@@ -1,0 +1,19 @@
+summer:
+  restaurant: osteria
+  name: Summer Selection
+  season: Summer
+  position: 1
+  active: false
+
+winter:
+  restaurant: osteria
+  name: Winter Selection
+  season: Winter
+  position: 2
+  active: false
+
+trattoria_list:
+  restaurant: trattoria
+  name: House Picks
+  position: 1
+  active: true

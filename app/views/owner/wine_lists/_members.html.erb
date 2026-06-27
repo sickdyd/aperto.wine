@@ -1,0 +1,49 @@
+<section class="max-w-2xl">
+  <h2 class="font-display text-xl font-light mb-1"><%= t("owner.wine_lists.members.title") %></h2>
+  <p class="text-sm text-base-content/50 mb-6"><%= t("owner.wine_lists.members.intro") %></p>
+
+  <%# Current members %>
+  <% items = wine_list.wine_list_items.includes(:wine).by_position %>
+  <% if items.any? %>
+    <div class="space-y-2 mb-8">
+      <% items.each do |item| %>
+        <div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="inline-block w-2.5 h-2.5 rounded-full <%= wine_color_class(item.wine.color) %>"></span>
+            <span class="font-body text-sm truncate"><%= item.wine.name %></span>
+            <% unless item.wine.available? %>
+              <span class="badge badge-ghost badge-xs"><%= t("menu.unavailable") %></span>
+            <% end %>
+          </div>
+
+          <div class="flex items-center gap-2 ml-4">
+            <%= form_with model: [:owner, @restaurant, wine_list, item], method: :patch, class: "flex items-center gap-1" do |f| %>
+              <%= f.label :position, t("owner.wine_lists.members.position"), class: "sr-only" %>
+              <%= f.number_field :position, value: item.position, min: 0, class: "input input-bordered input-xs w-16 font-body" %>
+              <%= f.submit t("shared.save"), class: "btn btn-ghost btn-xs" %>
+            <% end %>
+            <%= button_to owner_restaurant_wine_list_wine_list_item_path(@restaurant, wine_list, item), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.members.confirm_remove") } do %>
+              <%= icon "trash", css: "size-3.5" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-sm text-base-content/40 italic mb-8"><%= t("owner.wine_lists.members.empty") %></p>
+  <% end %>
+
+  <%# Add a wine (reuse the already-loaded items to avoid an extra query) %>
+  <% available_wines = @restaurant.wines.by_position.where.not(id: items.map(&:wine_id)) %>
+  <% if available_wines.any? %>
+    <%= form_with url: owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list), method: :post, class: "flex items-end gap-3" do |f| %>
+      <div class="form-control flex-1">
+        <%= f.label :wine_id, t("owner.wine_lists.members.add_label"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <%= f.select :wine_id, available_wines.map { |w| [w.name, w.id] }, {}, class: "select select-bordered w-full font-body" %>
+      </div>
+      <%= f.submit t("owner.wine_lists.members.add"), class: "btn-wine btn-sm" %>
+    <% end %>
+  <% else %>
+    <p class="text-xs text-base-content/40"><%= t("owner.wine_lists.members.all_added") %></p>
+  <% end %>
+</section>

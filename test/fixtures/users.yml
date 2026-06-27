@@ -25,3 +25,10 @@ unconfirmed:
   password_digest: <%= BCrypt::Password.create('password123') %>
   role: 0
   confirmed_at: null
+
+owner_two:
+  email: owner2@test.com
+  name: Second Owner
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: 1
+  confirmed_at: <%= Time.current %>

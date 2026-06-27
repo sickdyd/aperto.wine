@@ -13,8 +13,30 @@
     <input type="search" placeholder="<%= t('menu.search_placeholder') %>" class="input input-bordered w-full font-body text-sm" data-controller="menu-search">
   </div>
 
-  <%# Wine list grouped by color %>
-  <% if @wines.any? %>
+  <%# Curated lists take over the menu when the restaurant has published any.
+      Otherwise we fall back to the full wine list grouped by color. %>
+  <% if @wine_lists.any? %>
+    <% @wine_lists.each do |wine_list| %>
+      <%# Hide deactivated wines entirely (matching the flat list); active wines
+          with no glasses still render with the "currently unavailable" badge. %>
+      <% items = wine_list.wine_list_items.select { |i| i.wine.active? }.sort_by { |i| [i.position, i.id] } %>
+      <% next if items.empty? %>
+      <section class="mb-10">
+        <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
+        <% if wine_list.season.present? %>
+          <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
+        <% else %>
+          <div class="mb-4"></div>
+        <% end %>
+
+        <div class="space-y-3">
+          <% items.each do |item| %>
+            <%= render "wine_row", wine: item.wine, unavailable_label: t("menu.unavailable") %>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  <% elsif @wines.any? %>
     <% @wines.group_by(&:color).each do |color, wines| %>
       <section class="mb-10">
         <h2 class="font-display text-xl font-medium mb-4 flex items-center gap-2">
@@ -24,47 +46,7 @@
 
         <div class="space-y-3">
           <% wines.each do |wine| %>
-            <% open_bottle = wine.wine_bottles.find_by(status: :open) %>
-            <div class="p-4 rounded-lg border border-base-content/5 <%= wine.available? ? '' : 'opacity-50' %>">
-              <div class="flex items-start justify-between">
-                <div class="shrink-0 mr-3 self-center">
-                  <%= bottle_icon(wine, bottle: open_bottle, size: :sm) %>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-body font-medium text-sm"><%= wine.name %></h3>
-                  <p class="text-xs text-base-content/50 mt-0.5">
-                    <%= [wine.producer, wine.grape_variety, wine.vintage_year, wine.region].compact_blank.join(" · ") %>
-                  </p>
-                </div>
-
-                <% if wine.available? %>
-                  <div class="text-right ml-4">
-                    <% Wine::GLASS_SIZES.each do |size| %>
-                      <% price = wine.price_for_glass(size) %>
-                      <% if price&.positive? %>
-                        <span class="inline-block text-xs text-base-content/60 ml-2">
-                          <%= size %>ml <span class="font-medium text-base-content"><%= format_cents(price) %></span>
-                        </span>
-                      <% end %>
-                    <% end %>
-                  </div>
-                <% else %>
-                  <span class="badge badge-ghost badge-sm"><%= t("shared.sold_out") %></span>
-                <% end %>
-              </div>
-
-              <% if wine.description.present? %>
-                <p class="text-xs text-base-content/40 mt-2 italic"><%= wine.description %></p>
-              <% end %>
-
-              <%# Show opened_at for open bottles %>
-              <% if open_bottle&.opened_at %>
-                <p class="text-xs text-primary/60 mt-2 flex items-center gap-1">
-                  <%= icon "clock", css: "size-3" %>
-                  <%= t("menu.opened_at", time: time_ago_in_words(open_bottle.opened_at)) %>
-                </p>
-              <% end %>
-            </div>
+            <%= render "wine_row", wine: wine %>
           <% end %>
         </div>
       </section>

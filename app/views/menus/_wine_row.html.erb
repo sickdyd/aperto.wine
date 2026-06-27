@@ -1,0 +1,48 @@
+<%#
+  Renders a single wine row for the public menu.
+  Locals:
+    wine               - the Wine to render (required)
+    unavailable_label  - badge text when the wine isn't pourable
+                         (defaults to the flat-menu "Sold out" wording)
+%>
+<% unavailable_label = local_assigns.fetch(:unavailable_label) { t("shared.sold_out") } %>
+<% open_bottle = wine.wine_bottles.find { |b| b.status == "open" } %>
+<div class="p-4 rounded-lg border border-base-content/5 <%= wine.available? ? '' : 'opacity-50' %>">
+  <div class="flex items-start justify-between">
+    <div class="shrink-0 mr-3 self-center">
+      <%= bottle_icon(wine, bottle: open_bottle, size: :sm) %>
+    </div>
+    <div class="flex-1 min-w-0">
+      <h3 class="font-body font-medium text-sm"><%= wine.name %></h3>
+      <p class="text-xs text-base-content/50 mt-0.5">
+        <%= [wine.producer, wine.grape_variety, wine.vintage_year, wine.region].compact_blank.join(" · ") %>
+      </p>
+    </div>
+
+    <% if wine.available? %>
+      <div class="text-right ml-4">
+        <% Wine::GLASS_SIZES.each do |size| %>
+          <% price = wine.price_for_glass(size) %>
+          <% if price&.positive? %>
+            <span class="inline-block text-xs text-base-content/60 ml-2">
+              <%= size %>ml <span class="font-medium text-base-content"><%= format_cents(price) %></span>
+            </span>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <span class="badge badge-ghost badge-sm"><%= unavailable_label %></span>
+    <% end %>
+  </div>
+
+  <% if wine.description.present? %>
+    <p class="text-xs text-base-content/40 mt-2 italic"><%= wine.description %></p>
+  <% end %>
+
+  <% if open_bottle&.opened_at %>
+    <p class="text-xs text-primary/60 mt-2 flex items-center gap-1">
+      <%= icon "clock", css: "size-3" %>
+      <%= t("menu.opened_at", time: time_ago_in_words(open_bottle.opened_at)) %>
+    </p>
+  <% end %>
+</div>

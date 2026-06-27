@@ -71,4 +71,20 @@ class PublicMenuTest < ApplicationSystemTestCase
     click_link "aperto.wine"
     assert_current_path root_path
   end
+
+  # --- Curated lists ---
+
+  test "restaurant with an active list shows its curated list" do
+    visit menu_path(id: restaurants(:trattoria).id)
+
+    assert_text "House Picks"
+    assert_text "Chianti Classico"
+  end
+
+  test "a featured but sold-out wine appears as currently unavailable" do
+    visit menu_path(id: restaurants(:trattoria).id)
+
+    assert_text "Reserve Barbaresco"
+    assert_text "Currently unavailable"
+  end
 end

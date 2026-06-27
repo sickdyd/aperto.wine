@@ -1,0 +1,28 @@
+summer_barolo:
+  wine_list: summer
+  wine: barolo
+  position: 1
+
+# Featured on an active list but available_glasses: 0 — drives the
+# "currently unavailable / On Deck" public-menu rendering test.
+summer_sold_out:
+  wine_list: summer
+  wine: sold_out_wine
+  position: 2
+
+winter_gavi:
+  wine_list: winter
+  wine: gavi
+  position: 1
+
+# Trattoria's active "House Picks" list drives the curated public-menu test:
+# chianti is pourable, reserve_barbaresco is featured but sold out (On Deck).
+trattoria_chianti:
+  wine_list: trattoria_list
+  wine: chianti
+  position: 1
+
+trattoria_soldout:
+  wine_list: trattoria_list
+  wine: trattoria_sold_out
+  position: 2

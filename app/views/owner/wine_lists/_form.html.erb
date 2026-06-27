@@ -1,0 +1,43 @@
+<%= form_with model: [:owner, @restaurant, wine_list], class: "space-y-6 max-w-2xl" do |f| %>
+  <% if wine_list.errors.any? %>
+    <div role="alert" class="alert alert-error text-sm">
+      <%= icon "warning", css: "size-4" %>
+      <div>
+        <% wine_list.errors.full_messages.each do |msg| %>
+          <p><%= msg %></p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <fieldset class="space-y-4">
+    <div class="form-control">
+      <%= f.label :name, t("owner.wine_lists.form.name"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+      <%= f.text_field :name, required: true, class: "input input-bordered w-full font-body", placeholder: t("owner.wine_lists.form.name_placeholder") %>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="form-control">
+        <%= f.label :season, t("owner.wine_lists.form.season"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <%= f.text_field :season, class: "input input-bordered w-full font-body", placeholder: t("owner.wine_lists.form.season_placeholder") %>
+      </div>
+
+      <div class="form-control">
+        <%= f.label :position, t("owner.wine_lists.form.position"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <%= f.number_field :position, min: 0, class: "input input-bordered w-32 font-body" %>
+      </div>
+    </div>
+
+    <div class="form-control">
+      <label class="label cursor-pointer justify-start gap-3">
+        <%= f.check_box :active, class: "toggle toggle-primary" %>
+        <span class="label-text font-body"><%= t("owner.wine_lists.form.active_label") %></span>
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="flex items-center gap-3 pt-4">
+    <%= f.submit class: "btn-wine" %>
+    <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+  </div>
+<% end %>
