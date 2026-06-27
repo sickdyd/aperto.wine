@@ -113,6 +113,14 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # Icon SVGs are gitignored and synced from upstream (see .gitignore).
+      # Sync them so views that render icons don't raise "Icon not found".
+      - name: Sync icon libraries
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: bin/rails generate rails_icons:sync --library=phosphor
+
       - name: Run tests
         env:
           RAILS_ENV: test
@@ -160,6 +168,14 @@ jobs:
 
       - name: Install npm dependencies
         run: npm ci
+
+      # Icon SVGs are gitignored and synced from upstream (see .gitignore).
+      # Sync them so views that render icons don't raise "Icon not found".
+      - name: Sync icon libraries
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: bin/rails generate rails_icons:sync --library=phosphor
 
       - name: Run System Tests
         env:
