@@ -6,7 +6,8 @@ class RegistrationsController < ApplicationController
 
   def create
     @user = User.new(registration_params)
-    @tab = @user.role || "customer"
+    @user.role = registration_role
+    @tab = @user.role
 
     if @user.save
       auto_confirm_in_development!(@user)
@@ -25,10 +26,14 @@ class RegistrationsController < ApplicationController
   private
 
   def registration_params
-    permitted = params.require(:user).permit(:email, :name, :password, :password_confirmation, :role)
-    # Only allow customer or owner roles during self-registration
-    permitted[:role] = "customer" unless %w[customer owner].include?(permitted[:role])
-    permitted
+    params.require(:user).permit(:email, :name, :password, :password_confirmation)
+  end
+
+  # Role is set explicitly (never mass-assigned) and restricted to the roles a
+  # user may self-select. Anything else (e.g. "admin") falls back to "customer".
+  def registration_role
+    role = params.dig(:user, :role)
+    %w[customer owner].include?(role) ? role : "customer"
   end
 
   def auto_confirm_in_development!(user)

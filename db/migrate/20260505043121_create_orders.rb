@@ -9,7 +9,7 @@ class CreateOrders < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :orders, [:restaurant_id, :status]
-    add_index :orders, [:customer_id, :status]
+    add_index :orders, [ :restaurant_id, :status ]
+    add_index :orders, [ :customer_id, :status ]
   end
 end

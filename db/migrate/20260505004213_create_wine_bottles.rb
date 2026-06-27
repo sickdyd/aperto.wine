@@ -9,6 +9,6 @@ class CreateWineBottles < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :wine_bottles, [:wine_id, :status]
+    add_index :wine_bottles, [ :wine_id, :status ]
   end
 end

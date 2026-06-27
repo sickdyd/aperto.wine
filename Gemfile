@@ -54,6 +54,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Manage Git hooks (rubocop, brakeman, dependency audits on commit) [https://github.com/evilmartians/lefthook]
+  gem "lefthook", require: false
 end
 
 group :development do

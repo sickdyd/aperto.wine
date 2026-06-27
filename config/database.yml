@@ -1,6 +1,9 @@
 default: &default
   adapter: postgresql
   encoding: unicode
+  # Disable GSSAPI negotiation: libpq's Kerberos calls are not fork-safe on
+  # macOS and segfault under parallel (forking) tests. Harmless on Linux/CI.
+  gssencmode: disable
   host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
   port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
   username: <%= ENV["DATABASE_USERNAME"] %>

@@ -1,0 +1,30 @@
+# Git hooks managed by lefthook (https://github.com/evilmartians/lefthook)
+# Run `bundle exec lefthook install` after bundling to (re)generate the Git hooks.
+#
+# These mirror the checks enforced in CI (.github/workflows/ci.yml) so problems
+# are caught locally before they ever reach a pull request.
+
+pre-commit:
+  parallel: true
+  commands:
+    rubocop:
+      tags: lint
+      glob: "*.rb"
+      # Only lint the Ruby files that are actually staged for speed.
+      run: bin/rubocop --force-exclusion {staged_files}
+
+    brakeman:
+      tags: security
+      # Static analysis for common Rails security vulnerabilities.
+      run: bin/brakeman --no-pager --quiet
+
+    bundler-audit:
+      tags: security
+      # Scan Ruby gems for known vulnerabilities (refreshes the advisory DB).
+      run: bin/bundler-audit check --update
+
+    npm-audit:
+      tags: security
+      # Scan npm dependencies for known vulnerabilities.
+      glob: "{package.json,package-lock.json}"
+      run: npm audit --audit-level=moderate

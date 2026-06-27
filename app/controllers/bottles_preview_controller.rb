@@ -4,7 +4,7 @@ class BottlesPreviewController < ApplicationController
 
   def index
     @shapes = %w[bordeaux burgundy flute champagne]
-    @fill_levels = [100, 75, 50, 25, 10, 0]
+    @fill_levels = [ 100, 75, 50, 25, 10, 0 ]
     @wine_colors = {
       "bordeaux" => "#722F37",
       "burgundy" => "#F5E6B8",

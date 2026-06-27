@@ -22,7 +22,7 @@ class CreateWines < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :wines, [:restaurant_id, :position]
-    add_index :wines, [:restaurant_id, :color]
+    add_index :wines, [ :restaurant_id, :position ]
+    add_index :wines, [ :restaurant_id, :color ]
   end
 end
