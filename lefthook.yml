@@ -20,8 +20,12 @@ pre-commit:
 
     bundler-audit:
       tags: security
-      # Scan Ruby gems for known vulnerabilities (refreshes the advisory DB).
-      run: bin/bundler-audit check --update
+      # Scan Ruby gems for known vulnerabilities against the local advisory DB.
+      # No --update here: it shells out to `git pull origin master`, which during
+      # a worktree Git hook inherits the leaked GIT_DIR and targets this repo
+      # (which has no `master` branch) instead of the advisory-DB clone. CI runs
+      # the same flagless command; refresh the DB out of band if needed.
+      run: bin/bundler-audit check
 
     npm-audit:
       tags: security
