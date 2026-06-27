@@ -63,11 +63,26 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Winter Selection", response.body
   end
 
-  test "falls back to the flat wine list when there are no active lists" do
+  test "the default All Wines list shows every active wine grouped by color" do
     get menu_path(id: restaurants(:osteria))
     assert_response :success
-    # Flat menu shows every active wine grouped by color
     assert_match "Barolo Riserva", response.body
     assert_match "Gavi di Gavi", response.body
+  end
+
+  test "disabling All Wines shows only the enabled custom lists" do
+    restaurants(:osteria).update!(all_wines_list_active: false)
+    wine_lists(:summer).update!(active: true) # summer holds barolo + sold_out_wine
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_match "Barolo Riserva", response.body      # featured on summer
+    assert_no_match "Gavi di Gavi", response.body      # only in All Wines, now off
+  end
+
+  test "menu is empty when All Wines is off and no custom list is active" do
+    restaurants(:osteria).update!(all_wines_list_active: false)
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_match I18n.t("menu.empty"), response.body
   end
 end

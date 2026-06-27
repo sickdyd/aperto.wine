@@ -16,42 +16,57 @@
   <p class="text-sm text-base-content/50 mt-2"><%= t("owner.wine_lists.intro") %></p>
 </div>
 
-<% if @wine_lists.any? %>
-  <div class="space-y-2">
-    <% @wine_lists.each do |wine_list| %>
-      <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all">
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2">
-            <span class="font-body font-medium text-sm truncate"><%= wine_list.name %></span>
-            <% if wine_list.active? %>
-              <span class="badge badge-primary badge-xs"><%= t("owner.wine_lists.published") %></span>
-            <% else %>
-              <span class="badge badge-ghost badge-xs"><%= t("owner.wine_lists.hidden") %></span>
-            <% end %>
-          </div>
+<div class="space-y-2">
+  <%# Default "All Wines" list — always present, reflects every available wine. %>
+  <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/10 bg-base-200/40">
+    <div class="flex items-center gap-3 min-w-0">
+      <%= form_with url: toggle_all_wines_owner_restaurant_wine_lists_path(@restaurant), method: :patch, data: { controller: "auto-submit" } do %>
+        <%= check_box_tag :active, "1", @restaurant.all_wines_list_active?,
+              class: "toggle toggle-primary toggle-sm",
+              aria: { label: t("owner.wine_lists.toggle_label") },
+              data: { action: "change->auto-submit#submit" } %>
+      <% end %>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="font-body font-medium text-sm truncate"><%= t("owner.wine_lists.all_wines") %></span>
+          <span class="badge badge-ghost badge-xs"><%= t("owner.wine_lists.default") %></span>
+        </div>
+        <p class="text-xs text-base-content/50"><%= t("owner.wine_lists.wine_count", count: @available_wine_count) %></p>
+      </div>
+    </div>
+
+    <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn btn-ghost btn-xs">
+      <%= icon "pencil-simple", css: "size-3.5" %>
+      <span class="hidden sm:inline"><%= t("owner.wine_lists.manage_wines") %></span>
+    </a>
+  </div>
+
+  <%# Custom curated lists. %>
+  <% @wine_lists.each do |wine_list| %>
+    <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all">
+      <div class="flex items-center gap-3 min-w-0">
+        <%= form_with model: [ :owner, @restaurant, wine_list ], method: :patch, data: { controller: "auto-submit" } do |f| %>
+          <%= f.check_box :active,
+                class: "toggle toggle-primary toggle-sm",
+                aria: { label: t("owner.wine_lists.toggle_label") },
+                data: { action: "change->auto-submit#submit" } %>
+        <% end %>
+        <div class="min-w-0">
+          <span class="font-body font-medium text-sm truncate"><%= wine_list.name %></span>
           <p class="text-xs text-base-content/50 truncate">
-            <%= [wine_list.season, t("owner.wine_lists.wine_count", count: wine_list.wine_list_items.size)].compact_blank.join(" · ") %>
+            <%= [ wine_list.season, t("owner.wine_lists.wine_count", count: wine_list.wine_list_items.size) ].compact_blank.join(" · ") %>
           </p>
         </div>
-
-        <div class="flex items-center gap-1 ml-4">
-          <a href="<%= edit_owner_restaurant_wine_list_path(@restaurant, wine_list) %>" class="btn btn-ghost btn-xs">
-            <%= icon "pencil-simple", css: "size-3.5" %>
-          </a>
-          <%= button_to owner_restaurant_wine_list_path(@restaurant, wine_list), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.confirm_delete") } do %>
-            <%= icon "trash", css: "size-3.5" %>
-          <% end %>
-        </div>
       </div>
-    <% end %>
-  </div>
-<% else %>
-  <div class="text-center py-20">
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
-      <%= icon "wine", css: "size-7 text-base-content/30" %>
+
+      <div class="flex items-center gap-1 ml-4">
+        <a href="<%= edit_owner_restaurant_wine_list_path(@restaurant, wine_list) %>" class="btn btn-ghost btn-xs">
+          <%= icon "pencil-simple", css: "size-3.5" %>
+        </a>
+        <%= button_to owner_restaurant_wine_list_path(@restaurant, wine_list), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.confirm_delete") } do %>
+          <%= icon "trash", css: "size-3.5" %>
+        <% end %>
+      </div>
     </div>
-    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.wine_lists.empty_title") %></h2>
-    <p class="text-base-content/50 mb-6"><%= t("owner.wine_lists.empty_description") %></p>
-    <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine"><%= t("owner.wine_lists.add_first") %></a>
-  </div>
-<% end %>
+  <% end %>
+</div>

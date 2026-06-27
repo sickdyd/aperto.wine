@@ -13,31 +13,40 @@
     <input type="search" placeholder="<%= t('menu.search_placeholder') %>" class="input input-bordered w-full font-body text-sm" data-controller="menu-search">
   </div>
 
-  <%# Curated lists take over the menu when the restaurant has published any.
-      Otherwise we fall back to the full wine list grouped by color. %>
-  <% if @wine_lists.any? %>
-    <% @wine_lists.each do |wine_list| %>
-      <%# Hide deactivated wines entirely (matching the flat list); active wines
-          with no glasses still render with the "currently unavailable" badge. %>
-      <% items = wine_list.wine_list_items.select { |i| i.wine.active? }.sort_by { |i| [i.position, i.id] } %>
-      <% next if items.empty? %>
-      <section class="mb-10">
-        <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
-        <% if wine_list.season.present? %>
-          <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
-        <% else %>
-          <div class="mb-4"></div>
-        <% end %>
+  <%# Render every enabled list: published curated lists first, then the
+      default "All Wines" list (the full menu grouped by color) if enabled. %>
+  <% all_wines = @show_all_wines ? @wines.to_a : [] %>
+  <% rendered_any = false %>
 
-        <div class="space-y-3">
-          <% items.each do |item| %>
-            <%= render "wine_row", wine: item.wine, unavailable_label: t("menu.unavailable") %>
-          <% end %>
-        </div>
-      </section>
+  <% @wine_lists.each do |wine_list| %>
+    <%# Hide deactivated wines entirely (like the flat list); active wines with
+        no glasses still render with the "currently unavailable" badge. %>
+    <% items = wine_list.wine_list_items.select { |i| i.wine.active? }.sort_by { |i| [i.position, i.id] } %>
+    <% next if items.empty? %>
+    <% rendered_any = true %>
+    <section class="mb-10">
+      <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
+      <% if wine_list.season.present? %>
+        <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
+      <% else %>
+        <div class="mb-4"></div>
+      <% end %>
+
+      <div class="space-y-3">
+        <% items.each do |item| %>
+          <%= render "wine_row", wine: item.wine, unavailable_label: t("menu.unavailable") %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if all_wines.any? %>
+    <% rendered_any = true %>
+    <%# Only label this section when curated lists also appear above it. %>
+    <% if @wine_lists.any? { |l| l.wine_list_items.any? { |i| i.wine.active? } } %>
+      <h2 class="font-display text-2xl font-light mb-6"><%= t("menu.all_wines") %></h2>
     <% end %>
-  <% elsif @wines.any? %>
-    <% @wines.group_by(&:color).each do |color, wines| %>
+    <% all_wines.group_by(&:color).each do |color, wines| %>
       <section class="mb-10">
         <h2 class="font-display text-xl font-medium mb-4 flex items-center gap-2">
           <span class="inline-block w-3 h-3 rounded-full <%= wine_color_class(color) %>"></span>
@@ -51,7 +60,9 @@
         </div>
       </section>
     <% end %>
-  <% else %>
+  <% end %>
+
+  <% unless rendered_any %>
     <div class="text-center py-16">
       <p class="text-base-content/50"><%= t("menu.empty") %></p>
     </div>

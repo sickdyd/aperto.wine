@@ -96,6 +96,30 @@ module Owner
       assert_redirected_to owner_restaurant_wine_lists_path(restaurant_id: @restaurant)
     end
 
+    # --- Toggle the default All Wines list ---
+
+    test "toggle_all_wines disables the default list" do
+      sign_in_as @owner
+      assert @restaurant.all_wines_list_active?
+      patch toggle_all_wines_owner_restaurant_wine_lists_path(restaurant_id: @restaurant)
+      assert_not @restaurant.reload.all_wines_list_active?
+      assert_redirected_to owner_restaurant_wine_lists_path(restaurant_id: @restaurant)
+    end
+
+    test "toggle_all_wines enables the default list when active is present" do
+      @restaurant.update!(all_wines_list_active: false)
+      sign_in_as @owner
+      patch toggle_all_wines_owner_restaurant_wine_lists_path(restaurant_id: @restaurant),
+        params: { active: "1" }
+      assert @restaurant.reload.all_wines_list_active?
+    end
+
+    test "cannot toggle All Wines for another owner's restaurant (404)" do
+      sign_in_as @owner
+      patch toggle_all_wines_owner_restaurant_wine_lists_path(restaurant_id: restaurants(:trattoria))
+      assert_response :not_found
+    end
+
     # --- Cross-owner protection ---
 
     test "cannot access another owner's restaurant lists (404)" do

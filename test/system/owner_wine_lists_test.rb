@@ -15,7 +15,7 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
 
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
-    assert_text "Curated Lists", wait: 5
+    assert_text "All Wines", wait: 5 # the default list is always present
 
     click_link "Add List", match: :first
     assert_text "New Wine List", wait: 5
@@ -38,16 +38,15 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     assert_text "Barolo Riserva"
   end
 
-  test "owner sees an empty state when no lists exist" do
+  test "a restaurant with no custom lists still shows the default All Wines list" do
     sign_in_as_owner
-    # trattoria belongs to owner_two; osteria has only inactive lists but they
-    # still exist, so use a fresh restaurant with no lists via the picker.
     restaurant = users(:owner).restaurants.create!(
       name: "Empty Cellar", address: "Via Vuota 1", proximity_radius_meters: 100
     )
 
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
-    assert_text "No curated lists yet", wait: 5
-    assert_link "Create your first list"
+    assert_text "All Wines", wait: 5
+    assert_text "Default"
+    assert_link "Add List"
   end
 end
