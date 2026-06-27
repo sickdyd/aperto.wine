@@ -14,19 +14,42 @@
       </div>
     <% end %>
 
-    <%= form_with url: sign_in_path, method: :post, class: "space-y-5" do |f| %>
-      <div class="form-control">
-        <%= f.label :email, t("auth.email"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input input-bordered w-full font-body", placeholder: "you@example.com" %>
-      </div>
+    <div data-controller="dev-login">
+      <%= form_with url: sign_in_path, method: :post, class: "space-y-5" do |f| %>
+        <div class="form-control">
+          <%= f.label :email, t("auth.email"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+          <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input input-bordered w-full font-body", placeholder: "you@example.com", data: { dev_login_target: "email" } %>
+        </div>
 
-      <div class="form-control">
-        <%= f.label :password, t("auth.password"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.password_field :password, required: true, autocomplete: "current-password", class: "input input-bordered w-full font-body" %>
-      </div>
+        <div class="form-control">
+          <%= f.label :password, t("auth.password"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+          <%= f.password_field :password, required: true, autocomplete: "current-password", class: "input input-bordered w-full font-body", data: { dev_login_target: "password" } %>
+        </div>
 
-      <%= f.submit t("auth.sign_in"), class: "btn-wine w-full btn-md mt-2" %>
-    <% end %>
+        <%= f.submit t("auth.sign_in"), class: "btn-wine w-full btn-md mt-2" %>
+      <% end %>
+
+      <% if Rails.env.development? %>
+        <div class="mt-8 pt-6 border-t border-base-content/10">
+          <p class="text-center text-xs uppercase tracking-wider text-base-content/40 mb-3">Dev quick login</p>
+          <div class="flex flex-wrap justify-center gap-2">
+            <% [
+              { label: "Admin", email: "admin@aperto.wine" },
+              { label: "Owner", email: "owner@aperto.wine" },
+              { label: "Customer", email: "customer@aperto.wine" }
+            ].each do |account| %>
+              <button type="button"
+                      class="btn btn-outline btn-sm font-body"
+                      data-action="dev-login#fill"
+                      data-dev-login-email-param="<%= account[:email] %>"
+                      data-dev-login-password-param="password">
+                <%= account[:label] %>
+              </button>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
 
     <p class="text-center mt-8 text-sm text-base-content/50">
       <%= t("auth.no_account") %>
