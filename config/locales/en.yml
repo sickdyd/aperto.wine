@@ -1,5 +1,5 @@
 en:
-  app_name: "Wine Sharing"
+  app_name: "aperto.wine"
   nav:
     home: "Home"
     wines: "Wines"
@@ -31,14 +31,14 @@ en:
     tab_owner: "I'm a restaurant owner"
     signed_in: "Welcome back!"
     signed_out: "You have been signed out."
-    welcome: "Welcome to Wine Sharing!"
+    welcome: "Welcome to aperto.wine!"
     confirmation_sent: "Please check your email to confirm your account."
     not_confirmed: "Please confirm your email address first."
     invalid_credentials: "Invalid email or password."
     sign_in_required: "Please sign in to continue."
     unauthorized: "You are not authorized to access this page."
   landing:
-    title: "Wine Sharing — By the Glass, By Choice"
+    title: "aperto.wine — By the Glass, By Choice"
     meta_description: "A live digital wine list that lets restaurants sell premium bottles by the glass. Customers discover and order fine wines without committing to a full bottle."
     sign_in: "Sign In"
     sign_up: "Get Started"
@@ -51,7 +51,7 @@ en:
     problem_description: "Premium bottles remain unsold because customers won't commit to a full bottle. Opening them is a gamble — one glass ordered today means the rest might go to waste tomorrow. Paper menus can't keep up with daily availability."
     solution_label: "The answer"
     solution_title: "A live menu that moves your inventory"
-    solution_description: "Wine Sharing gives your customers a real-time digital wine list. They see what's available right now, order by the glass, and you only open what sells. No guesswork. No waste. Just wine, shared."
+    solution_description: "aperto.wine gives your customers a real-time digital wine list. They see what's available right now, order by the glass, and you only open what sells. No guesswork. No waste. Just wine, shared."
     how_label: "How it works"
     how_title: "Three steps to your first pour"
     steps:
@@ -63,7 +63,7 @@ en:
         description: "Customers order from their phone. You approve, pour, and turn idle inventory into revenue."
     restaurants_label: "For restaurants"
     restaurants_title: "Turn idle stock into poured profit"
-    restaurants_description: "Your premium bottles shouldn't sit unopened. Wine Sharing lets you offer any wine by the glass with zero overhead — no reprinting menus, no verbal pitch. Just a live list your customers trust."
+    restaurants_description: "Your premium bottles shouldn't sit unopened. aperto.wine lets you offer any wine by the glass with zero overhead — no reprinting menus, no verbal pitch. Just a live list your customers trust."
     restaurants_cta: "Register your restaurant"
     restaurant_features:
       - icon: "list-bullets"

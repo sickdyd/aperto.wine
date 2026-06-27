@@ -6,7 +6,7 @@
 <nav class="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-base-100/80 border-b border-base-content/5">
   <div class="landing-section flex items-center justify-between h-16 md:h-20">
     <a href="<%= root_path %>" class="flex items-center gap-2">
-      <span class="font-display text-xl md:text-2xl font-semibold text-primary tracking-tight">Wine Sharing</span>
+      <span class="font-display text-xl md:text-2xl font-semibold text-primary tracking-tight">aperto.wine</span>
     </a>
 
     <div class="flex items-center gap-3">
@@ -187,10 +187,10 @@
 <footer class="landing-section py-12 border-t border-base-content/5">
   <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
     <div class="flex items-center gap-2">
-      <span class="font-display text-lg font-semibold text-primary">Wine Sharing</span>
+      <span class="font-display text-lg font-semibold text-primary">aperto.wine</span>
     </div>
 
-    <p class="text-xs text-base-content/40">&copy; <%= Date.current.year %> Wine Sharing. <%= t("landing.footer_rights") %></p>
+    <p class="text-xs text-base-content/40">&copy; <%= Date.current.year %> aperto.wine. <%= t("landing.footer_rights") %></p>
 
     <div class="flex items-center gap-4">
       <a href="<%= root_path(locale: :en) %>" class="text-xs uppercase tracking-wider <%= I18n.locale == :en ? 'text-primary font-medium' : 'text-base-content/40 hover:text-base-content/70' %>">EN</a>

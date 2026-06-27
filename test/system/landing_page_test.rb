@@ -5,7 +5,7 @@ class LandingPageTest < ApplicationSystemTestCase
     visit root_path
 
     assert_selector "nav"
-    assert_text "Wine Sharing"
+    assert_text "aperto.wine"
   end
 
   test "visitor sees sign in and sign up links in nav" do

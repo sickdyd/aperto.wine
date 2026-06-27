@@ -1,5 +1,5 @@
 it:
-  app_name: "Wine Sharing"
+  app_name: "aperto.wine"
   nav:
     home: "Home"
     wines: "Vini"
@@ -31,14 +31,14 @@ it:
     tab_owner: "Sono un ristoratore"
     signed_in: "Bentornato!"
     signed_out: "Sei uscito."
-    welcome: "Benvenuto su Wine Sharing!"
+    welcome: "Benvenuto su aperto.wine!"
     confirmation_sent: "Controlla la tua email per confermare l'account."
     not_confirmed: "Conferma il tuo indirizzo email prima di accedere."
     invalid_credentials: "Email o password non validi."
     sign_in_required: "Accedi per continuare."
     unauthorized: "Non sei autorizzato ad accedere a questa pagina."
   landing:
-    title: "Wine Sharing — Al Calice, Per Scelta"
+    title: "aperto.wine — Al Calice, Per Scelta"
     meta_description: "Una carta dei vini digitale e aggiornata in tempo reale che permette ai ristoranti di vendere bottiglie pregiate al calice. I clienti scoprono e ordinano vini eccellenti senza impegnarsi per un'intera bottiglia."
     sign_in: "Accedi"
     sign_up: "Inizia ora"
@@ -51,7 +51,7 @@ it:
     problem_description: "Le bottiglie premium restano invendute perché i clienti non vogliono impegnarsi per un'intera bottiglia. Aprirle è un rischio — un calice ordinato oggi significa che il resto potrebbe andare sprecato domani. I menu cartacei non possono stare al passo con la disponibilità giornaliera."
     solution_label: "La soluzione"
     solution_title: "Un menu live che muove il tuo inventario"
-    solution_description: "Wine Sharing offre ai tuoi clienti una carta dei vini digitale in tempo reale. Vedono cosa è disponibile in questo momento, ordinano al calice, e tu apri solo ciò che si vende. Nessun azzardo. Nessuno spreco. Solo vino, condiviso."
+    solution_description: "aperto.wine offre ai tuoi clienti una carta dei vini digitale in tempo reale. Vedono cosa è disponibile in questo momento, ordinano al calice, e tu apri solo ciò che si vende. Nessun azzardo. Nessuno spreco. Solo vino, condiviso."
     how_label: "Come funziona"
     how_title: "Tre passi al primo calice"
     steps:
@@ -63,7 +63,7 @@ it:
         description: "I clienti ordinano dal telefono. Tu approvi, versi, e trasformi l'inventario fermo in ricavo."
     restaurants_label: "Per i ristoranti"
     restaurants_title: "Trasforma lo stock fermo in profitto versato"
-    restaurants_description: "Le tue bottiglie pregiate non dovrebbero restare chiuse. Wine Sharing ti permette di offrire qualsiasi vino al calice senza overhead — nessun menu da ristampare, nessun passaparola. Solo una lista live di cui i tuoi clienti si fidano."
+    restaurants_description: "Le tue bottiglie pregiate non dovrebbero restare chiuse. aperto.wine ti permette di offrire qualsiasi vino al calice senza overhead — nessun menu da ristampare, nessun passaparola. Solo una lista live di cui i tuoi clienti si fidano."
     restaurants_cta: "Registra il tuo ristorante"
     restaurant_features:
       - icon: "list-bullets"

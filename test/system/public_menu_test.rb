@@ -49,12 +49,12 @@ class PublicMenuTest < ApplicationSystemTestCase
     assert_selector "input[type='search']"
   end
 
-  test "menu shows powered by Wine Sharing footer" do
+  test "menu shows powered by aperto.wine footer" do
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
     assert_text "Powered by"
-    assert_link "Wine Sharing"
+    assert_link "aperto.wine"
   end
 
   test "menu is accessible without authentication" do
@@ -64,11 +64,11 @@ class PublicMenuTest < ApplicationSystemTestCase
     assert_selector "h1", text: restaurant.name
   end
 
-  test "Wine Sharing link in menu footer points to root" do
+  test "aperto.wine link in menu footer points to root" do
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    click_link "Wine Sharing"
+    click_link "aperto.wine"
     assert_current_path root_path
   end
 end

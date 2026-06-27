@@ -4,7 +4,7 @@ return unless Rails.env.development?
 puts "Seeding development data..."
 
 # Admin
-admin = User.find_or_create_by!(email: "admin@winesharing.dev") do |u|
+admin = User.find_or_create_by!(email: "admin@aperto.wine") do |u|
   u.name = "Admin"
   u.role = :admin
   u.password = "password"
@@ -14,7 +14,7 @@ end
 puts "  Admin: #{admin.email} / password"
 
 # Owner
-owner = User.find_or_create_by!(email: "owner@winesharing.dev") do |u|
+owner = User.find_or_create_by!(email: "owner@aperto.wine") do |u|
   u.name = "Marco Rossi"
   u.role = :owner
   u.password = "password"
@@ -49,7 +49,7 @@ end
 puts "  Wines: #{restaurant.wines.count}"
 
 # Customer
-customer = User.find_or_create_by!(email: "customer@winesharing.dev") do |u|
+customer = User.find_or_create_by!(email: "customer@aperto.wine") do |u|
   u.name = "Giulia Bianchi"
   u.role = :customer
   u.password = "password"

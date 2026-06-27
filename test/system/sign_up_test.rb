@@ -43,7 +43,7 @@ class SignUpTest < ApplicationSystemTestCase
 
     # Owner is redirected to owner dashboard which uses the owner layout with flash
     assert_current_path owner_restaurants_path
-    assert_text "Welcome to Wine Sharing!"
+    assert_text "Welcome to aperto.wine!"
   end
 
   test "shows validation errors on empty form submission" do
