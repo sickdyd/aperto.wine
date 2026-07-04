@@ -16,65 +16,46 @@
   </head>
 
   <body class="bg-base-100 text-base-content font-body antialiased min-h-screen">
-    <%# Top navigation %>
-    <nav class="sticky top-0 z-50 bg-base-100 border-b border-base-content/5">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-        <div class="flex items-center gap-6">
-          <a href="<%= owner_restaurants_path %>" class="font-display text-xl font-semibold text-primary">aperto.wine</a>
-          <span class="hidden sm:inline text-xs uppercase tracking-[0.15em] text-base-content/40 font-body"><%= t("owner.dashboard") %></span>
-        </div>
+    <div class="drawer lg:drawer-open">
+      <input id="owner-drawer" type="checkbox" class="drawer-toggle">
 
-        <div class="flex items-center gap-4">
-          <span class="text-sm text-base-content/60"><%= current_user.name %></span>
-          <%= button_to t("auth.sign_out"), sign_out_path, method: :delete, class: "btn btn-ghost btn-sm text-xs uppercase tracking-wider" %>
-        </div>
+      <div class="drawer-content flex min-h-screen flex-col">
+        <%# Mobile top bar %>
+        <header class="navbar sticky top-0 z-40 bg-base-100 border-b border-base-content/5 lg:hidden">
+          <label for="owner-drawer" class="btn btn-square btn-ghost drawer-button" aria-label="<%= t("owner.nav.open_menu") %>">
+            <%= icon "list", css: "size-5" %>
+          </label>
+          <a href="<%= owner_restaurants_path %>" class="font-display text-lg font-semibold text-primary px-2">aperto.wine</a>
+        </header>
+
+        <%# Flash messages %>
+        <% if notice %>
+          <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            <div role="alert" class="alert alert-success text-sm">
+              <%= icon "check-circle", css: "size-4" %>
+              <span><%= notice %></span>
+            </div>
+          </div>
+        <% end %>
+        <% if alert %>
+          <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            <div role="alert" class="alert alert-error text-sm">
+              <%= icon "warning", css: "size-4" %>
+              <span><%= alert %></span>
+            </div>
+          </div>
+        <% end %>
+
+        <%# Main content %>
+        <main class="w-full max-w-6xl mx-auto flex-1 px-4 sm:px-6 lg:px-8 py-8">
+          <%= yield %>
+        </main>
       </div>
-    </nav>
 
-    <%# Restaurant sub-nav %>
-    <% if @restaurant&.persisted? %>
-      <nav class="border-b border-base-content/5 bg-base-200/30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 h-10 overflow-x-auto">
-          <a href="<%= owner_restaurant_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'restaurants' && action_name == 'show' ? 'btn-active' : '' %>">
-            <%= @restaurant.name %>
-          </a>
-          <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= %w[wine_lists wine_list_items wines].include?(controller_name) ? 'btn-active' : '' %>">
-            <%= icon "wine", css: "size-3.5" %>
-            <%= t("owner.restaurants.wine_lists") %>
-          </a>
-          <a href="<%= owner_restaurant_orders_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'orders' ? 'btn-active' : '' %>">
-            <%= icon "receipt", css: "size-3.5" %>
-            <%= t("owner.restaurants.orders") %>
-          </a>
-          <a href="<%= owner_restaurant_qr_code_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'qr_codes' ? 'btn-active' : '' %>">
-            <%= icon "qr-code", css: "size-3.5" %>
-            <%= t("owner.restaurants.qr_code") %>
-          </a>
-        </div>
-      </nav>
-    <% end %>
-
-    <%# Flash messages %>
-    <% if notice %>
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div role="alert" class="alert alert-success text-sm">
-          <%= icon "check-circle", css: "size-4" %>
-          <span><%= notice %></span>
-        </div>
+      <div class="drawer-side z-50">
+        <label for="owner-drawer" aria-label="<%= t("owner.nav.close_menu") %>" class="drawer-overlay"></label>
+        <%= render "owner/shared/sidebar" %>
       </div>
-    <% end %>
-    <% if alert %>
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div role="alert" class="alert alert-error text-sm">
-          <%= icon "warning", css: "size-4" %>
-          <span><%= alert %></span>
-        </div>
-      </div>
-    <% end %>
-
-    <%# Main content %>
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <%= yield %>
-    </main>
+    </div>
   </body>
 </html>
