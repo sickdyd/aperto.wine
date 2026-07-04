@@ -39,3 +39,23 @@ sold_out_wine:
   available_glasses: 0
   position: 99
   active: true
+
+chianti:
+  restaurant: trattoria
+  name: Chianti Classico
+  producer: Antinori
+  color: 0
+  bottle_size_ml: 750
+  available_glasses: 4
+  position: 1
+  active: true
+
+trattoria_sold_out:
+  restaurant: trattoria
+  name: Reserve Barbaresco
+  producer: Gaja
+  color: 0
+  bottle_size_ml: 750
+  available_glasses: 0
+  position: 2
+  active: true

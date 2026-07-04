@@ -113,13 +113,21 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      # Icon SVGs are gitignored and synced from upstream (see .gitignore).
-      # Sync them so views that render icons don't raise "Icon not found".
-      - name: Sync icon libraries
+      # Icon SVGs are gitignored and synced via rails_icons (see .gitignore).
+      # Cache them keyed on the gem version so the ~35MB download happens once.
+      - name: Cache synced icons
+        id: rails_icons
+        uses: actions/cache@v6
+        with:
+          path: app/assets/svg/icons
+          key: rails-icons-${{ hashFiles('Gemfile.lock') }}
+
+      - name: Sync icon SVGs
+        if: steps.rails_icons.outputs.cache-hit != 'true'
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails generate rails_icons:sync --library=phosphor
+        run: bin/rails generate rails_icons:sync --library=phosphor --force --quiet
 
       - name: Run tests
         env:
@@ -169,13 +177,21 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      # Icon SVGs are gitignored and synced from upstream (see .gitignore).
-      # Sync them so views that render icons don't raise "Icon not found".
-      - name: Sync icon libraries
+      # Icon SVGs are gitignored and synced via rails_icons (see .gitignore).
+      # Cache them keyed on the gem version so the ~35MB download happens once.
+      - name: Cache synced icons
+        id: rails_icons
+        uses: actions/cache@v6
+        with:
+          path: app/assets/svg/icons
+          key: rails-icons-${{ hashFiles('Gemfile.lock') }}
+
+      - name: Sync icon SVGs
+        if: steps.rails_icons.outputs.cache-hit != 'true'
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails generate rails_icons:sync --library=phosphor
+        run: bin/rails generate rails_icons:sync --library=phosphor --force --quiet
 
       - name: Run System Tests
         env:

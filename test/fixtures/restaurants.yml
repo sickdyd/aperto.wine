@@ -13,3 +13,10 @@ inactive_restaurant:
   name: Closed Place
   address: Via Chiusa 1, Roma
   active: false
+
+trattoria:
+  user: owner_two
+  name: Trattoria Due
+  address: Via Verdi 7, Torino
+  proximity_radius_meters: 150
+  active: true

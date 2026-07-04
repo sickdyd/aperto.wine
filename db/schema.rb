@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_043122) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_27_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_043122) do
   create_table "restaurants", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "address", null: false
+    t.boolean "all_wines_list_active", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.decimal "latitude", precision: 10, scale: 7
@@ -85,6 +86,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_043122) do
     t.index ["wine_id"], name: "index_wine_bottles_on_wine_id"
   end
 
+  create_table "wine_list_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "wine_id", null: false
+    t.bigint "wine_list_id", null: false
+    t.index ["wine_id"], name: "index_wine_list_items_on_wine_id"
+    t.index ["wine_list_id", "position"], name: "index_wine_list_items_on_wine_list_id_and_position"
+    t.index ["wine_list_id", "wine_id"], name: "index_wine_list_items_on_wine_list_id_and_wine_id", unique: true
+  end
+
+  create_table "wine_lists", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "restaurant_id", null: false
+    t.string "season"
+    t.datetime "updated_at", null: false
+    t.index ["restaurant_id", "position"], name: "index_wine_lists_on_restaurant_id_and_position"
+    t.index ["restaurant_id"], name: "index_wine_lists_on_restaurant_id"
+  end
+
   create_table "wines", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.integer "available_glasses", default: 0, null: false
@@ -116,5 +140,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_043122) do
   add_foreign_key "orders", "users", column: "customer_id"
   add_foreign_key "restaurants", "users"
   add_foreign_key "wine_bottles", "wines"
+  add_foreign_key "wine_list_items", "wine_lists", on_delete: :cascade
+  add_foreign_key "wine_list_items", "wines", on_delete: :cascade
+  add_foreign_key "wine_lists", "restaurants", on_delete: :cascade
   add_foreign_key "wines", "restaurants"
 end

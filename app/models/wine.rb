@@ -1,6 +1,8 @@
 class Wine < ApplicationRecord
   belongs_to :restaurant
   has_many :wine_bottles, dependent: :destroy
+  has_many :wine_list_items, dependent: :destroy
+  has_many :wine_lists, through: :wine_list_items
 
   enum :color, { red: 0, white: 1, rose: 2, sparkling: 3, dessert: 4 }
 

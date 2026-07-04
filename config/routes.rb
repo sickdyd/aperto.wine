@@ -23,6 +23,12 @@ Rails.application.routes.draw do
     namespace :owner do
       resources :restaurants do
         resources :wines, except: [ :show ]
+        resources :wine_lists, except: [ :show ] do
+          collection do
+            patch :toggle_all_wines
+          end
+          resources :wine_list_items, only: [ :create, :update, :destroy ]
+        end
         resource :qr_code, only: [ :show ], controller: "qr_codes"
         resources :orders, only: [ :index, :show ] do
           member do

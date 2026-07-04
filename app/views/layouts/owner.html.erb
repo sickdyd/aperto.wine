@@ -38,9 +38,9 @@
           <a href="<%= owner_restaurant_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'restaurants' && action_name == 'show' ? 'btn-active' : '' %>">
             <%= @restaurant.name %>
           </a>
-          <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'wines' ? 'btn-active' : '' %>">
+          <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= %w[wine_lists wine_list_items wines].include?(controller_name) ? 'btn-active' : '' %>">
             <%= icon "wine", css: "size-3.5" %>
-            <%= t("owner.restaurants.wine_list") %>
+            <%= t("owner.restaurants.wine_lists") %>
           </a>
           <a href="<%= owner_restaurant_orders_path(@restaurant) %>" class="btn btn-ghost btn-xs font-body text-xs <%= controller_name == 'orders' ? 'btn-active' : '' %>">
             <%= icon "receipt", css: "size-3.5" %>
