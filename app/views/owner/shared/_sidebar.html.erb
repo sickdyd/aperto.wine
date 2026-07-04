@@ -18,9 +18,9 @@
         <ul class="dropdown-content menu w-full mt-1 p-2 bg-base-100 rounded-box border border-base-content/10 shadow-sm z-50">
           <% @sidebar_restaurants.each do |restaurant| %>
             <li>
-              <a href="<%= owner_restaurant_path(restaurant) %>" class="<%= 'menu-active' if @restaurant&.persisted? && @restaurant == restaurant %>">
+              <%= link_to owner_restaurant_path(restaurant), **owner_nav_link_attrs(@restaurant&.persisted? && @restaurant == restaurant) do %>
                 <span class="truncate"><%= restaurant.name %></span>
-              </a>
+              <% end %>
             </li>
           <% end %>
           <li class="border-t border-base-content/5 mt-1 pt-1">
@@ -45,43 +45,43 @@
     <% if @restaurant&.persisted? %>
       <ul class="menu w-full gap-0.5 font-body">
         <li>
-          <a href="<%= owner_restaurant_path(@restaurant) %>" class="<%= 'menu-active' if controller_name == 'restaurants' && action_name == 'show' %>">
+          <%= link_to owner_restaurant_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("restaurants", actions: "show")) do %>
             <%= icon "house", css: "size-4" %>
             <%= t("owner.nav.overview") %>
-          </a>
+          <% end %>
         </li>
         <li>
-          <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="<%= 'menu-active' if %w[wine_lists wine_list_items wines].include?(controller_name) %>">
+          <%= link_to owner_restaurant_wine_lists_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?(%w[wine_lists wine_list_items wines])) do %>
             <%= icon "wine", css: "size-4" %>
             <%= t("owner.restaurants.wine_lists") %>
-          </a>
+          <% end %>
         </li>
         <li>
-          <a href="<%= owner_restaurant_orders_path(@restaurant) %>" class="<%= 'menu-active' if controller_name == 'orders' %>">
+          <%= link_to owner_restaurant_orders_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("orders")) do %>
             <%= icon "receipt", css: "size-4" %>
             <%= t("owner.restaurants.orders") %>
-          </a>
+          <% end %>
         </li>
         <li>
-          <a href="<%= owner_restaurant_qr_code_path(@restaurant) %>" class="<%= 'menu-active' if controller_name == 'qr_codes' %>">
+          <%= link_to owner_restaurant_qr_code_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("qr_codes")) do %>
             <%= icon "qr-code", css: "size-4" %>
             <%= t("owner.restaurants.qr_code") %>
-          </a>
+          <% end %>
         </li>
         <li>
-          <a href="<%= edit_owner_restaurant_path(@restaurant) %>" class="<%= 'menu-active' if controller_name == 'restaurants' && %w[edit update].include?(action_name) %>">
+          <%= link_to edit_owner_restaurant_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("restaurants", actions: %w[edit update])) do %>
             <%= icon "gear", css: "size-4" %>
             <%= t("owner.nav.settings") %>
-          </a>
+          <% end %>
         </li>
       </ul>
     <% else %>
       <ul class="menu w-full gap-0.5 font-body">
         <li>
-          <a href="<%= owner_restaurants_path %>" class="<%= 'menu-active' if controller_name == 'restaurants' && action_name == 'index' %>">
+          <%= link_to owner_restaurants_path, **owner_nav_link_attrs(owner_nav_active?("restaurants", actions: "index")) do %>
             <%= icon "squares-four", css: "size-4" %>
             <%= t("owner.restaurants.title") %>
-          </a>
+          <% end %>
         </li>
       </ul>
     <% end %>

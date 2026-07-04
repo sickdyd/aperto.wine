@@ -5,7 +5,6 @@ en:
     wines: "Wines"
     orders: "My Orders"
   shared:
-    back: "Back"
     save: "Save"
     cancel: "Cancel"
     confirm: "Confirm"

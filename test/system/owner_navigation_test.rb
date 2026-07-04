@@ -73,6 +73,21 @@ class OwnerNavigationTest < ApplicationSystemTestCase
     end
   end
 
+  test "owner with no restaurants sees no switcher and only the restaurants link" do
+    user = users(:owner_no_restaurants)
+    visit sign_in_path
+    fill_in "email", with: user.email
+    fill_in "password", with: "password123"
+    find("input[type='submit']").click
+    assert_text "No restaurants yet", wait: 5
+
+    within ".drawer-side" do
+      assert_no_selector "summary"
+      assert_link "My Restaurants"
+      assert_no_link "Orders"
+    end
+  end
+
   # ── Restaurant switcher ───────────────────────────────────────────────────
 
   test "restaurant switcher lists restaurants and switches context" do

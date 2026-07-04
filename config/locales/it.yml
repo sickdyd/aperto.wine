@@ -5,7 +5,6 @@ it:
     wines: "Vini"
     orders: "I miei ordini"
   shared:
-    back: "Indietro"
     save: "Salva"
     cancel: "Annulla"
     confirm: "Conferma"
