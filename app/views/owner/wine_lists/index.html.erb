@@ -1,11 +1,6 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.wine_lists.title')}" } %>
 
 <div class="mb-8">
-  <a href="<%= owner_restaurant_path(@restaurant) %>" class="text-sm text-base-content/50 hover:text-primary flex items-center gap-1 mb-4">
-    <%= icon "arrow-left", css: "size-3.5" %>
-    <%= @restaurant.name %>
-  </a>
-
   <div class="flex items-center justify-between">
     <h1 class="font-display text-3xl font-light"><%= t("owner.wine_lists.title") %></h1>
     <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine btn-sm">

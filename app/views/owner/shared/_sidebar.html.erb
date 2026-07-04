@@ -1,0 +1,97 @@
+<aside class="flex min-h-full w-72 flex-col bg-base-200 border-r border-base-content/5">
+  <%# Brand %>
+  <div class="flex items-center h-16 px-6">
+    <a href="<%= owner_restaurants_path %>" class="font-display text-xl font-semibold text-primary">aperto.wine</a>
+  </div>
+
+  <%# Restaurant context switcher %>
+  <% if @sidebar_restaurants.any? %>
+    <div class="px-4 mb-2">
+      <details class="dropdown w-full">
+        <summary class="btn btn-ghost btn-block justify-between border border-base-content/10 bg-base-100 font-body font-medium normal-case">
+          <span class="flex items-center gap-2 min-w-0">
+            <%= icon "storefront", css: "size-4 shrink-0 text-primary/70" %>
+            <span class="truncate text-sm"><%= @restaurant&.persisted? ? @restaurant.name : t("owner.nav.select_restaurant") %></span>
+          </span>
+          <%= icon "caret-up-down", css: "size-4 shrink-0 text-base-content/40" %>
+        </summary>
+        <ul class="dropdown-content menu w-full mt-1 p-2 bg-base-100 rounded-box border border-base-content/10 shadow-sm z-50">
+          <% @sidebar_restaurants.each do |restaurant| %>
+            <li>
+              <%= link_to owner_restaurant_path(restaurant), **owner_nav_link_attrs(@restaurant&.persisted? && @restaurant == restaurant) do %>
+                <span class="truncate"><%= restaurant.name %></span>
+              <% end %>
+            </li>
+          <% end %>
+          <li class="border-t border-base-content/5 mt-1 pt-1">
+            <a href="<%= owner_restaurants_path %>">
+              <%= icon "squares-four", css: "size-4" %>
+              <%= t("owner.nav.all_restaurants") %>
+            </a>
+          </li>
+          <li>
+            <a href="<%= new_owner_restaurant_path %>">
+              <%= icon "plus", css: "size-4" %>
+              <%= t("owner.nav.new_restaurant") %>
+            </a>
+          </li>
+        </ul>
+      </details>
+    </div>
+  <% end %>
+
+  <%# Section navigation %>
+  <nav class="grow px-4" aria-label="<%= t("owner.dashboard") %>">
+    <% if @restaurant&.persisted? %>
+      <ul class="menu w-full gap-0.5 font-body">
+        <li>
+          <%= link_to owner_restaurant_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("restaurants", actions: "show")) do %>
+            <%= icon "house", css: "size-4" %>
+            <%= t("owner.nav.overview") %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to owner_restaurant_wine_lists_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?(%w[wine_lists wine_list_items wines])) do %>
+            <%= icon "wine", css: "size-4" %>
+            <%= t("owner.restaurants.wine_lists") %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to owner_restaurant_orders_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("orders")) do %>
+            <%= icon "receipt", css: "size-4" %>
+            <%= t("owner.restaurants.orders") %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to owner_restaurant_qr_code_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("qr_codes")) do %>
+            <%= icon "qr-code", css: "size-4" %>
+            <%= t("owner.restaurants.qr_code") %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to edit_owner_restaurant_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("restaurants", actions: %w[edit update])) do %>
+            <%= icon "gear", css: "size-4" %>
+            <%= t("owner.nav.settings") %>
+          <% end %>
+        </li>
+      </ul>
+    <% else %>
+      <ul class="menu w-full gap-0.5 font-body">
+        <li>
+          <%= link_to owner_restaurants_path, **owner_nav_link_attrs(owner_nav_active?("restaurants", actions: "index")) do %>
+            <%= icon "squares-four", css: "size-4" %>
+            <%= t("owner.restaurants.title") %>
+          <% end %>
+        </li>
+      </ul>
+    <% end %>
+  </nav>
+
+  <%# User footer %>
+  <div class="px-4 py-4 border-t border-base-content/5">
+    <div class="flex items-center justify-between gap-2">
+      <span class="text-sm text-base-content/60 truncate"><%= current_user.name %></span>
+      <%= button_to t("auth.sign_out"), sign_out_path, method: :delete, class: "btn btn-ghost btn-xs text-xs uppercase tracking-wider shrink-0" %>
+    </div>
+  </div>
+</aside>

@@ -1,11 +1,6 @@
 <% content_for(:title) { "#{t('owner.orders.order')} ##{@order.id}" } %>
 
 <div class="mb-8">
-  <a href="<%= owner_restaurant_orders_path(@restaurant) %>" class="text-sm text-base-content/50 hover:text-primary flex items-center gap-1 mb-4">
-    <%= icon "arrow-left", css: "size-3.5" %>
-    <%= t("owner.orders.title") %>
-  </a>
-
   <div class="flex items-center justify-between">
     <div>
       <h1 class="font-display text-3xl font-light"><%= t("owner.orders.order") %> #<%= @order.id %></h1>

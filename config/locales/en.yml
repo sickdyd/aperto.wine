@@ -5,7 +5,6 @@ en:
     wines: "Wines"
     orders: "My Orders"
   shared:
-    back: "Back"
     save: "Save"
     cancel: "Cancel"
     confirm: "Confirm"
@@ -102,6 +101,14 @@ en:
     cta_customer: "I'm a wine lover"
   owner:
     dashboard: "Dashboard"
+    nav:
+      overview: "Overview"
+      settings: "Settings"
+      all_restaurants: "All restaurants"
+      new_restaurant: "New restaurant"
+      select_restaurant: "Select a restaurant"
+      open_menu: "Open menu"
+      close_menu: "Close menu"
     restaurants:
       title: "My Restaurants"
       add: "Add Restaurant"

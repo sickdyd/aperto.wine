@@ -32,3 +32,10 @@ owner_two:
   password_digest: <%= BCrypt::Password.create('password123') %>
   role: 1
   confirmed_at: <%= Time.current %>
+
+owner_no_restaurants:
+  email: owner-empty@test.com
+  name: Empty Owner
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: 1
+  confirmed_at: <%= Time.current %>

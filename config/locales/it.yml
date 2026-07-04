@@ -5,7 +5,6 @@ it:
     wines: "Vini"
     orders: "I miei ordini"
   shared:
-    back: "Indietro"
     save: "Salva"
     cancel: "Annulla"
     confirm: "Conferma"
@@ -102,6 +101,14 @@ it:
     cta_customer: "Sono un amante del vino"
   owner:
     dashboard: "Pannello"
+    nav:
+      overview: "Panoramica"
+      settings: "Impostazioni"
+      all_restaurants: "Tutti i ristoranti"
+      new_restaurant: "Nuovo ristorante"
+      select_restaurant: "Seleziona un ristorante"
+      open_menu: "Apri menu"
+      close_menu: "Chiudi menu"
     restaurants:
       title: "I miei ristoranti"
       add: "Aggiungi Ristorante"
