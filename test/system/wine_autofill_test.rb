@@ -40,7 +40,7 @@ class WineAutofillTest < ApplicationSystemTestCase
     visit new_owner_restaurant_wine_path(restaurant_id: restaurants(:osteria))
 
     fill_in "wine[name]", with: "sassicaia"
-    assert_text "Sassicaia — Toscana", wait: 5
+    assert_text "Sassicaia — Tenuta San Guido (Toscana)", wait: 5
 
     find("[data-wine-autofill-target='results'] button", match: :first).click
 
@@ -57,16 +57,16 @@ class WineAutofillTest < ApplicationSystemTestCase
     visit new_owner_restaurant_wine_path(restaurant_id: restaurants(:osteria))
 
     fill_in "wine[name]", with: "sassicaia"
-    assert_text "Sassicaia — Toscana", wait: 5
+    assert_text "Sassicaia — Tenuta San Guido (Toscana)", wait: 5
 
     name_input = find("input[name='wine[name]']")
     name_input.send_keys :escape
-    assert_no_text "Sassicaia — Toscana"
+    assert_no_text "Sassicaia — Tenuta San Guido (Toscana)"
 
     # Re-open and select with keyboard only
     name_input.send_keys " "
     name_input.send_keys :backspace
-    assert_text "Sassicaia — Toscana", wait: 5
+    assert_text "Sassicaia — Tenuta San Guido (Toscana)", wait: 5
     name_input.send_keys :arrow_down
     name_input.send_keys :enter
 

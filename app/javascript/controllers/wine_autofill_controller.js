@@ -23,8 +23,18 @@ export default class extends Controller {
 
   close(event) {
     // Keep the dropdown open when focus moves into one of its buttons.
+    // Belt-and-braces: Safari doesn't focus a <button> on click, so
+    // relatedTarget alone can't be trusted there — see keepOpen().
     if (event?.relatedTarget && this.resultsTarget.contains(event.relatedTarget)) return
     this.#close()
+  }
+
+  // Safari doesn't move focus to a clicked <button> until after mousedown,
+  // so the input's blur fires (and empties the dropdown) before the click
+  // handler runs. Suppressing the default mousedown behavior stops the
+  // input from losing focus in the first place, in every browser.
+  keepOpen(event) {
+    event.preventDefault()
   }
 
   navigate(event) {
@@ -90,15 +100,18 @@ export default class extends Controller {
       this.#close()
       return
     }
-    const items = wines.map((wine) => {
-      const label = [wine.name, wine.region].filter(Boolean).join(" — ")
+    const items = wines.map((wine, index) => {
+      const label = this.#label(wine)
       const item = document.createElement("li")
       const button = document.createElement("button")
       button.type = "button"
+      button.id = `wine-suggestion-${index}`
       button.className = "w-full text-left px-4 py-2 hover:bg-base-200 font-body text-sm"
       button.textContent = label
       button.dataset.wine = JSON.stringify(wine)
       button.dataset.action = "wine-autofill#select"
+      button.setAttribute("role", "option")
+      button.setAttribute("aria-selected", "false")
       item.appendChild(button)
       return item
     })
@@ -108,13 +121,30 @@ export default class extends Controller {
     this.activeIndex = -1
   }
 
+  #label(wine) {
+    let label = wine.name
+    if (wine.producer) label += ` — ${wine.producer}`
+    if (wine.region) label += ` (${wine.region})`
+    return label
+  }
+
   #suggestionButtons() {
     return Array.from(this.resultsTarget.querySelectorAll("button"))
   }
 
   #highlight(buttons, index) {
-    buttons.forEach((button, i) => button.classList.toggle("bg-base-200", i === index))
+    buttons.forEach((button, i) => {
+      const active = i === index
+      button.classList.toggle("bg-base-200", active)
+      button.setAttribute("aria-selected", active ? "true" : "false")
+    })
     this.activeIndex = index
+    const active = buttons[index]
+    if (active) {
+      this.inputTarget.setAttribute("aria-activedescendant", active.id)
+    } else {
+      this.inputTarget.removeAttribute("aria-activedescendant")
+    }
   }
 
   #fill(target, value) {
@@ -128,6 +158,7 @@ export default class extends Controller {
     this.resultsTarget.replaceChildren()
     this.resultsTarget.classList.add("hidden")
     this.inputTarget.setAttribute("aria-expanded", "false")
+    this.inputTarget.removeAttribute("aria-activedescendant")
     this.activeIndex = -1
   }
 
