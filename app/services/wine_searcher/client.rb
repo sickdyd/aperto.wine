@@ -57,7 +57,7 @@ module WineSearcher
 
     def fetch_results(query)
       uri = URI.parse(api_url)
-      uri.query = URI.encode_www_form(api_key: api_key, winename: query.downcase, output: "json")
+      uri.query = URI.encode_www_form(api_key: api_key, winename: query, output: "json")
 
       response = perform_request(uri)
       unless response.is_a?(Net::HTTPOK)

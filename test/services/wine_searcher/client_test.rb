@@ -38,7 +38,7 @@ module WineSearcher
 
     test "search maps a wine payload to Result structs" do
       stub_request(:get, API_URL)
-        .with(query: hash_including("api_key" => "test-key", "winename" => "haut brion"))
+        .with(query: hash_including("api_key" => "test-key", "winename" => "Haut Brion"))
         .to_return(
           status: 200,
           headers: { "Content-Type" => "application/json" },
@@ -139,7 +139,7 @@ module WineSearcher
 
     test "search caches results for identical normalized queries" do
       with_memory_cache do
-        stub = stub_request(:get, API_URL).with(query: hash_including("winename" => "barolo"))
+        stub = stub_request(:get, API_URL).with(query: hash_including("winename" => "Barolo"))
           .to_return(status: 200, body: { "wines" => [ { "wine-name" => "Barolo" } ] }.to_json)
 
         first = Client.new.search("Barolo")
