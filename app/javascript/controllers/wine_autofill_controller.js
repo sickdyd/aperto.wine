@@ -122,6 +122,9 @@ export default class extends Controller {
   }
 
   #close() {
+    // Cancel pending work first: a queued debounce timer or in-flight fetch
+    // would otherwise reopen the dropdown right after it was dismissed.
+    this.#reset()
     this.resultsTarget.replaceChildren()
     this.resultsTarget.classList.add("hidden")
     this.inputTarget.setAttribute("aria-expanded", "false")
