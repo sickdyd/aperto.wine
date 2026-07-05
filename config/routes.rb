@@ -21,6 +21,10 @@ Rails.application.routes.draw do
 
     # Owner namespace
     namespace :owner do
+      # Wine data autofill proxy — not nested under restaurants: wine reference
+      # data is global, only the session needs to be an owner.
+      resources :wine_lookups, only: [ :index ]
+
       resources :restaurants do
         resources :wines, except: [ :show ]
         resources :wine_lists, except: [ :show ] do
