@@ -10,6 +10,12 @@ module WineSearcher
     OPEN_TIMEOUT_SECONDS = 2
     READ_TIMEOUT_SECONDS = 3
     VINTAGE_RANGE = (1900..).freeze
+    CACHE_TTL = 24.hours
+    CACHE_NAMESPACE = "wine_searcher/v1".freeze
+
+    # Sentinel: rescue paths return this exact frozen array so search can tell
+    # "upstream failed" (don't cache) from "no matches" (cache it).
+    FAILURE = [].freeze
 
     # Ordered: more specific substrings before generic ones.
     COLOR_BY_STYLE = {
@@ -27,7 +33,16 @@ module WineSearcher
       normalized = query.to_s.strip
       return [] if normalized.length < MIN_QUERY_LENGTH || !configured?
 
-      fetch_results(normalized)
+      cache_key = "#{CACHE_NAMESPACE}/#{normalized.downcase}"
+      cached = Rails.cache.read(cache_key)
+      return cached if cached
+
+      fetch_results(normalized).tap do |results|
+        # A failed upstream call returns [] via the rescue in fetch_results and
+        # must stay uncached so the next keystroke can retry; a genuine empty
+        # result set IS cached (negative caching) to protect the daily quota.
+        Rails.cache.write(cache_key, results, expires_in: CACHE_TTL) unless results.equal?(FAILURE)
+      end
     end
 
     private
@@ -42,19 +57,19 @@ module WineSearcher
 
     def fetch_results(query)
       uri = URI.parse(api_url)
-      uri.query = URI.encode_www_form(api_key: api_key, winename: query, output: "json")
+      uri.query = URI.encode_www_form(api_key: api_key, winename: query.downcase, output: "json")
 
       response = perform_request(uri)
       unless response.is_a?(Net::HTTPOK)
         Rails.logger.warn("[wine_searcher] non-200 response: #{response.code}")
-        return []
+        return FAILURE
       end
 
       parse_results(JSON.parse(response.body))
     rescue JSON::ParserError, Net::OpenTimeout, Net::ReadTimeout, Timeout::Error,
            IOError, SocketError, SystemCallError, OpenSSL::SSL::SSLError, URI::InvalidURIError => e
       Rails.logger.warn("[wine_searcher] search failed: #{e.class}: #{e.message}")
-      []
+      FAILURE
     end
 
     def perform_request(uri)

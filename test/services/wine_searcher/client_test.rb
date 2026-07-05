@@ -38,7 +38,7 @@ module WineSearcher
 
     test "search maps a wine payload to Result structs" do
       stub_request(:get, API_URL)
-        .with(query: hash_including("api_key" => "test-key", "winename" => "Haut Brion"))
+        .with(query: hash_including("api_key" => "test-key", "winename" => "haut brion"))
         .to_return(
           status: 200,
           headers: { "Content-Type" => "application/json" },
@@ -135,6 +135,51 @@ module WineSearcher
         .to_return(status: 200, body: "<not json>")
 
       assert_equal [], Client.new.search("barolo")
+    end
+
+    test "search caches results for identical normalized queries" do
+      with_memory_cache do
+        stub = stub_request(:get, API_URL).with(query: hash_including("winename" => "barolo"))
+          .to_return(status: 200, body: { "wines" => [ { "wine-name" => "Barolo" } ] }.to_json)
+
+        first = Client.new.search("Barolo")
+        second = Client.new.search("  barolo ")
+
+        assert_equal first, second
+        assert_requested stub, times: 1
+      end
+    end
+
+    test "search caches empty result sets (negative caching)" do
+      with_memory_cache do
+        stub = stub_request(:get, API_URL).with(query: hash_including("winename" => "nonexistent"))
+          .to_return(status: 200, body: { "wines" => [] }.to_json)
+
+        assert_equal [], Client.new.search("nonexistent")
+        assert_equal [], Client.new.search("nonexistent")
+        assert_requested stub, times: 1
+      end
+    end
+
+    test "failures are not cached" do
+      with_memory_cache do
+        stub_request(:get, API_URL).with(query: hash_including("winename" => "flaky"))
+          .to_timeout.then
+          .to_return(status: 200, body: { "wines" => [ { "wine-name" => "Flaky Estate" } ] }.to_json)
+
+        assert_equal [], Client.new.search("flaky")
+        assert_equal [ "Flaky Estate" ], Client.new.search("flaky").map(&:name)
+      end
+    end
+
+    private
+
+    def with_memory_cache
+      original = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+      yield
+    ensure
+      Rails.cache = original
     end
   end
 end
