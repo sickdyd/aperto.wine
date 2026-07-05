@@ -1,13 +1,17 @@
 # Asset Sourcing Reference
 
 Where to look when a new icon, SVG, or illustration is needed. Check the sources
-in order — most needs are covered by what is already vendored in the repo.
+in order — most needs are covered by what is already installed locally.
 
-## 1. Already in the repo (check first)
+## 1. Already installed (check first)
 
-### Phosphor icons (full set, vendored)
+### Phosphor icons (full set, local install)
 
 - **Location:** `app/assets/svg/icons/phosphor/{thin,light,regular,bold,fill,duotone}/`
+- **Note:** `app/assets/svg/icons` is **gitignored** — the set is installed per
+  checkout, not committed. In a fresh clone or worktree, restore it with
+  `bin/rails generate rails_icons:install --libraries=phosphor` (or copy the
+  directory from another checkout). Tests fail with "Icon not found" until it exists.
 - **License:** MIT — no attribution required.
 - **Rendered via** the `rails_icons` gem (configured in `config/initializers/rails_icons.rb`,
   default library `phosphor`, default variant `regular`, default css `size-5`):
@@ -30,9 +34,12 @@ in order — most needs are covered by what is already vendored in the repo.
 ## 2. Cherry-pick from other MIT/ISC icon libraries
 
 For UI icons Phosphor lacks. Copy only the SVGs needed into
-`app/assets/svg/icons/<library>/<variant>/` (so `rails_icons` can serve them) and note
-the source/license in the commit message. Do **not** add npm/gem dependencies for a
-handful of icons.
+`app/assets/svg/icons/<library>/<variant>/` (so `rails_icons` can serve them). Do
+**not** add npm/gem dependencies for a handful of icons.
+
+Beware: `app/assets/svg/icons` is gitignored, so a cherry-picked SVG dropped there
+will NOT be committed. Either carve out an exception in `.gitignore` for the specific
+file(s), or list them in this doc so other checkouts know to fetch them.
 
 | Library | License | URL | Notable wine-domain icons |
 |---|---|---|---|
