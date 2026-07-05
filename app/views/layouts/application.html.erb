@@ -22,6 +22,19 @@
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <%# Disable CSS transitions/animations under system tests so Capybara never
+        clicks an element mid-transition — a common source of flaky failures. %>
+    <% if Rails.env.test? %>
+      <style>
+        *, *::before, *::after {
+          transition-duration: 0s !important;
+          transition-delay: 0s !important;
+          animation-duration: 0s !important;
+          animation-delay: 0s !important;
+        }
+      </style>
+    <% end %>
   </head>
 
   <body class="bg-base-100 text-base-content font-body antialiased">

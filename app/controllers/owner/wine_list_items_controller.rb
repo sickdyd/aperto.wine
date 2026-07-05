@@ -11,27 +11,27 @@ module Owner
       item = @wine_list.wine_list_items.build(wine: wine)
 
       if item.save
-        redirect_to edit_path, notice: t("owner.wine_lists.members.added")
+        redirect_to edit_path, notice: t("owner.wine_lists.members.added"), status: :see_other
       else
-        redirect_to edit_path, alert: t("owner.wine_lists.members.already_added")
+        redirect_to edit_path, alert: t("owner.wine_lists.members.already_added"), status: :see_other
       end
     rescue ActiveRecord::RecordNotUnique
       # The unique index can still fire under concurrent adds even though the
       # model validation passed at build time.
-      redirect_to edit_path, alert: t("owner.wine_lists.members.already_added")
+      redirect_to edit_path, alert: t("owner.wine_lists.members.already_added"), status: :see_other
     end
 
     def update
       if @wine_list_item.update(wine_list_item_params)
-        redirect_to edit_path, notice: t("owner.wine_lists.members.reordered")
+        redirect_to edit_path, notice: t("owner.wine_lists.members.reordered"), status: :see_other
       else
-        redirect_to edit_path, alert: @wine_list_item.errors.full_messages.to_sentence
+        redirect_to edit_path, alert: @wine_list_item.errors.full_messages.to_sentence, status: :see_other
       end
     end
 
     def destroy
       @wine_list_item.destroy!
-      redirect_to edit_path, notice: t("owner.wine_lists.members.removed")
+      redirect_to edit_path, notice: t("owner.wine_lists.members.removed"), status: :see_other
     end
 
     private

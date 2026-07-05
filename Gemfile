@@ -73,6 +73,10 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+
+  # Retry browser (system) tests only, to absorb irreducible Selenium/Turbo
+  # nondeterminism. Scoped to system tests in application_system_test_case.rb.
+  gem "minitest-retry"
 end
 
 gem "rails_icons", "~> 1.8"

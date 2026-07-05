@@ -13,12 +13,12 @@ module Owner
 
     def approve
       @order.approve!
-      redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.approved")
+      redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.approved"), status: :see_other
     end
 
     def cancel
       @order.cancel!
-      redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.cancelled")
+      redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.cancelled"), status: :see_other
     end
 
     private
