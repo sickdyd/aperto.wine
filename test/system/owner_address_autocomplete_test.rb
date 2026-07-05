@@ -31,11 +31,11 @@ class OwnerAddressAutocompleteTest < ApplicationSystemTestCase
 
     fill_in "Address", with: "Via Roma 42"
     assert_selector "li[role='option']", text: "Via Roma 42, 20121 Milano, Italia", wait: 5
+    assert_text "OpenStreetMap contributors"
     find("li[role='option']", match: :first).click
 
     assert_equal "45.4642", find("input[name='restaurant[latitude]']", visible: false).value
     assert_equal "9.19", find("input[name='restaurant[longitude]']", visible: false).value
-    assert_text "OpenStreetMap contributors"
   end
 
   test "editing the address after picking clears the coordinates" do
