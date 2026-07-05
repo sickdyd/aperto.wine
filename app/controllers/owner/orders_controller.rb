@@ -4,7 +4,7 @@ module Owner
     before_action :set_order, only: %i[show approve cancel]
 
     def index
-      @orders = @restaurant.orders.includes(:customer, order_items: :wine).recent
+      @orders = @restaurant.orders.includes(:customer, :restaurant_table, order_items: :wine).recent
       @orders = @orders.where(status: params[:status]) if params[:status].present?
     end
 

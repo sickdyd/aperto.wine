@@ -18,6 +18,8 @@ Rails.application.routes.draw do
 
     # Public menu (customer-facing, no auth required)
     get "menu/:id", to: "menus#show", as: :menu
+    # Per-table QR entry point: same menu, resolved from the table's token
+    get "t/:table_token", to: "menus#show", as: :table_menu
 
     # Owner namespace
     namespace :owner do
@@ -30,6 +32,14 @@ Rails.application.routes.draw do
           resources :wine_list_items, only: [ :create, :update, :destroy ]
         end
         resource :qr_code, only: [ :show ], controller: "qr_codes"
+        resources :tables, except: [ :show ], controller: "restaurant_tables" do
+          member do
+            get :qr
+          end
+          collection do
+            get :bulk_print
+          end
+        end
         resources :orders, only: [ :index, :show ] do
           member do
             patch :approve

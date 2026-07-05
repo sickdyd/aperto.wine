@@ -1,6 +1,7 @@
 class Order < ApplicationRecord
   belongs_to :restaurant
   belongs_to :customer, class_name: "User"
+  belongs_to :restaurant_table, optional: true
   has_many :order_items, dependent: :destroy
 
   enum :status, { pending: 0, approved: 1, cancelled: 2, completed: 3 }

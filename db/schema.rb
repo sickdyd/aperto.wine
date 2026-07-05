@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_05_004600) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_05_100001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_05_004600) do
     t.datetime "created_at", null: false
     t.bigint "customer_id", null: false
     t.bigint "restaurant_id", null: false
+    t.bigint "restaurant_table_id"
     t.integer "status", default: 0, null: false
     t.integer "total_amount_cents", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -65,6 +66,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_05_004600) do
     t.index ["customer_id"], name: "index_orders_on_customer_id"
     t.index ["restaurant_id", "status"], name: "index_orders_on_restaurant_id_and_status"
     t.index ["restaurant_id"], name: "index_orders_on_restaurant_id"
+    t.index ["restaurant_table_id"], name: "index_orders_on_restaurant_table_id"
+  end
+
+  create_table "restaurant_tables", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "area"
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "restaurant_id", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index "restaurant_id, COALESCE(area, ''::character varying), lower((name)::text)", name: "index_restaurant_tables_on_restaurant_area_name", unique: true
+    t.index ["restaurant_id", "area", "position"], name: "index_restaurant_tables_on_restaurant_id_and_area_and_position"
+    t.index ["restaurant_id"], name: "index_restaurant_tables_on_restaurant_id"
+    t.index ["token"], name: "index_restaurant_tables_on_token", unique: true
   end
 
   create_table "restaurants", force: :cascade do |t|
@@ -188,8 +205,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_05_004600) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "wines"
+  add_foreign_key "orders", "restaurant_tables", on_delete: :nullify
   add_foreign_key "orders", "restaurants"
   add_foreign_key "orders", "users", column: "customer_id"
+  add_foreign_key "restaurant_tables", "restaurants", on_delete: :cascade
   add_foreign_key "restaurants", "users"
   add_foreign_key "wine_bottles", "wines"
   add_foreign_key "wine_list_items", "wine_lists", on_delete: :cascade

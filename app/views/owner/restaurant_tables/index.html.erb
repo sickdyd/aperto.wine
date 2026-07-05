@@ -1,0 +1,81 @@
+<% content_for(:title) { "#{@restaurant.name} — #{t('owner.tables.title')}" } %>
+
+<div class="mb-8">
+  <div class="flex items-center justify-between">
+    <h1 class="font-display text-3xl font-light"><%= t("owner.tables.title") %></h1>
+    <div class="flex items-center gap-2">
+      <% if @grouped_tables.any? %>
+        <a href="<%= bulk_print_owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost btn-sm">
+          <%= icon "printer", css: "size-4" %>
+          <%= t("owner.tables.print_all") %>
+        </a>
+      <% end %>
+      <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine btn-sm">
+        <%= icon "plus", css: "size-4" %>
+        <%= t("owner.tables.add") %>
+      </a>
+    </div>
+  </div>
+  <p class="text-sm text-base-content/50 mt-2"><%= t("owner.tables.intro") %></p>
+</div>
+
+<% if @grouped_tables.any? %>
+  <div class="space-y-8">
+    <% @grouped_tables.each do |area, tables| %>
+      <section>
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50">
+            <%= area.presence || t("owner.tables.no_area") %>
+          </h2>
+          <a href="<%= bulk_print_owner_restaurant_tables_path(@restaurant, area: area) %>" class="btn btn-ghost btn-xs">
+            <%= icon "printer", css: "size-3.5" %>
+            <%= t("owner.tables.print_area") %>
+          </a>
+        </div>
+
+        <div class="space-y-2">
+          <% tables.each do |table| %>
+            <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all">
+              <div class="flex items-center gap-3 min-w-0">
+                <%= icon "picnic-table", css: "size-5 text-primary/70 shrink-0" %>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="font-body font-medium text-sm truncate"><%= table.name %></span>
+                    <% unless table.active? %>
+                      <span class="badge badge-ghost badge-xs"><%= t("owner.tables.inactive") %></span>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1 ml-4">
+                <a href="<%= qr_owner_restaurant_table_path(@restaurant, table) %>" class="btn btn-ghost btn-xs">
+                  <%= icon "qr-code", css: "size-3.5" %>
+                  <span class="hidden sm:inline"><%= t("owner.tables.view_qr") %></span>
+                </a>
+                <a href="<%= edit_owner_restaurant_table_path(@restaurant, table) %>" class="btn btn-ghost btn-xs">
+                  <%= icon "pencil-simple", css: "size-3.5" %>
+                </a>
+                <%= button_to owner_restaurant_table_path(@restaurant, table), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.tables.confirm_delete") } do %>
+                  <%= icon "trash", css: "size-3.5" %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  </div>
+<% else %>
+  <div class="text-center py-16">
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
+      <%= icon "picnic-table", css: "size-7 text-base-content/30" %>
+    </div>
+    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.tables.empty_title") %></h2>
+    <p class="text-base-content/50 mb-6"><%= t("owner.tables.empty_description") %></p>
+    <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine btn-sm">
+      <%= icon "plus", css: "size-4" %>
+      <%= t("owner.tables.add_first") %>
+    </a>
+  </div>
+<% end %>
