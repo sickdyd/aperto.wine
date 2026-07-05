@@ -54,7 +54,7 @@ export default class extends Controller {
 
   select(event) {
     const wine = JSON.parse(event.currentTarget.dataset.wine)
-    this.inputTarget.value = wine.name
+    this.#fill(this.inputTarget, wine.name)
     this.#fill(this.producerTarget, wine.producer)
     this.#fill(this.grapeTarget, wine.grape_variety)
     this.#fill(this.vintageTarget, wine.vintage_year)
