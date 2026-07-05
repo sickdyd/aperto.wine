@@ -20,7 +20,10 @@ Rails.application.configure do
 
   # Show full error reports.
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+  # Memory store (not the default null store) so Rails.cache-backed behavior —
+  # suggestion caching and controller rate limiting — is exercisable in tests.
+  # test_helper.rb clears the cache before every test to keep them isolated.
+  config.cache_store = :memory_store
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
