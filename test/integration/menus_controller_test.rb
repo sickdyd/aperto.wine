@@ -85,4 +85,70 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match I18n.t("menu.empty"), response.body
   end
+
+  # --- Table QR entry point (GET /t/:table_token) ---
+
+  test "GET /t/:table_token renders the restaurant menu for a valid token" do
+    table = restaurant_tables(:sala_t1)
+    get table_menu_path(table_token: table.token)
+    assert_response :success
+    assert_match "Barolo Riserva", response.body
+  end
+
+  test "GET /t/:table_token shows the table name on the menu" do
+    table = restaurant_tables(:sala_t1)
+    get table_menu_path(table_token: table.token)
+    assert_response :success
+    assert_match table.name, response.body
+  end
+
+  test "GET /t/:table_token stores the table token in the session" do
+    table = restaurant_tables(:sala_t1)
+    get table_menu_path(table_token: table.token)
+    assert_equal table.token, session[:table_tokens][table.restaurant_id.to_s]
+  end
+
+  test "scanning a second table replaces the stored token for that restaurant" do
+    first = restaurant_tables(:sala_t1)
+    second = restaurant_tables(:sala_t2)
+    get table_menu_path(table_token: first.token)
+    get table_menu_path(table_token: second.token)
+    assert_equal second.token, session[:table_tokens][second.restaurant_id.to_s]
+  end
+
+  test "tokens from different restaurants are stored independently" do
+    osteria_table = restaurant_tables(:sala_t1)
+    trattoria_table = restaurant_tables(:trattoria_t1)
+    get table_menu_path(table_token: osteria_table.token)
+    get table_menu_path(table_token: trattoria_table.token)
+    assert_equal osteria_table.token, session[:table_tokens][osteria_table.restaurant_id.to_s]
+    assert_equal trattoria_table.token, session[:table_tokens][trattoria_table.restaurant_id.to_s]
+  end
+
+  test "GET /t/:table_token with an unknown token returns 404" do
+    get table_menu_path(table_token: "no-such-token")
+    assert_response :not_found
+  end
+
+  test "GET /t/:table_token for an inactive table falls back to the plain menu" do
+    table = restaurant_tables(:retired_table)
+    get table_menu_path(table_token: table.token)
+    assert_response :success
+    assert_match "Barolo Riserva", response.body
+    assert_no_match table.name, response.body
+    assert_nil session[:table_tokens]
+  end
+
+  test "GET /t/:table_token for an inactive restaurant returns 404" do
+    table = restaurant_tables(:sala_t1)
+    table.restaurant.update!(active: false)
+    get table_menu_path(table_token: table.token)
+    assert_response :not_found
+  end
+
+  test "GET /menu/:id still works without any table context" do
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_nil session[:table_tokens]
+  end
 end

@@ -1,8 +1,8 @@
-<% content_for(:title) { "#{@restaurant.name} — #{t('owner.qr_code.title')}" } %>
+<% content_for(:title) { "#{@restaurant.name} — #{t('owner.tables.qr_title', table: @table.name)}" } %>
 
 <div class="mb-8">
-  <h1 class="font-display text-3xl font-light"><%= t("owner.qr_code.title") %></h1>
-  <p class="text-base-content/50 mt-2"><%= t("owner.qr_code.description") %></p>
+  <h1 class="font-display text-3xl font-light"><%= t("owner.tables.qr_title", table: @table.name) %></h1>
+  <p class="text-base-content/50 mt-2"><%= t("owner.tables.qr_description") %></p>
 </div>
 
 <div class="grid md:grid-cols-2 gap-12">
@@ -13,16 +13,17 @@
         <%= @qr_svg %>
       </div>
       <p class="text-center mt-4 font-display text-lg font-medium"><%= @restaurant.name %></p>
+      <p class="text-center text-sm text-base-content/60"><%= [ @table.area, @table.name ].compact_blank.join(" · ") %></p>
       <p class="text-center text-xs text-base-content/40 mt-1">aperto.wine</p>
     </div>
 
     <button onclick="window.print()" class="btn-wine btn-sm mt-6">
       <%= icon "printer", css: "size-4" %>
-      <%= t("owner.qr_code.print") %>
+      <%= t("owner.tables.print") %>
     </button>
   </div>
 
-  <%# Link and instructions %>
+  <%# Link %>
   <div class="space-y-6">
     <div>
       <h3 class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-2"><%= t("owner.qr_code.menu_link") %></h3>
@@ -32,26 +33,18 @@
           <%= icon "copy", css: "size-4" %>
         </button>
       </div>
+      <p class="text-xs text-base-content/50 mt-3"><%= t("owner.tables.qr_hint") %></p>
     </div>
 
-    <div class="divider"></div>
-
-    <div>
-      <h3 class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-3"><%= t("owner.qr_code.instructions_title") %></h3>
-      <ol class="space-y-3 text-sm text-base-content/70">
-        <% t("owner.qr_code.instructions").each_with_index do |step, i| %>
-          <li class="flex gap-3">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-medium"><%= i + 1 %></span>
-            <span><%= step %></span>
-          </li>
-        <% end %>
-      </ol>
-    </div>
+    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost btn-sm text-xs uppercase tracking-wider">
+      <%= icon "arrow-left", css: "size-4" %>
+      <%= t("owner.tables.back_to_tables") %>
+    </a>
   </div>
 </div>
 
 <%# Print styles %>
 <style media="print">
-  nav, .btn, button, input, .divider, ol, h3 { display: none !important; }
+  nav, .btn, button, input, h3 { display: none !important; }
   #qr-code { border: none !important; box-shadow: none !important; margin: auto; }
 </style>

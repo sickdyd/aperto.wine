@@ -5,6 +5,10 @@
   <header class="text-center mb-10">
     <h1 class="font-display text-3xl font-light"><%= @restaurant.name %></h1>
     <p class="text-sm text-base-content/50 mt-1"><%= @restaurant.address %></p>
+    <% if @restaurant_table %>
+      <%# The table label is owner-defined (e.g. "Tavolo 3"), shown as-is. %>
+      <span class="badge badge-ghost badge-sm mt-3 font-body"><%= @restaurant_table.name %></span>
+    <% end %>
     <div class="divider-wine mt-6"></div>
   </header>
 

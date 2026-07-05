@@ -1,0 +1,38 @@
+sala_t1:
+  restaurant: osteria
+  name: Tavolo 1
+  area: Sala principale
+  token: sala_t1_fixture_token_abc123
+  position: 1
+  active: true
+
+sala_t2:
+  restaurant: osteria
+  name: Tavolo 2
+  area: Sala principale
+  token: sala_t2_fixture_token_def456
+  position: 2
+  active: true
+
+dehors_t1:
+  restaurant: osteria
+  name: Tavolo 1
+  area: Dehors
+  token: dehors_t1_fixture_token_ghi789
+  position: 1
+  active: true
+
+retired_table:
+  restaurant: osteria
+  name: Tavolo dismesso
+  area: Sala principale
+  token: retired_fixture_token_jkl012
+  position: 9
+  active: false
+
+trattoria_t1:
+  restaurant: trattoria
+  name: Tavolo 1
+  token: trattoria_t1_fixture_token_mno345
+  position: 1
+  active: true

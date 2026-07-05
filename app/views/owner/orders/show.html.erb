@@ -7,6 +7,14 @@
       <p class="text-base-content/50 mt-1">
         <%= @order.customer.name %> · <%= l(@order.created_at, format: :long) %>
       </p>
+      <p class="text-sm text-base-content/60 mt-1 flex items-center gap-1">
+        <%= icon "picnic-table", css: "size-3.5" %>
+        <% if @order.restaurant_table %>
+          <%= [ @order.restaurant_table.area, @order.restaurant_table.name ].compact_blank.join(" · ") %>
+        <% else %>
+          <%= t("owner.orders.no_table") %>
+        <% end %>
+      </p>
     </div>
     <span class="badge <%= order_status_badge_class(@order.status) %>"><%= t("owner.orders.statuses.#{@order.status}") %></span>
   </div>

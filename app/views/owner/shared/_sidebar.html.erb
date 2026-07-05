@@ -63,6 +63,12 @@
           <% end %>
         </li>
         <li>
+          <%= link_to owner_restaurant_tables_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("restaurant_tables")) do %>
+            <%= icon "picnic-table", css: "size-4" %>
+            <%= t("owner.restaurants.tables") %>
+          <% end %>
+        </li>
+        <li>
           <%= link_to owner_restaurant_qr_code_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("qr_codes")) do %>
             <%= icon "qr-code", css: "size-4" %>
             <%= t("owner.restaurants.qr_code") %>

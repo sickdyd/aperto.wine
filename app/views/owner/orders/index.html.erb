@@ -29,6 +29,11 @@
             <div class="flex items-center gap-3">
               <span class="font-body font-medium text-sm">#<%= order.id %></span>
               <span class="badge badge-sm <%= order_status_badge_class(order.status) %>"><%= t("owner.orders.statuses.#{order.status}") %></span>
+              <% if order.restaurant_table %>
+                <span class="badge badge-outline badge-sm">
+                  <%= [ order.restaurant_table.area, order.restaurant_table.name ].compact_blank.join(" · ") %>
+                </span>
+              <% end %>
             </div>
             <p class="text-xs text-base-content/50 mt-1">
               <%= order.customer.name %> · <%= l(order.created_at, format: :short) %> · <%= format_cents(order.total_amount_cents) %>
