@@ -186,6 +186,8 @@ en:
         suggested: "Suggested"
         position: "Sort Order"
         active_label: "Wine is available for order"
+      autofill:
+        aria_label: Wine name with autocomplete suggestions
     wine_lists:
       title: "Wine Lists"
       intro: "Your public menu shows every enabled list. Keep the default \"All Wines\" list on to show your full menu, or build curated lists and toggle them on and off here."

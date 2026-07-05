@@ -80,6 +80,9 @@ group :test do
   # Retry browser (system) tests only, to absorb irreducible Selenium/Turbo
   # nondeterminism. Scoped to system tests in application_system_test_case.rb.
   gem "minitest-retry"
+
+  # Stub external HTTP in tests — no real network calls allowed
+  gem "webmock"
 end
 
 gem "rails_icons", "~> 1.8"

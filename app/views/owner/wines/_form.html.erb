@@ -1,4 +1,5 @@
-<%= form_with model: [:owner, @restaurant, wine], class: "space-y-6 max-w-2xl" do |f| %>
+<%= form_with model: [:owner, @restaurant, wine], class: "space-y-6 max-w-2xl",
+      data: { controller: "wine-autofill", wine_autofill_url_value: owner_wine_lookups_path } do |f| %>
   <% if wine.errors.any? %>
     <div role="alert" class="alert alert-error text-sm">
       <%= icon "warning", css: "size-4" %>
@@ -14,37 +15,51 @@
   <fieldset class="space-y-4">
     <legend class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-2"><%= t("owner.wines.form.basic_info") %></legend>
 
-    <div class="form-control">
+    <div class="form-control relative">
       <%= f.label :name, t("owner.wines.form.name"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-      <%= f.text_field :name, required: true, class: "input input-bordered w-full font-body", placeholder: t("owner.wines.form.name_placeholder") %>
+      <%= f.text_field :name, required: true, autocomplete: "off",
+            class: "input input-bordered w-full font-body",
+            placeholder: t("owner.wines.form.name_placeholder"),
+            role: "combobox", "aria-expanded": "false", "aria-autocomplete": "list",
+            "aria-label": t("owner.wines.autofill.aria_label"),
+            "aria-controls": "wine-suggestions-listbox",
+            data: {
+              wine_autofill_target: "input",
+              action: "input->wine-autofill#search keydown->wine-autofill#navigate blur->wine-autofill#close"
+            } %>
+      <ul id="wine-suggestions-listbox"
+          class="hidden absolute top-full left-0 right-0 z-20 mt-1 menu p-0 bg-base-100 border border-base-content/10 rounded-box shadow-sm max-h-64 overflow-y-auto"
+          role="listbox"
+          data-wine-autofill-target="results"
+          data-action="mousedown->wine-autofill#keepOpen"></ul>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="form-control">
         <%= f.label :producer, t("owner.wines.form.producer"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.text_field :producer, class: "input input-bordered w-full font-body" %>
+        <%= f.text_field :producer, class: "input input-bordered w-full font-body", data: { wine_autofill_target: "producer" } %>
       </div>
 
       <div class="form-control">
         <%= f.label :grape_variety, t("owner.wines.form.grape_variety"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.text_field :grape_variety, class: "input input-bordered w-full font-body", placeholder: t("owner.wines.form.grape_placeholder") %>
+        <%= f.text_field :grape_variety, class: "input input-bordered w-full font-body", placeholder: t("owner.wines.form.grape_placeholder"), data: { wine_autofill_target: "grape" } %>
       </div>
     </div>
 
     <div class="grid grid-cols-3 gap-4">
       <div class="form-control">
         <%= f.label :color, t("owner.wines.form.color"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.select :color, Wine.colors.keys.map { |c| [t("owner.wines.colors.#{c}"), c] }, {}, class: "select select-bordered w-full font-body" %>
+        <%= f.select :color, Wine.colors.keys.map { |c| [t("owner.wines.colors.#{c}"), c] }, {}, class: "select select-bordered w-full font-body", data: { wine_autofill_target: "color" } %>
       </div>
 
       <div class="form-control">
         <%= f.label :vintage_year, t("owner.wines.form.vintage_year"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input input-bordered w-full font-body" %>
+        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input input-bordered w-full font-body", data: { wine_autofill_target: "vintage" } %>
       </div>
 
       <div class="form-control">
         <%= f.label :region, t("owner.wines.form.region"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.text_field :region, class: "input input-bordered w-full font-body", placeholder: t("owner.wines.form.region_placeholder") %>
+        <%= f.text_field :region, class: "input input-bordered w-full font-body", placeholder: t("owner.wines.form.region_placeholder"), data: { wine_autofill_target: "region" } %>
       </div>
     </div>
 
