@@ -141,8 +141,6 @@ en:
         address_suggestions_attribution: "© OpenStreetMap contributors"
         description: "Description"
         description_placeholder: "A brief description of your restaurant..."
-        latitude: "Latitude"
-        longitude: "Longitude"
         proximity_radius: "Order Proximity Radius"
         meters: "meters"
         active_label: "Restaurant is active and visible to customers"

@@ -106,6 +106,25 @@
     height: auto;
     display: block;
   }
+
+  /* Address autocomplete dropdown (stimulus-autocomplete results) */
+  .address-suggestions {
+    @apply absolute left-0 right-0 top-full z-20 mt-1 list-none bg-base-100 border border-base-300 rounded-box shadow-lg p-1 max-h-64 overflow-y-auto;
+  }
+
+  .address-suggestion {
+    @apply block px-3 py-2 rounded-field cursor-pointer text-sm font-body;
+  }
+
+  .address-suggestion:hover,
+  .address-suggestion[aria-selected="true"],
+  .address-suggestion.active {
+    @apply bg-base-200;
+  }
+
+  .address-suggestion-attribution {
+    @apply px-3 py-1 text-xs text-base-content/40 cursor-default;
+  }
 }
 
 @layer utilities {
