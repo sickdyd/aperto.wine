@@ -27,8 +27,22 @@ pre-commit:
       # the same flagless command; refresh the DB out of band if needed.
       run: bin/bundler-audit check
 
+    importmap-audit:
+      tags: security
+      # Scan importmap-pinned JavaScript for known vulnerabilities (mirrors the
+      # scan_js CI job, which audits both importmap and npm dependencies).
+      run: bin/importmap audit
+
     npm-audit:
       tags: security
       # Scan npm dependencies for known vulnerabilities.
       glob: "{package.json,package-lock.json}"
       run: npm audit --audit-level=moderate
+
+# Unit + integration tests are heavier than the lint/security scans, so they run
+# on push rather than on every commit. System tests (bin/rails test:system) spin
+# up a headless browser and are left to CI / manual runs.
+pre-push:
+  commands:
+    tests:
+      run: bin/rails test
