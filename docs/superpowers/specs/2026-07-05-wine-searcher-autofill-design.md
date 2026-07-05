@@ -69,8 +69,10 @@ name input (Stimulus wine-autofill, 350ms debounce, min 3 chars)
   restaurant-scoped).
 - Validates `q`: strip, min length 3, max length 100; short/blank queries
   return `[]` without touching the client.
-- Rate limiting via Rails' built-in `rate_limit` (10 requests / 20 seconds
-  per session) as a second guard on the upstream quota.
+- Rate limiting via Rails' built-in `rate_limit` (30 requests / 1 minute
+  per session — same average rate as the originally proposed 10/20s, chosen
+  deliberately to match the reviewed implementation) as a second guard on the
+  upstream quota.
 - When `WineSearcher::Client#configured?` is false, returns `[]` — the form
   behaves exactly as today for environments without a key.
 
@@ -132,7 +134,18 @@ owner beyond an empty dropdown.
 ## Rollout
 
 1. Merge with stubs; endpoint inert until a key is configured.
-2. When the trial key arrives: add to credentials, verify parsing against one
+2. When the trial key arrives: add the key to **per-environment** credentials
+   — `bin/rails credentials:edit --environment production` (and
+   `--environment development` if desired for local verification) — **not**
+   the shared `config/credentials.yml.enc`. The shared credentials file is
+   read by every environment, including `test`; a `wine_searcher.api_key`
+   placed there would leak into the test environment, override the test
+   suite's `ENV["WINE_SEARCHER_API_KEY"]` / `ENV["WINE_SEARCHER_API_URL"]`
+   configuration (the client prefers credentials over `ENV`), and send the
+   client to a real endpoint that WebMock has not stubbed — causing
+   `WebMock::NetConnectNotAllowedError` across the client/controller/system
+   test suites. The shared credentials file MUST NOT hold `wine_searcher`
+   keys. Once the per-environment key is in place: verify parsing against one
    live response in the console, adjust the one parse method if the
    documented shape differs, confirm with the client unit fixtures updated to
    the real shape.
