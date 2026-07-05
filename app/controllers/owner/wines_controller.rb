@@ -15,7 +15,7 @@ module Owner
       @wine = @restaurant.wines.build(wine_params)
 
       if @wine.save
-        redirect_to owner_restaurant_wines_path(@restaurant), notice: t("owner.wines.created")
+        redirect_to owner_restaurant_wines_path(@restaurant), notice: t("owner.wines.created"), status: :see_other
       else
         render :new, status: :unprocessable_entity
       end
@@ -26,7 +26,7 @@ module Owner
 
     def update
       if @wine.update(wine_params)
-        redirect_to owner_restaurant_wines_path(@restaurant), notice: t("owner.wines.updated")
+        redirect_to owner_restaurant_wines_path(@restaurant), notice: t("owner.wines.updated"), status: :see_other
       else
         render :edit, status: :unprocessable_entity
       end
@@ -34,7 +34,7 @@ module Owner
 
     def destroy
       @wine.destroy!
-      redirect_to owner_restaurant_wines_path(@restaurant), notice: t("owner.wines.deleted")
+      redirect_to owner_restaurant_wines_path(@restaurant), notice: t("owner.wines.deleted"), status: :see_other
     end
 
     private

@@ -16,7 +16,7 @@ module Owner
       @wine_list = @restaurant.wine_lists.build(wine_list_params)
 
       if @wine_list.save
-        redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.created")
+        redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.created"), status: :see_other
       else
         render :new, status: :unprocessable_entity
       end
@@ -27,7 +27,7 @@ module Owner
 
     def update
       if @wine_list.update(wine_list_params)
-        redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.updated")
+        redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.updated"), status: :see_other
       else
         render :edit, status: :unprocessable_entity
       end
@@ -35,14 +35,14 @@ module Owner
 
     def destroy
       @wine_list.destroy!
-      redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.deleted")
+      redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.deleted"), status: :see_other
     end
 
     # Enable/disable the default "All Wines" list, which always reflects every
     # available wine. Backed by a flag on the restaurant (it has no membership).
     def toggle_all_wines
       @restaurant.update(all_wines_list_active: params[:active].present?)
-      redirect_to owner_restaurant_wine_lists_path(@restaurant)
+      redirect_to owner_restaurant_wine_lists_path(@restaurant), status: :see_other
     end
 
     private

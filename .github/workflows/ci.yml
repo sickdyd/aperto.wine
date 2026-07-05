@@ -199,7 +199,9 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test:system
+        # Build Tailwind up front so the first browser request isn't racing a
+        # lazy asset build (a source of first-load system-test flakiness).
+        run: bin/rails db:test:prepare tailwindcss:build test:system
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v7
