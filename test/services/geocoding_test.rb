@@ -75,6 +75,15 @@ class GeocodingTest < ActiveSupport::TestCase
     assert_equal [], Geocoding.suggestions("Via Roma 42")
   end
 
+  test "suggestions does not cache failures" do
+    stub_request(:get, PhotonStubs::PHOTON_API).to_timeout
+    assert_equal [], Geocoding.suggestions("Via Roma 42")
+
+    stub_photon([ photon_feature ])
+
+    assert_equal 1, Geocoding.suggestions("Via Roma 42").length
+  end
+
   test "allowed_country? is case-insensitive and nil-safe" do
     assert Geocoding.allowed_country?("it")
     assert Geocoding.allowed_country?("IT")

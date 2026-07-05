@@ -24,9 +24,14 @@ module Geocoding
       query = query.to_s.strip
       return [] if query.length < MIN_QUERY_LENGTH
 
-      Rails.cache.fetch([ "address_suggestions", I18n.locale, query.downcase ], expires_in: CACHE_TTL) do
+      # skip_nil: fetch_suggestions returns nil when the lookup fails, and
+      # failures must not be cached — otherwise one transient Photon outage
+      # would blank out this query's suggestions for the whole TTL. A
+      # legitimate empty result set ([]) is still cached.
+      cache_key = [ "address_suggestions", I18n.locale, query.downcase ]
+      Rails.cache.fetch(cache_key, expires_in: CACHE_TTL, skip_nil: true) do
         fetch_suggestions(query)
-      end
+      end || []
     end
 
     private
@@ -41,7 +46,7 @@ module Geocoding
       results.filter_map { |result| suggestion_from(result) }
     rescue StandardError => e
       Rails.logger.warn("Geocoding.suggestions failed: #{e.class}: #{e.message}")
-      []
+      nil
     end
 
     def suggestion_from(result)

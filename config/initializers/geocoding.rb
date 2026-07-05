@@ -10,5 +10,10 @@ Geocoder.configure(
   lookup: :photon,
   use_https: true,
   timeout: 2,
-  units: :km
+  units: :km,
+  # Without this, Geocoder swallows timeouts/network errors and returns [],
+  # indistinguishable from a real empty result — which callers would then
+  # cache. Raising lets callers tell failures apart; each caller rescues
+  # and degrades on its own terms.
+  always_raise: :all
 )
