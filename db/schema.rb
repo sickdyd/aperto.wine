@@ -10,9 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_27_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_05_004600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.string "content_type"
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "order_items", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -110,14 +138,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_130000) do
   end
 
   create_table "wines", force: :cascade do |t|
+    t.decimal "abv", precision: 5, scale: 2
+    t.integer "acidity", limit: 2
     t.boolean "active", default: true, null: false
+    t.string "aromas", default: [], null: false, array: true
     t.integer "available_glasses", default: 0, null: false
+    t.boolean "biodynamic", default: false, null: false
+    t.integer "body", limit: 2
     t.integer "bottle_size_ml", default: 750, null: false
     t.integer "color", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.boolean "favorite", default: false, null: false
+    t.boolean "featured", default: false, null: false
+    t.string "food_pairings", default: [], null: false, array: true
     t.string "grape_variety"
+    t.string "image_url"
     t.string "name", null: false
+    t.boolean "natural_wine", default: false, null: false
+    t.boolean "organic", default: false, null: false
     t.integer "position", default: 0, null: false
     t.integer "price_100ml_cents"
     t.integer "price_125ml_cents"
@@ -127,13 +166,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_130000) do
     t.string "producer"
     t.string "region"
     t.bigint "restaurant_id", null: false
+    t.string "short_description"
+    t.string "style"
+    t.integer "sweetness", limit: 2
+    t.integer "tannins", limit: 2
     t.datetime "updated_at", null: false
+    t.boolean "vegan", default: false, null: false
     t.integer "vintage_year"
     t.index ["restaurant_id", "color"], name: "index_wines_on_restaurant_id_and_color"
     t.index ["restaurant_id", "position"], name: "index_wines_on_restaurant_id_and_position"
+    t.index ["restaurant_id", "position"], name: "index_wines_on_restaurant_id_and_position_where_featured", where: "featured"
     t.index ["restaurant_id"], name: "index_wines_on_restaurant_id"
+    t.check_constraint "abv IS NULL OR abv >= 0::numeric AND abv <= 100::numeric", name: "wines_abv_range"
+    t.check_constraint "acidity IS NULL OR acidity >= 0 AND acidity <= 5", name: "wines_acidity_range"
+    t.check_constraint "body IS NULL OR body >= 0 AND body <= 5", name: "wines_body_range"
+    t.check_constraint "sweetness IS NULL OR sweetness >= 0 AND sweetness <= 5", name: "wines_sweetness_range"
+    t.check_constraint "tannins IS NULL OR tannins >= 0 AND tannins <= 5", name: "wines_tannins_range"
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "wines"
   add_foreign_key "orders", "restaurants"

@@ -44,6 +44,9 @@ gem "image_processing", "~> 2.0"
 # dlopen libvips (Active Storage loads it lazily only when processing variants).
 gem "ruby-vips", require: false
 
+# Validate Active Storage attachments (content type, size) at the model boundary
+gem "active_storage_validations", "~> 3.0"
+
 group :development, :test do
   # Load environment variables from .env files
   gem "dotenv-rails"
