@@ -52,7 +52,7 @@ module WineSearcher
 
       parse_results(JSON.parse(response.body))
     rescue JSON::ParserError, Net::OpenTimeout, Net::ReadTimeout, Timeout::Error,
-           SocketError, SystemCallError, OpenSSL::SSL::SSLError, URI::InvalidURIError => e
+           IOError, SocketError, SystemCallError, OpenSSL::SSL::SSLError, URI::InvalidURIError => e
       Rails.logger.warn("[wine_searcher] search failed: #{e.class}: #{e.message}")
       []
     end

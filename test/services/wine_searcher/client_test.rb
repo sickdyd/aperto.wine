@@ -123,6 +123,13 @@ module WineSearcher
       assert_equal [], Client.new.search("barolo")
     end
 
+    test "search returns [] when the connection drops mid-response" do
+      stub_request(:get, API_URL).with(query: hash_including("winename" => "barolo"))
+        .to_raise(EOFError)
+
+      assert_equal [], Client.new.search("barolo")
+    end
+
     test "search returns [] on malformed JSON" do
       stub_request(:get, API_URL).with(query: hash_including("winename" => "barolo"))
         .to_return(status: 200, body: "<not json>")
