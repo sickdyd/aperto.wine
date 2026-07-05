@@ -27,6 +27,7 @@ Rails.application.routes.draw do
       # data is global, only the session needs to be an owner.
       resources :wine_lookups, only: [ :index ]
 
+      resources :address_suggestions, only: [ :index ]
       resources :restaurants do
         resources :wines, except: [ :show ]
         resources :wine_lists, except: [ :show ] do

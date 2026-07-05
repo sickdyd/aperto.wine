@@ -138,6 +138,7 @@ it:
         name_placeholder: "es. Osteria del Borgo"
         address: "Indirizzo"
         address_placeholder: "es. Via Roma 42, Milano"
+        address_suggestions_attribution: "© contributori di OpenStreetMap"
         description: "Descrizione"
         description_placeholder: "Una breve descrizione del tuo ristorante..."
         latitude: "Latitudine"
