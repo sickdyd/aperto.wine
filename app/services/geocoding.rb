@@ -5,6 +5,7 @@
 module Geocoding
   SUGGESTION_LIMIT = 5
   MIN_QUERY_LENGTH = 3
+  MAX_QUERY_LENGTH = 200
   CACHE_TTL = 1.day
   # Geographic center of Italy — ranks nearby results first without
   # excluding other countries (filtering is allowed_country?'s job).
@@ -23,6 +24,8 @@ module Geocoding
     def suggestions(query)
       query = query.to_s.strip
       return [] if query.length < MIN_QUERY_LENGTH
+
+      query = query[0, MAX_QUERY_LENGTH]
 
       # skip_nil: fetch_suggestions returns nil when the lookup fails, and
       # failures must not be cached — otherwise one transient Photon outage

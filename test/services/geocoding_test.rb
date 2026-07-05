@@ -61,6 +61,16 @@ class GeocodingTest < ActiveSupport::TestCase
     end
   end
 
+  test "suggestions truncates very long queries before lookup" do
+    stub_photon([])
+
+    Geocoding.suggestions("a" * 500)
+
+    assert_requested :get, PhotonStubs::PHOTON_API, times: 1 do |request|
+      Rack::Utils.parse_query(request.uri.query)["q"].length == 200
+    end
+  end
+
   test "suggestions caches results per query" do
     stub_photon([ photon_feature ])
 

@@ -4,8 +4,8 @@ module Owner
     skip_before_action :set_sidebar_restaurants
 
     # Every keystroke can fan out to Photon (a shared free service); cap
-    # bursts per client beyond what the client-side debounce already does.
-    rate_limit to: 10, within: 3.seconds, with: -> { head :too_many_requests }
+    # bursts per user beyond what the client-side debounce already does.
+    rate_limit to: 10, within: 3.seconds, by: -> { current_user.id }, with: -> { head :too_many_requests }
 
     def index
       @suggestions = Geocoding.suggestions(params[:q])
