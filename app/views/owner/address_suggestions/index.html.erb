@@ -1,0 +1,10 @@
+<% @suggestions.each do |suggestion| %>
+  <li role="option"
+      class="address-suggestion"
+      data-autocomplete-value="<%= suggestion[:label] %>"
+      data-latitude="<%= suggestion[:latitude] %>"
+      data-longitude="<%= suggestion[:longitude] %>"><%= suggestion[:label] %></li>
+<% end %>
+<% if @suggestions.any? %>
+  <li aria-disabled="true" class="address-suggestion-attribution"><%= t("owner.restaurants.form.address_suggestions_attribution") %></li>
+<% end %>

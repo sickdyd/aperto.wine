@@ -47,6 +47,9 @@ gem "ruby-vips", require: false
 # Validate Active Storage attachments (content type, size) at the model boundary
 gem "active_storage_validations", "~> 3.0"
 
+# Geocoding (address → coordinates) via OpenStreetMap/Photon [https://github.com/alexreisner/geocoder]
+gem "geocoder", "~> 1.8"
+
 group :development, :test do
   # Load environment variables from .env files
   gem "dotenv-rails"

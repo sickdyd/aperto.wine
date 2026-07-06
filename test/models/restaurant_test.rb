@@ -99,4 +99,58 @@ class RestaurantTest < ActiveSupport::TestCase
   test "active scope excludes inactive restaurants" do
     assert_equal false, Restaurant.active.include?(restaurants(:inactive_restaurant))
   end
+
+  # --- Fallback geocoding ---
+
+  test "geocodes on create when address present and coordinates blank" do
+    stub_photon([ photon_feature ])
+
+    restaurant = users(:owner).restaurants.create!(name: "Nuova", address: "Via Roma 42, Milano")
+
+    assert_in_delta 45.4642, restaurant.latitude.to_f
+    assert_in_delta 9.19, restaurant.longitude.to_f
+  end
+
+  test "does not geocode when coordinates are provided" do
+    users(:owner).restaurants.create!(
+      name: "Nuova", address: "Via Roma 42, Milano", latitude: 45.0, longitude: 9.0
+    )
+
+    assert_not_requested :get, PhotonStubs::PHOTON_API
+  end
+
+  test "re-geocodes on update when address changes and coordinates were cleared" do
+    restaurant = restaurants(:osteria)
+    stub_photon([ photon_feature(street: "Via Verdi", housenumber: "7", city: "Torino",
+                                 postcode: "10121", lat: 45.0703, lon: 7.6869) ])
+
+    restaurant.update!(address: "Via Verdi 7, Torino", latitude: nil, longitude: nil)
+
+    assert_in_delta 45.0703, restaurant.latitude.to_f
+    assert_in_delta 7.6869, restaurant.longitude.to_f
+  end
+
+  test "does not geocode when address is unchanged" do
+    restaurants(:osteria).update!(description: "Updated")
+
+    assert_not_requested :get, PhotonStubs::PHOTON_API
+  end
+
+  test "skips results from countries outside the configured list" do
+    stub_photon([ photon_feature(countrycode: "FR", country: "France") ])
+
+    restaurant = users(:owner).restaurants.create!(name: "Nuova", address: "Rue de Rivoli, Paris")
+
+    assert_nil restaurant.latitude
+    assert_nil restaurant.longitude
+  end
+
+  test "save succeeds when geocoding fails" do
+    stub_request(:get, PhotonStubs::PHOTON_API).to_timeout
+
+    restaurant = users(:owner).restaurants.create!(name: "Nuova", address: "Via Roma 42, Milano")
+
+    assert restaurant.persisted?
+    assert_nil restaurant.latitude
+  end
 end

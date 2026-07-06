@@ -15,26 +15,24 @@
     <%= f.text_field :name, required: true, class: "input input-bordered w-full font-body", placeholder: t("owner.restaurants.form.name_placeholder") %>
   </div>
 
-  <div class="form-control">
+  <div class="form-control relative"
+       data-controller="autocomplete address-autocomplete"
+       data-autocomplete-url-value="<%= owner_address_suggestions_path %>"
+       data-autocomplete-min-length-value="3"
+       data-action="autocomplete.change->address-autocomplete#select">
     <%= f.label :address, t("owner.restaurants.form.address"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-    <%= f.text_field :address, required: true, class: "input input-bordered w-full font-body", placeholder: t("owner.restaurants.form.address_placeholder") %>
+    <%= f.text_field :address, required: true, autocomplete: "off",
+          class: "input input-bordered w-full font-body",
+          placeholder: t("owner.restaurants.form.address_placeholder"),
+          data: { autocomplete_target: "input", action: "input->address-autocomplete#clear" } %>
+    <ul class="address-suggestions" data-autocomplete-target="results" hidden></ul>
+    <%= f.hidden_field :latitude, data: { address_autocomplete_target: "latitude" } %>
+    <%= f.hidden_field :longitude, data: { address_autocomplete_target: "longitude" } %>
   </div>
 
   <div class="form-control">
     <%= f.label :description, t("owner.restaurants.form.description"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
     <%= f.text_area :description, rows: 3, class: "textarea textarea-bordered w-full font-body", placeholder: t("owner.restaurants.form.description_placeholder") %>
-  </div>
-
-  <div class="grid grid-cols-2 gap-4">
-    <div class="form-control">
-      <%= f.label :latitude, t("owner.restaurants.form.latitude"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-      <%= f.number_field :latitude, step: "0.0000001", class: "input input-bordered w-full font-body" %>
-    </div>
-
-    <div class="form-control">
-      <%= f.label :longitude, t("owner.restaurants.form.longitude"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-      <%= f.number_field :longitude, step: "0.0000001", class: "input input-bordered w-full font-body" %>
-    </div>
   </div>
 
   <div class="form-control">
