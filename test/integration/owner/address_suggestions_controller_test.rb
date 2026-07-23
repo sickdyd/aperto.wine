@@ -28,7 +28,7 @@ module Owner
       assert_match 'data-autocomplete-value="Via Roma 42, 20121 Milano, Italia"', response.body
       assert_match 'data-latitude="45.4642"', response.body
       assert_match 'data-longitude="9.19"', response.body
-      assert_match "OpenStreetMap contributors", response.body
+      assert_match I18n.t("owner.restaurants.form.address_suggestions_attribution"), response.body
     end
 
     test "index escapes HTML in photon data" do

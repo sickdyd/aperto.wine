@@ -50,6 +50,9 @@ gem "active_storage_validations", "~> 3.0"
 # Geocoding (address → coordinates) via OpenStreetMap/Photon [https://github.com/alexreisner/geocoder]
 gem "geocoder", "~> 1.8"
 
+# Framework locale data (validation messages, date/time formats) for Italian [https://github.com/svenfuchs/rails-i18n]
+gem "rails-i18n", "~> 8.1"
+
 group :development, :test do
   # Load environment variables from .env files
   gem "dotenv-rails"

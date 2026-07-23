@@ -20,19 +20,19 @@ class RestaurantTest < ActiveSupport::TestCase
   test "requires name" do
     restaurant = Restaurant.new(valid_attributes.merge(name: ""))
     assert_not restaurant.valid?
-    assert_includes restaurant.errors[:name], "can't be blank"
+    assert restaurant.errors.of_kind?(:name, :blank)
   end
 
   test "requires address" do
     restaurant = Restaurant.new(valid_attributes.merge(address: ""))
     assert_not restaurant.valid?
-    assert_includes restaurant.errors[:address], "can't be blank"
+    assert restaurant.errors.of_kind?(:address, :blank)
   end
 
   test "requires proximity_radius_meters greater than 0" do
     restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: 0))
     assert_not restaurant.valid?
-    assert_includes restaurant.errors[:proximity_radius_meters], "must be greater than 0"
+    assert restaurant.errors.of_kind?(:proximity_radius_meters, :greater_than)
   end
 
   test "rejects negative proximity_radius_meters" do

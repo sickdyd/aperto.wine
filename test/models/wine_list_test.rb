@@ -14,7 +14,7 @@ class WineListTest < ActiveSupport::TestCase
   test "requires name" do
     list = WineList.new(valid_attributes.merge(name: ""))
     assert_not list.valid?
-    assert_includes list.errors[:name], "can't be blank"
+    assert list.errors.of_kind?(:name, :blank)
   end
 
   test "requires restaurant" do

@@ -25,13 +25,13 @@ class WineTest < ActiveSupport::TestCase
   test "requires name" do
     wine = Wine.new(valid_attributes.merge(name: ""))
     assert_not wine.valid?
-    assert_includes wine.errors[:name], "can't be blank"
+    assert wine.errors.of_kind?(:name, :blank)
   end
 
   test "requires bottle_size_ml greater than 0" do
     wine = Wine.new(valid_attributes.merge(bottle_size_ml: 0))
     assert_not wine.valid?
-    assert_includes wine.errors[:bottle_size_ml], "must be greater than 0"
+    assert wine.errors.of_kind?(:bottle_size_ml, :greater_than)
   end
 
   test "rejects negative bottle_size_ml" do
@@ -42,7 +42,7 @@ class WineTest < ActiveSupport::TestCase
   test "requires available_glasses >= 0" do
     wine = Wine.new(valid_attributes.merge(available_glasses: -1))
     assert_not wine.valid?
-    assert_includes wine.errors[:available_glasses], "must be greater than or equal to 0"
+    assert wine.errors.of_kind?(:available_glasses, :greater_than_or_equal_to)
   end
 
   test "allows available_glasses of zero" do
@@ -203,7 +203,7 @@ class WineTest < ActiveSupport::TestCase
   test "rejects tasting attribute above 5" do
     wine = Wine.new(valid_attributes.merge(tannins: 6))
     assert_not wine.valid?
-    assert_includes wine.errors[:tannins], "must be in 0..5"
+    assert wine.errors.of_kind?(:tannins, :in)
   end
 
   test "rejects tasting attribute below 0" do

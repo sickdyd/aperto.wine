@@ -31,7 +31,7 @@ class OrderItemTest < ActiveSupport::TestCase
   test "glass_size_ml must be in GLASS_SIZES" do
     item = OrderItem.new(valid_attributes.merge(glass_size_ml: 200))
     assert_not item.valid?
-    assert_includes item.errors[:glass_size_ml], "is not included in the list"
+    assert item.errors.of_kind?(:glass_size_ml, :inclusion)
   end
 
   test "accepts all valid glass sizes" do
@@ -44,7 +44,7 @@ class OrderItemTest < ActiveSupport::TestCase
   test "requires quantity greater than 0" do
     item = OrderItem.new(valid_attributes.merge(quantity: 0))
     assert_not item.valid?
-    assert_includes item.errors[:quantity], "must be greater than 0"
+    assert item.errors.of_kind?(:quantity, :greater_than)
   end
 
   test "rejects negative quantity" do
@@ -55,7 +55,7 @@ class OrderItemTest < ActiveSupport::TestCase
   test "requires unit_price_cents greater than 0" do
     item = OrderItem.new(valid_attributes.merge(unit_price_cents: 0))
     assert_not item.valid?
-    assert_includes item.errors[:unit_price_cents], "must be greater than 0"
+    assert item.errors.of_kind?(:unit_price_cents, :greater_than)
   end
 
   test "rejects negative unit_price_cents" do

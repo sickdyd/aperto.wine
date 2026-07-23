@@ -13,14 +13,14 @@ class UserTest < ActiveSupport::TestCase
   test "requires email" do
     user = User.new(valid_attributes.merge(email: ""))
     assert_not user.valid?
-    assert_includes user.errors[:email], "can't be blank"
+    assert user.errors.of_kind?(:email, :blank)
   end
 
   test "requires unique email" do
     User.create!(valid_attributes)
     user = User.new(valid_attributes.merge(name: "Another"))
     assert_not user.valid?
-    assert_includes user.errors[:email], "has already been taken"
+    assert user.errors.of_kind?(:email, :taken)
   end
 
   test "normalizes email" do
@@ -32,7 +32,7 @@ class UserTest < ActiveSupport::TestCase
   test "requires password minimum 8 characters" do
     user = User.new(valid_attributes.merge(password: "short", password_confirmation: "short"))
     assert_not user.valid?
-    assert_includes user.errors[:password], "is too short (minimum is 8 characters)"
+    assert user.errors.of_kind?(:password, :too_short)
   end
 
   test "requires name" do

@@ -13,7 +13,7 @@ class RestaurantTableTest < ActiveSupport::TestCase
   test "invalid without name" do
     table = @restaurant.restaurant_tables.build(name: "")
     assert_not table.valid?
-    assert_includes table.errors[:name], "can't be blank"
+    assert table.errors.of_kind?(:name, :blank)
   end
 
   test "name must be unique within restaurant and area" do

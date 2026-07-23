@@ -28,7 +28,7 @@ module ApertoWine
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
-    config.i18n.default_locale = :en
+    config.i18n.default_locale = :it
     config.i18n.available_locales = %i[en it]
     config.i18n.fallbacks = true
   end

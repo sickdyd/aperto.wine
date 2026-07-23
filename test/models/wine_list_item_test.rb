@@ -29,7 +29,7 @@ class WineListItemTest < ActiveSupport::TestCase
   test "rejects the same wine twice on one list" do
     dup = WineListItem.new(wine_list: wine_lists(:summer), wine: wines(:barolo))
     assert_not dup.valid?
-    assert_includes dup.errors[:wine_id], "has already been taken"
+    assert dup.errors.of_kind?(:wine_id, :taken)
   end
 
   test "allows the same wine on different lists" do

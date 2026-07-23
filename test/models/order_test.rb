@@ -30,7 +30,7 @@ class OrderTest < ActiveSupport::TestCase
   test "requires total_amount_cents >= 0" do
     order = Order.new(valid_attributes.merge(total_amount_cents: -1))
     assert_not order.valid?
-    assert_includes order.errors[:total_amount_cents], "must be greater than or equal to 0"
+    assert order.errors.of_kind?(:total_amount_cents, :greater_than_or_equal_to)
   end
 
   test "allows total_amount_cents of zero" do
