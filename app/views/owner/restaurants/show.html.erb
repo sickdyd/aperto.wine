@@ -64,6 +64,26 @@
     </div>
     <p class="text-xs text-base-content/50"><%= t("owner.restaurants.qr_description") %></p>
   </a>
+
+  <%# The public menu only serves active restaurants, so an inactive one gets a
+      hint instead of a link that would 404. %>
+  <% if @restaurant.active? %>
+    <a href="<%= menu_path(id: @restaurant.id) %>" target="_blank" rel="noopener" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
+      <div class="flex items-center gap-3 mb-2">
+        <%= icon "eye", css: "size-5 text-primary/70" %>
+        <span class="font-body text-sm font-medium"><%= t("owner.restaurants.preview_menu") %></span>
+      </div>
+      <p class="text-xs text-base-content/50"><%= t("owner.restaurants.preview_description") %></p>
+    </a>
+  <% else %>
+    <div class="block p-6 rounded-lg border border-base-content/5 opacity-50">
+      <div class="flex items-center gap-3 mb-2">
+        <%= icon "eye-slash", css: "size-5 text-base-content/40" %>
+        <span class="font-body text-sm font-medium"><%= t("owner.restaurants.preview_menu") %></span>
+      </div>
+      <p class="text-xs text-base-content/50"><%= t("owner.restaurants.preview_inactive_hint") %></p>
+    </div>
+  <% end %>
 </div>
 
 <% if @restaurant.description.present? %>

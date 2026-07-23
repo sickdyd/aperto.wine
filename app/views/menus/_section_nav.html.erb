@@ -1,0 +1,15 @@
+<%# Locals: sections (required) — [dom_id, label] pairs, one per rendered menu
+    section, in page order (see MenusHelper#menu_nav_sections).
+
+    Sticky jump navigation: one chip per rendered menu section. Chips are plain
+    anchors so navigation works without JS; smooth scrolling comes from the
+    scroll-smooth class on <html> and scroll-mt-* offsets on the sections. %>
+<nav aria-label="<%= t("menu.sections_nav_label") %>" class="sticky top-0 z-10 -mx-4 px-4 py-3 mb-6 bg-base-100/90 backdrop-blur">
+  <div class="flex gap-2 overflow-x-auto">
+    <% sections.each do |dom_id, label| %>
+      <a href="#<%= dom_id %>" class="badge badge-ghost shrink-0 py-3 px-4 font-body text-xs uppercase tracking-wider hover:badge-primary transition-colors">
+        <%= label %>
+      </a>
+    <% end %>
+  </div>
+</nav>

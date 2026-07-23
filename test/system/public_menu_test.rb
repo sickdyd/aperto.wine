@@ -39,7 +39,7 @@ class PublicMenuTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    assert_text "Sold out"
+    assert_text I18n.t("shared.sold_out")
   end
 
   test "menu has a search field" do
@@ -53,7 +53,7 @@ class PublicMenuTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    assert_text "Powered by"
+    assert_text I18n.t("menu.powered_by")
     assert_link "aperto.wine"
   end
 
@@ -72,6 +72,43 @@ class PublicMenuTest < ApplicationSystemTestCase
     assert_current_path root_path
   end
 
+  # --- Section navigation ---
+
+  def section_nav_selector
+    "nav[aria-label='#{I18n.t("menu.sections_nav_label")}']"
+  end
+
+  test "menu with multiple sections shows jump navigation chips" do
+    visit menu_path(id: restaurants(:trattoria).id)
+
+    within section_nav_selector do
+      assert_link "House Picks"
+      assert_link I18n.t("owner.wines.colors.red")
+    end
+
+    assert_selector "section#list-#{wine_lists(:trattoria_list).id}"
+    assert_selector "section#color-red"
+  end
+
+  test "clicking a jump chip navigates to that section anchor" do
+    visit menu_path(id: restaurants(:trattoria).id)
+
+    within section_nav_selector do
+      click_link I18n.t("owner.wines.colors.red")
+    end
+
+    assert page.has_current_path?(/#color-red\z/, url: true),
+           "expected URL to gain the #color-red fragment, got #{current_url}"
+  end
+
+  test "menu with a single section shows no jump navigation" do
+    restaurants(:trattoria).update!(all_wines_list_active: false)
+    visit menu_path(id: restaurants(:trattoria).id)
+
+    assert_text "House Picks"
+    assert_no_selector section_nav_selector
+  end
+
   # --- Curated lists ---
 
   test "restaurant with an active list shows its curated list" do
@@ -85,6 +122,6 @@ class PublicMenuTest < ApplicationSystemTestCase
     visit menu_path(id: restaurants(:trattoria).id)
 
     assert_text "Reserve Barbaresco"
-    assert_text "Currently unavailable"
+    assert_text I18n.t("menu.unavailable")
   end
 end

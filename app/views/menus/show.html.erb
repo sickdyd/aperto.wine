@@ -18,17 +18,21 @@
   </div>
 
   <%# Render every enabled list: published curated lists first, then the
-      default "All Wines" list (the full menu grouped by color) if enabled. %>
+      default "All Wines" list (the full menu grouped by color) if enabled.
+      Curated lists hide deactivated wines entirely (like the flat list);
+      active wines with no glasses still render with the "unavailable" badge. %>
+  <% rendered_lists = renderable_wine_lists(@wine_lists) %>
   <% all_wines = @show_all_wines ? @wines.to_a : [] %>
-  <% rendered_any = false %>
+  <% color_groups = all_wines.group_by(&:color) %>
+  <% rendered_any = rendered_lists.any? || all_wines.any? %>
 
-  <% @wine_lists.each do |wine_list| %>
-    <%# Hide deactivated wines entirely (like the flat list); active wines with
-        no glasses still render with the "currently unavailable" badge. %>
-    <% items = wine_list.wine_list_items.select { |i| i.wine.active? }.sort_by { |i| [i.position, i.id] } %>
-    <% next if items.empty? %>
-    <% rendered_any = true %>
-    <section class="mb-10">
+  <% nav_sections = menu_nav_sections(rendered_lists, color_groups) %>
+  <% if nav_sections.size > 1 %>
+    <%= render "section_nav", sections: nav_sections %>
+  <% end %>
+
+  <% rendered_lists.each do |wine_list, items| %>
+    <section id="list-<%= wine_list.id %>" class="mb-10 scroll-mt-20">
       <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
       <% if wine_list.season.present? %>
         <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
@@ -45,13 +49,12 @@
   <% end %>
 
   <% if all_wines.any? %>
-    <% rendered_any = true %>
     <%# Only label this section when curated lists also appear above it. %>
-    <% if @wine_lists.any? { |l| l.wine_list_items.any? { |i| i.wine.active? } } %>
+    <% if rendered_lists.any? %>
       <h2 class="font-display text-2xl font-light mb-6"><%= t("menu.all_wines") %></h2>
     <% end %>
-    <% all_wines.group_by(&:color).each do |color, wines| %>
-      <section class="mb-10">
+    <% color_groups.each do |color, wines| %>
+      <section id="color-<%= color %>" class="mb-10 scroll-mt-20">
         <h2 class="font-display text-xl font-medium mb-4 flex items-center gap-2">
           <span class="inline-block w-3 h-3 rounded-full <%= wine_color_class(color) %>"></span>
           <%= t("owner.wines.colors.#{color}") %>

@@ -133,6 +133,9 @@ en:
       qr_description: "Print QR code for your tables."
       tables: "Dining Tables"
       tables_description: "Manage your tables and print a QR code for each one."
+      preview_menu: "Preview menu"
+      preview_description: "See the menu as your customers do."
+      preview_inactive_hint: "Activate the restaurant to preview the menu."
       form:
         name: "Restaurant Name"
         name_placeholder: "e.g. Osteria del Borgo"
@@ -302,6 +305,7 @@ en:
     title: "Wine List"
     all_wines: "All Wines"
     search_placeholder: "Search wines..."
+    sections_nav_label: "Menu sections"
     opened_at: "Opened %{time} ago"
     unavailable: "Currently unavailable"
     empty: "No wines available at the moment."

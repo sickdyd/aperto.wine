@@ -133,6 +133,9 @@ it:
       qr_description: "Stampa il codice QR per i tuoi tavoli."
       tables: "Tavoli in sala"
       tables_description: "Gestisci i tavoli e stampa un codice QR per ciascuno."
+      preview_menu: "Anteprima menu"
+      preview_description: "Guarda il menu come lo vedono i tuoi clienti."
+      preview_inactive_hint: "Attiva il ristorante per vedere l'anteprima del menu."
       form:
         name: "Nome Ristorante"
         name_placeholder: "es. Osteria del Borgo"
@@ -302,6 +305,7 @@ it:
     title: "Carta dei Vini"
     all_wines: "Tutti i Vini"
     search_placeholder: "Cerca vini..."
+    sections_nav_label: "Sezioni del menu"
     opened_at: "Aperta %{time} fa"
     unavailable: "Non disponibile al momento"
     empty: "Nessun vino disponibile al momento."

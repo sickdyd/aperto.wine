@@ -24,5 +24,11 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     # Suppress first-run prompts that can steal focus from the page under test.
     options.add_argument("--disable-search-engine-choice-screen")
     options.add_argument("--disable-features=Translate")
+    # Locale is negotiated from Accept-Language and non-default locales get a
+    # URL prefix, so path and copy assertions depend on the browser language.
+    # Pin it to the configured default (:en in the test env) instead of
+    # inheriting the host machine's locale.
+    options.add_argument("--accept-lang=#{I18n.default_locale}")
+    options.add_preference("intl.accept_languages", I18n.default_locale.to_s)
   end
 end
