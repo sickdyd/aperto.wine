@@ -8,7 +8,9 @@ default: &default
   port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
   username: <%= ENV["DATABASE_USERNAME"] %>
   password: <%= ENV["DATABASE_PASSWORD"] %>
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  # Pool must cover Puma threads + SolidQueue threads (workers + dispatcher)
+  # when SOLID_QUEUE_IN_PUMA is set, so DB_POOL (Render) takes precedence.
+  max_connections: <%= ENV.fetch("DB_POOL", ENV.fetch("RAILS_MAX_THREADS", 5)) %>
 
 development:
   <<: *default
@@ -18,15 +20,9 @@ test:
   <<: *default
   database: aperto_wine_test
 
+# Single database (jeero pattern): Render provisions one Postgres per
+# environment, so Solid Cache and Solid Queue tables live in the primary
+# schema (created via regular migrations) instead of separate databases.
 production:
-  primary: &primary_production
-    <<: *default
-    database: aperto_wine_production
-  cache:
-    <<: *primary_production
-    database: aperto_wine_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: aperto_wine_production_queue
-    migrations_paths: db/queue_migrate
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
