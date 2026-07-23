@@ -3,10 +3,23 @@
 <div class="mb-8">
   <div class="flex items-center justify-between">
     <h1 class="font-display text-3xl font-light"><%= t("owner.wine_lists.title") %></h1>
-    <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine btn-sm">
-      <%= icon "plus", css: "size-4" %>
-      <%= t("owner.wine_lists.add") %>
-    </a>
+    <div class="flex items-center gap-2">
+      <% if @restaurant.active? %>
+        <a href="<%= menu_path(id: @restaurant.id) %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm text-xs uppercase tracking-wider">
+          <%= icon "eye", css: "size-4" %>
+          <%= t("owner.restaurants.preview_menu") %>
+        </a>
+      <% else %>
+        <span class="btn btn-ghost btn-sm btn-disabled text-xs uppercase tracking-wider" title="<%= t("owner.restaurants.preview_inactive_hint") %>">
+          <%= icon "eye-slash", css: "size-4" %>
+          <%= t("owner.restaurants.preview_menu") %>
+        </span>
+      <% end %>
+      <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine btn-sm">
+        <%= icon "plus", css: "size-4" %>
+        <%= t("owner.wine_lists.add") %>
+      </a>
+    </div>
   </div>
   <p class="text-sm text-base-content/50 mt-2"><%= t("owner.wine_lists.intro") %></p>
 </div>

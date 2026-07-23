@@ -103,6 +103,30 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     assert_no_text "To Delete"
   end
 
+  # ── Menu preview ──────────────────────────────────────────────────────────
+
+  test "owner sees a preview menu card linking to the public menu" do
+    sign_in_as_owner
+
+    restaurant = restaurants(:osteria)
+    visit owner_restaurant_path(id: restaurant.id)
+
+    link = find_link(I18n.t("owner.restaurants.preview_menu"))
+    assert_equal menu_path(id: restaurant.id), URI.parse(link[:href]).path
+    assert_equal "_blank", link[:target]
+    assert_includes link[:rel], "noopener"
+  end
+
+  test "preview menu card is disabled for an inactive restaurant" do
+    sign_in_as_owner
+
+    restaurant = restaurants(:inactive_restaurant)
+    visit owner_restaurant_path(id: restaurant.id)
+
+    assert_no_link I18n.t("owner.restaurants.preview_menu")
+    assert_text I18n.t("owner.restaurants.preview_inactive_hint")
+  end
+
   # ── Auth guard ────────────────────────────────────────────────────────────
 
   test "unauthenticated user is redirected away from owner restaurants" do

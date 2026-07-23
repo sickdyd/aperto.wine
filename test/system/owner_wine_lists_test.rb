@@ -10,6 +10,18 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     assert_text I18n.t("owner.restaurants.title"), wait: 5
   end
 
+  test "wine lists header offers a preview of the public menu" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+
+    visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.wine_lists.title"), wait: 5
+
+    link = find_link(I18n.t("owner.restaurants.preview_menu"))
+    assert_equal menu_path(id: restaurant.id), URI.parse(link[:href]).path
+    assert_equal "_blank", link[:target]
+  end
+
   test "owner can create a curated wine list and add a wine to it" do
     sign_in_as_owner
     restaurant = restaurants(:osteria)
