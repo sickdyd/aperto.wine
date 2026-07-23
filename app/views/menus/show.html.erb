@@ -12,11 +12,6 @@
     <div class="divider-wine mt-6"></div>
   </header>
 
-  <%# Search and filters (placeholder for now) %>
-  <div class="mb-8">
-    <input type="search" placeholder="<%= t('menu.search_placeholder') %>" class="input w-full font-body text-sm" data-controller="menu-search">
-  </div>
-
   <%# Render every enabled list: published curated lists first, then the
       default "All Wines" list (the full menu grouped by color) if enabled.
       Curated lists hide deactivated wines entirely (like the flat list);
@@ -26,50 +21,66 @@
   <% color_groups = all_wines.group_by(&:color) %>
   <% rendered_any = rendered_lists.any? || all_wines.any? %>
 
-  <% nav_sections = menu_nav_sections(rendered_lists, color_groups) %>
-  <% if nav_sections.size > 1 %>
-    <%= render "section_nav", sections: nav_sections %>
-  <% end %>
+  <% if rendered_any %>
+    <div data-controller="list-filter">
+      <div class="mb-8">
+        <label for="menu_search" class="sr-only"><%= t("menu.search_placeholder") %></label>
+        <input type="search"
+               id="menu_search"
+               placeholder="<%= t('menu.search_placeholder') %>"
+               class="input w-full font-body text-sm"
+               data-list-filter-target="input"
+               data-action="input->list-filter#filter">
+      </div>
 
-  <% rendered_lists.each do |wine_list, items| %>
-    <section id="list-<%= wine_list.id %>" class="mb-10 scroll-mt-20">
-      <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
-      <% if wine_list.season.present? %>
-        <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
-      <% else %>
-        <div class="mb-4"></div>
+      <% nav_sections = menu_nav_sections(rendered_lists, color_groups) %>
+      <% if nav_sections.size > 1 %>
+        <%= render "section_nav", sections: nav_sections %>
       <% end %>
 
-      <div class="space-y-3">
-        <% items.each do |item| %>
-          <%= render "wine_row", wine: item.wine, unavailable_label: t("menu.unavailable") %>
-        <% end %>
-      </div>
-    </section>
-  <% end %>
-
-  <% if all_wines.any? %>
-    <%# Only label this section when curated lists also appear above it. %>
-    <% if rendered_lists.any? %>
-      <h2 class="font-display text-2xl font-light mb-6"><%= t("menu.all_wines") %></h2>
-    <% end %>
-    <% color_groups.each do |color, wines| %>
-      <section id="color-<%= color %>" class="mb-10 scroll-mt-20">
-        <h2 class="font-display text-xl font-medium mb-4 flex items-center gap-2">
-          <span class="inline-block w-3 h-3 rounded-full <%= wine_color_class(color) %>"></span>
-          <%= t("owner.wines.colors.#{color}") %>
-        </h2>
-
-        <div class="space-y-3">
-          <% wines.each do |wine| %>
-            <%= render "wine_row", wine: wine %>
+      <% rendered_lists.each do |wine_list, items| %>
+        <section id="list-<%= wine_list.id %>" class="mb-10 scroll-mt-20" data-list-filter-target="group">
+          <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
+          <% if wine_list.season.present? %>
+            <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
+          <% else %>
+            <div class="mb-4"></div>
           <% end %>
-        </div>
-      </section>
-    <% end %>
-  <% end %>
 
-  <% unless rendered_any %>
+          <div class="space-y-3">
+            <% items.each do |item| %>
+              <%= render "wine_row", wine: item.wine, unavailable_label: t("menu.unavailable") %>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+
+      <% if all_wines.any? %>
+        <%# Only label this section when curated lists also appear above it. %>
+        <% if rendered_lists.any? %>
+          <h2 class="font-display text-2xl font-light mb-6"><%= t("menu.all_wines") %></h2>
+        <% end %>
+        <% color_groups.each do |color, wines| %>
+          <section id="color-<%= color %>" class="mb-10 scroll-mt-20" data-list-filter-target="group">
+            <h2 class="font-display text-xl font-medium mb-4 flex items-center gap-2">
+              <span class="inline-block w-3 h-3 rounded-full <%= wine_color_class(color) %>"></span>
+              <%= t("owner.wines.colors.#{color}") %>
+            </h2>
+
+            <div class="space-y-3">
+              <% wines.each do |wine| %>
+                <%= render "wine_row", wine: wine %>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+      <% end %>
+
+      <p data-list-filter-target="empty" hidden class="text-sm text-base-content/50 text-center py-8">
+        <%= t("menu.no_results") %>
+      </p>
+    </div>
+  <% else %>
     <div class="text-center py-16">
       <p class="text-base-content/50"><%= t("menu.empty") %></p>
     </div>
