@@ -48,6 +48,12 @@ Rails.application.configure do
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
 
+  # The whole suite (fixtures, fill_in/click labels, flash assertions) is
+  # written against the English UI. Production defaults to Italian; here the
+  # default stays :en so headless Chrome (Accept-Language: en) hits unprefixed
+  # URLs and path-helper assertions keep matching.
+  config.i18n.default_locale = :en
+
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true
 
