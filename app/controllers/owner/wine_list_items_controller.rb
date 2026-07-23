@@ -37,7 +37,10 @@ module Owner
     # Bulk reorder: persists the full submitted order in one transaction so
     # drag-and-drop reordering doesn't require one request per moved row.
     def sort
-      item_ids = Array(params[:item_ids]).reject(&:blank?)
+      # Permit only an array of scalars: a hash-shaped or otherwise malformed
+      # payload (e.g. item_ids[0][x]=y) is dropped entirely instead of
+      # reaching `find` as an ActionController::Parameters object.
+      item_ids = Array(params.permit(item_ids: [])[:item_ids]).reject(&:blank?)
       return head :unprocessable_entity if item_ids.empty?
 
       items = item_ids.map { |id| @wine_list.wine_list_items.find(id) }

@@ -9,7 +9,7 @@ const DEBOUNCE_MS = 150
 // mutated here — only visibility is toggled). `group` wraps a set of items
 // (e.g. a color section) and hides as a whole once none of its items match.
 export default class extends Controller {
-  static targets = ["input", "item", "group", "empty", "count"]
+  static targets = ["input", "item", "group", "empty"]
 
   connect() {
     this.timeout = null
@@ -41,10 +41,6 @@ export default class extends Controller {
 
     if (this.hasEmptyTarget) {
       this.emptyTarget.hidden = this.itemTargets.length === 0 || visibleCount > 0
-    }
-
-    if (this.hasCountTarget) {
-      this.countTarget.textContent = visibleCount
     }
   }
 }

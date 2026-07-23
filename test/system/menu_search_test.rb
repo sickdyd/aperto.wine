@@ -23,6 +23,17 @@ class MenuSearchTest < ApplicationSystemTestCase
     assert_text "Gavi di Gavi"
   end
 
+  test "typing a vintage year filters the menu to wines from that year" do
+    visit_menu
+
+    assert_text "Gavi di Gavi"
+
+    fill_in I18n.t("menu.search_placeholder"), with: "2018"
+
+    assert_text "Barolo Riserva", wait: 5
+    assert_no_text "Gavi di Gavi"
+  end
+
   test "shows a no-results message when nothing matches" do
     visit_menu
 

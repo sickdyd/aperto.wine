@@ -229,8 +229,6 @@ en:
         intro: "Hand-pick wines from your shared catalog — the same wine can appear on any number of lists. Availability is still driven by your bottles — featured wines that are sold out show as currently unavailable."
         empty: "No wines on this list yet."
         position: "Sort order"
-        add_label: "Add a wine from your catalog"
-        add: "Add"
         added: "Wine added to the list."
         removed: "Wine removed from the list."
         reordered: "List order updated."

@@ -229,8 +229,6 @@ it:
         intro: "Scegli i vini dal tuo catalogo condiviso — lo stesso vino può apparire in qualsiasi numero di liste. La disponibilità dipende sempre dalle bottiglie — i vini in evidenza ma esauriti appaiono come non disponibili."
         empty: "Nessun vino in questa lista."
         position: "Ordine"
-        add_label: "Aggiungi un vino dal tuo catalogo"
-        add: "Aggiungi"
         added: "Vino aggiunto alla lista."
         removed: "Vino rimosso dalla lista."
         reordered: "Ordine della lista aggiornato."

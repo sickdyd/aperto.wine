@@ -207,5 +207,21 @@ module Owner
 
       assert_response :unprocessable_entity
     end
+
+    test "sort with hash-shaped item_ids is rejected as a client error, not a 500, and changes no positions" do
+      sign_in_as @owner
+      summer = wine_lists(:summer)
+      first = wine_list_items(:summer_barolo)
+      second = wine_list_items(:summer_sold_out)
+      original_first_position = first.position
+      original_second_position = second.position
+
+      patch sort_owner_restaurant_wine_list_wine_list_items_path(restaurant_id: @restaurant, wine_list_id: summer),
+        params: { item_ids: { "0" => { "malicious" => "payload" } } }
+
+      assert_includes 400..499, response.status
+      assert_equal original_first_position, first.reload.position
+      assert_equal original_second_position, second.reload.position
+    end
   end
 end

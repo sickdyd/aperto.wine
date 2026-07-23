@@ -36,6 +36,17 @@ export default class extends Controller {
         sort: false,
         // Keep interactive controls clickable instead of starting a drag.
         filter: "a, button, input, [data-sortable-handle]",
+        // Don't preventDefault() on touchstart for filtered elements — that
+        // would swallow the synthesized click on the "Add to list" button,
+        // the mobile fallback for drag-and-drop.
+        preventOnFilter: false,
+        // Rows aren't touch-action: none here (unlike member rows, which
+        // scope that to their drag handle), so a bare touchstart must be
+        // able to become a scroll. Require a brief hold before a drag
+        // starts, and a small movement threshold, so taps/swipes pass
+        // through untouched.
+        delayOnTouchOnly: 150,
+        touchStartThreshold: 5,
         animation: 150
       }))
     }
