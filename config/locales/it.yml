@@ -101,6 +101,10 @@ it:
     cta_customer: "Sono un amante del vino"
   owner:
     dashboard: "Pannello"
+    shared:
+      filter:
+        placeholder: "Cerca..."
+        no_results: "Nessun risultato."
     nav:
       overview: "Panoramica"
       wines: "I miei vini"

@@ -101,6 +101,10 @@ en:
     cta_customer: "I'm a wine lover"
   owner:
     dashboard: "Dashboard"
+    shared:
+      filter:
+        placeholder: "Search..."
+        no_results: "No matches found."
     nav:
       overview: "Overview"
       wines: "My Wines"

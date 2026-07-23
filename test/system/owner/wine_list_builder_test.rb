@@ -72,6 +72,24 @@ module Owner
       assert_equal 5, wine_list_items(:summer_barolo).reload.position
     end
 
+    test "filtering the available wines column hides non-matching wines" do
+      sign_in_as_owner
+      list = wine_lists(:winter) # member: gavi; available: barolo, sold_out
+      visit_list(list)
+
+      within "[data-sortable-target='available']" do
+        assert_text "Barolo Riserva"
+        assert_text "Sold Out Wine"
+      end
+
+      fill_in I18n.t("owner.shared.filter.placeholder"), with: "Barolo"
+
+      within "[data-sortable-target='available']" do
+        assert_text "Barolo Riserva", wait: 5
+        assert_no_text "Sold Out Wine"
+      end
+    end
+
     # --- SECONDARY: drag-and-drop (SortableJS). These pass reliably under
     # headless Chrome; Minitest::Retry (2 retries) covers occasional infra
     # flake. The button-path tests above are the primary, must-pass coverage. ---

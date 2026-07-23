@@ -1,4 +1,7 @@
-<div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100 cursor-grab touch-none" data-wine-id="<%= wine.id %>">
+<div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100 cursor-grab touch-none"
+     data-wine-id="<%= wine.id %>"
+     data-list-filter-target="item"
+     data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety].compact_blank.join(" ").downcase %>">
   <div class="flex items-center gap-2 min-w-0">
     <span class="inline-block w-2.5 h-2.5 rounded-full <%= wine_color_class(wine.color) %>"></span>
     <span class="font-body text-sm truncate"><%= wine.name %></span>

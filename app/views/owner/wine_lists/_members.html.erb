@@ -26,14 +26,26 @@
     </div>
 
     <%# --- Available wines (drag source + Add button) --- %>
-    <div>
+    <div data-controller="list-filter">
       <h3 class="font-body text-sm font-medium text-base-content/70 mb-3"><%= t("owner.wine_lists.members.available_title") %></h3>
       <% if available_wines.any? %>
+        <div class="mb-3">
+          <label for="available_wines_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
+          <input type="search"
+                 id="available_wines_filter"
+                 class="input input-sm w-full font-body text-sm"
+                 placeholder="<%= t("owner.shared.filter.placeholder") %>"
+                 data-list-filter-target="input"
+                 data-action="input->list-filter#filter">
+        </div>
         <div data-sortable-target="available"
              aria-describedby="wine_list_drag_hint"
              class="space-y-2">
           <%= render partial: "owner/wine_lists/available_wine", collection: available_wines, as: :wine, locals: { wine_list: wine_list } %>
         </div>
+        <p data-list-filter-target="empty" hidden class="text-xs text-base-content/40 mt-3">
+          <%= t("owner.shared.filter.no_results") %>
+        </p>
         <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="inline-block mt-3 text-xs text-base-content/50 link link-hover">
           <%= t("owner.wine_lists.manage_wines") %>
         </a>
