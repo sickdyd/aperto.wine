@@ -44,8 +44,10 @@ class TableBulkGeneration
             restaurant.restaurant_tables.create!(name:, area:, position:, active: true)
             @created_count += 1
           rescue ActiveRecord::RecordInvalid
-            # Concurrent duplicate submission created the same (area, name) between
-            # the snapshot above and this create attempt; skip this table.
+            # A duplicate (area, name) committed between the snapshot above and
+            # this create's uniqueness check; skip this table. (An insert racing
+            # inside the window still hits the DB unique index and 500s — rare
+            # enough for an owner-only form that we accept it.)
             @skipped_count += 1
           end
         end
