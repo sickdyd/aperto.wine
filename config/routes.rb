@@ -43,6 +43,8 @@ Rails.application.routes.draw do
           end
           collection do
             get :bulk_print
+            get :bulk_new
+            post :bulk_create
           end
         end
         resources :orders, only: [ :index, :show ] do

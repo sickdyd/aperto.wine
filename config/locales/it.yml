@@ -264,6 +264,9 @@ it:
         table_word: "Tavolo"
         floor_default: "Piano"
         too_many: "Puoi generare al massimo %{max} tavoli alla volta."
+        title: "Genera tavoli"
+        created: "%{created} tavoli creati."
+        created_with_skipped: "%{created} tavoli creati, %{skipped} saltati (nome già in uso)."
       form:
         name: "Nome Tavolo"
         name_placeholder: "es. Tavolo 1"

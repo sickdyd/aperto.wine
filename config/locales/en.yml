@@ -264,6 +264,9 @@ en:
         table_word: "Table"
         floor_default: "Floor"
         too_many: "You can generate at most %{max} tables at once."
+        title: "Generate Tables"
+        created: "%{created} tables created."
+        created_with_skipped: "%{created} tables created, %{skipped} skipped (name already in use)."
       form:
         name: "Table Name"
         name_placeholder: "e.g. Table 1"
