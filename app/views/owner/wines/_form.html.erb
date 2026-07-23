@@ -1,4 +1,4 @@
-<%= form_with model: [:owner, @restaurant, wine], class: "space-y-6 max-w-2xl",
+<%= form_with model: [:owner, @restaurant, wine], class: "space-y-10 max-w-2xl",
       data: { controller: "wine-autofill", wine_autofill_url_value: owner_wine_lookups_path } do |f| %>
   <% if wine.errors.any? %>
     <div role="alert" class="alert alert-error text-sm">
@@ -12,13 +12,13 @@
   <% end %>
 
   <%# Basic info %>
-  <fieldset class="space-y-4">
-    <legend class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-2"><%= t("owner.wines.form.basic_info") %></legend>
+  <fieldset class="form-section">
+    <legend class="form-section-title"><%= t("owner.wines.form.basic_info") %></legend>
 
-    <div class="form-control relative">
-      <%= f.label :name, t("owner.wines.form.name"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+    <div class="field relative">
+      <%= f.label :name, t("owner.wines.form.name"), class: "field-label" %>
       <%= f.text_field :name, required: true, autocomplete: "off",
-            class: "input input-bordered w-full font-body",
+            class: "input w-full font-body",
             placeholder: t("owner.wines.form.name_placeholder"),
             role: "combobox", "aria-expanded": "false", "aria-autocomplete": "list",
             "aria-label": t("owner.wines.autofill.aria_label"),
@@ -34,72 +34,72 @@
           data-action="mousedown->wine-autofill#keepOpen"></ul>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div class="form-control">
-        <%= f.label :producer, t("owner.wines.form.producer"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.text_field :producer, class: "input input-bordered w-full font-body", data: { wine_autofill_target: "producer" } %>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="field">
+        <%= f.label :producer, t("owner.wines.form.producer"), class: "field-label" %>
+        <%= f.text_field :producer, class: "input w-full font-body", data: { wine_autofill_target: "producer" } %>
       </div>
 
-      <div class="form-control">
-        <%= f.label :grape_variety, t("owner.wines.form.grape_variety"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.text_field :grape_variety, class: "input input-bordered w-full font-body", placeholder: t("owner.wines.form.grape_placeholder"), data: { wine_autofill_target: "grape" } %>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-3 gap-4">
-      <div class="form-control">
-        <%= f.label :color, t("owner.wines.form.color"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.select :color, Wine.colors.keys.map { |c| [t("owner.wines.colors.#{c}"), c] }, {}, class: "select select-bordered w-full font-body", data: { wine_autofill_target: "color" } %>
-      </div>
-
-      <div class="form-control">
-        <%= f.label :vintage_year, t("owner.wines.form.vintage_year"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input input-bordered w-full font-body", data: { wine_autofill_target: "vintage" } %>
-      </div>
-
-      <div class="form-control">
-        <%= f.label :region, t("owner.wines.form.region"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.text_field :region, class: "input input-bordered w-full font-body", placeholder: t("owner.wines.form.region_placeholder"), data: { wine_autofill_target: "region" } %>
+      <div class="field">
+        <%= f.label :grape_variety, t("owner.wines.form.grape_variety"), class: "field-label" %>
+        <%= f.text_field :grape_variety, class: "input w-full font-body", placeholder: t("owner.wines.form.grape_placeholder"), data: { wine_autofill_target: "grape" } %>
       </div>
     </div>
 
-    <div class="form-control">
-      <%= f.label :description, t("owner.wines.form.description"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-      <%= f.text_area :description, rows: 2, class: "textarea textarea-bordered w-full font-body" %>
+    <div class="grid sm:grid-cols-3 gap-4">
+      <div class="field">
+        <%= f.label :color, t("owner.wines.form.color"), class: "field-label" %>
+        <%= f.select :color, Wine.colors.keys.map { |c| [t("owner.wines.colors.#{c}"), c] }, {}, class: "select w-full font-body", data: { wine_autofill_target: "color" } %>
+      </div>
+
+      <div class="field">
+        <%= f.label :vintage_year, t("owner.wines.form.vintage_year"), class: "field-label" %>
+        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input w-full font-body", data: { wine_autofill_target: "vintage" } %>
+      </div>
+
+      <div class="field">
+        <%= f.label :region, t("owner.wines.form.region"), class: "field-label" %>
+        <%= f.text_field :region, class: "input w-full font-body", placeholder: t("owner.wines.form.region_placeholder"), data: { wine_autofill_target: "region" } %>
+      </div>
+    </div>
+
+    <div class="field">
+      <%= f.label :description, t("owner.wines.form.description"), class: "field-label" %>
+      <%= f.text_area :description, rows: 2, class: "textarea w-full font-body" %>
     </div>
   </fieldset>
 
   <%# Pricing %>
-  <fieldset class="space-y-4">
-    <legend class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-2"><%= t("owner.wines.form.pricing") %></legend>
+  <fieldset class="form-section">
+    <legend class="form-section-title"><%= t("owner.wines.form.pricing") %></legend>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div class="form-control">
-        <%= f.label :bottle_size_ml, t("owner.wines.form.bottle_size"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="field">
+        <%= f.label :bottle_size_ml, t("owner.wines.form.bottle_size"), class: "field-label" %>
         <div class="flex items-center gap-2">
-          <%= f.number_field :bottle_size_ml, min: 187, max: 3000, step: 1, class: "input input-bordered w-32 font-body" %>
-          <span class="text-sm text-base-content/50">ml</span>
+          <%= f.number_field :bottle_size_ml, min: 187, max: 3000, step: 1, class: "input w-28 font-body" %>
+          <span class="field-hint">ml</span>
         </div>
       </div>
 
-      <div class="form-control">
-        <%= f.label :price_bottle_cents, t("owner.wines.form.price_bottle"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+      <div class="field">
+        <%= f.label :price_bottle_cents, t("owner.wines.form.price_bottle"), class: "field-label" %>
         <div class="flex items-center gap-2">
-          <span class="text-sm text-base-content/50">&euro;</span>
-          <%= f.number_field :price_bottle_cents, min: 0, step: 1, class: "input input-bordered w-32 font-body", placeholder: t("owner.wines.form.cents_hint") %>
+          <span class="field-hint">&euro;</span>
+          <%= f.number_field :price_bottle_cents, min: 0, step: 1, class: "input w-28 font-body", placeholder: t("owner.wines.form.cents_hint") %>
         </div>
       </div>
     </div>
 
-    <p class="text-xs text-base-content/40"><%= t("owner.wines.form.glass_prices_hint") %></p>
+    <p class="field-hint"><%= t("owner.wines.form.glass_prices_hint") %></p>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <% Wine::GLASS_SIZES.each do |size| %>
-        <div class="form-control">
-          <%= f.label :"price_#{size}ml_cents", "#{size}ml", class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
+        <div class="field">
+          <%= f.label :"price_#{size}ml_cents", "#{size}ml", class: "field-label" %>
           <div class="flex items-center gap-1">
-            <span class="text-xs text-base-content/50">&euro;</span>
-            <%= f.number_field :"price_#{size}ml_cents", min: 0, step: 1, class: "input input-bordered w-full font-body input-sm", placeholder: "cents" %>
+            <span class="field-hint">&euro;</span>
+            <%= f.number_field :"price_#{size}ml_cents", min: 0, step: 1, class: "input input-sm w-full font-body", placeholder: "cents" %>
           </div>
         </div>
       <% end %>
@@ -107,14 +107,14 @@
   </fieldset>
 
   <%# Availability %>
-  <fieldset class="space-y-4">
-    <legend class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-2"><%= t("owner.wines.form.availability") %></legend>
+  <fieldset class="form-section">
+    <legend class="form-section-title"><%= t("owner.wines.form.availability") %></legend>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div class="form-control">
-        <%= f.label :available_glasses, t("owner.wines.form.available_glasses"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.number_field :available_glasses, min: 0, class: "input input-bordered w-32 font-body" %>
-        <p class="label text-xs text-base-content/40">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="field">
+        <%= f.label :available_glasses, t("owner.wines.form.available_glasses"), class: "field-label" %>
+        <%= f.number_field :available_glasses, min: 0, class: "input w-28 font-body" %>
+        <p class="field-hint">
           <%= t("owner.wines.form.suggested") %>:
           <% Wine::GLASS_SIZES.each do |size| %>
             <span class="font-medium"><%= (wine.bottle_size_ml || 750) / size %></span> &times; <%= size %>ml<%= size == Wine::GLASS_SIZES.last ? "" : "," %>
@@ -122,21 +122,19 @@
         </p>
       </div>
 
-      <div class="form-control">
-        <%= f.label :position, t("owner.wines.form.position"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.number_field :position, min: 0, class: "input input-bordered w-32 font-body" %>
+      <div class="field">
+        <%= f.label :position, t("owner.wines.form.position"), class: "field-label" %>
+        <%= f.number_field :position, min: 0, class: "input w-28 font-body" %>
       </div>
     </div>
 
-    <div class="form-control">
-      <label class="label cursor-pointer justify-start gap-3">
-        <%= f.check_box :active, class: "toggle toggle-primary" %>
-        <span class="label-text font-body"><%= t("owner.wines.form.active_label") %></span>
-      </label>
-    </div>
+    <label class="field-toggle">
+      <%= f.check_box :active, class: "toggle toggle-primary" %>
+      <span><%= t("owner.wines.form.active_label") %></span>
+    </label>
   </fieldset>
 
-  <div class="flex items-center gap-3 pt-4">
+  <div class="form-actions">
     <%= f.submit class: "btn-wine" %>
     <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
   </div>

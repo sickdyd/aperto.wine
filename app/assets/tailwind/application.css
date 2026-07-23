@@ -107,6 +107,36 @@
     display: block;
   }
 
+  /* Form vocabulary — daisyUI 5 replaced form-control/label-text; these are the
+     app-wide equivalents so every form shares one field treatment. */
+  .field {
+    @apply flex flex-col gap-1.5;
+  }
+
+  .field-label {
+    @apply font-body text-xs uppercase tracking-wider text-base-content/60;
+  }
+
+  .field-hint {
+    @apply font-body text-xs text-base-content/60;
+  }
+
+  .field-toggle {
+    @apply flex items-center gap-3 cursor-pointer font-body text-sm text-base-content;
+  }
+
+  .form-section {
+    @apply flex flex-col gap-4;
+  }
+
+  .form-section-title {
+    @apply font-body text-xs font-semibold uppercase tracking-[0.15em] text-base-content/80 pb-2 mb-1 border-b border-base-300 w-full;
+  }
+
+  .form-actions {
+    @apply flex items-center gap-3 pt-2;
+  }
+
   /* Address autocomplete dropdown (stimulus-autocomplete results) */
   .address-suggestions {
     @apply absolute left-0 right-0 top-full z-20 mt-1 list-none bg-base-100 border border-base-300 rounded-box shadow-lg p-1 max-h-64 overflow-y-auto;

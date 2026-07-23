@@ -8,7 +8,7 @@
     </div>
 
     <%# Role tabs %>
-    <div role="tablist" class="tabs tabs-bordered mb-8">
+    <div role="tablist" class="tabs tabs-border mb-8">
       <a role="tab" href="<%= sign_up_path(tab: 'customer') %>"
          class="tab font-body text-xs uppercase tracking-wider <%= @tab == 'customer' ? 'tab-active' : '' %>">
         <%= t("auth.tab_customer") %>
@@ -33,25 +33,25 @@
     <%= form_with model: @user, url: sign_up_path, method: :post, class: "space-y-5" do |f| %>
       <%= f.hidden_field :role, value: @tab %>
 
-      <div class="form-control">
-        <%= f.label :name, t("auth.name"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.text_field :name, required: true, autofocus: true, autocomplete: "name", class: "input input-bordered w-full font-body" %>
+      <div class="field">
+        <%= f.label :name, t("auth.name"), class: "field-label" %>
+        <%= f.text_field :name, required: true, autofocus: true, autocomplete: "name", class: "input w-full font-body" %>
       </div>
 
-      <div class="form-control">
-        <%= f.label :email, t("auth.email"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.email_field :email, required: true, autocomplete: "email", class: "input input-bordered w-full font-body", placeholder: "you@example.com" %>
+      <div class="field">
+        <%= f.label :email, t("auth.email"), class: "field-label" %>
+        <%= f.email_field :email, required: true, autocomplete: "email", class: "input w-full font-body", placeholder: "you@example.com" %>
       </div>
 
-      <div class="form-control">
-        <%= f.label :password, t("auth.password"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.password_field :password, required: true, autocomplete: "new-password", class: "input input-bordered w-full font-body" %>
-        <p class="label text-xs text-base-content/40"><%= t("auth.password_hint") %></p>
+      <div class="field">
+        <%= f.label :password, t("auth.password"), class: "field-label" %>
+        <%= f.password_field :password, required: true, autocomplete: "new-password", class: "input w-full font-body" %>
+        <p class="field-hint"><%= t("auth.password_hint") %></p>
       </div>
 
-      <div class="form-control">
-        <%= f.label :password_confirmation, t("auth.password_confirmation"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "input input-bordered w-full font-body" %>
+      <div class="field">
+        <%= f.label :password_confirmation, t("auth.password_confirmation"), class: "field-label" %>
+        <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "input w-full font-body" %>
       </div>
 
       <%= f.submit t("auth.create_account"), class: "btn-wine w-full btn-md mt-2" %>

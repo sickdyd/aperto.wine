@@ -16,14 +16,14 @@
 
     <div data-controller="dev-login">
       <%= form_with url: sign_in_path, method: :post, class: "space-y-5" do |f| %>
-        <div class="form-control">
-          <%= f.label :email, t("auth.email"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-          <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input input-bordered w-full font-body", placeholder: "you@example.com", data: { dev_login_target: "email" } %>
+        <div class="field">
+          <%= f.label :email, t("auth.email"), class: "field-label" %>
+          <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input w-full font-body", placeholder: "you@example.com", data: { dev_login_target: "email" } %>
         </div>
 
-        <div class="form-control">
-          <%= f.label :password, t("auth.password"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-          <%= f.password_field :password, required: true, autocomplete: "current-password", class: "input input-bordered w-full font-body", data: { dev_login_target: "password" } %>
+        <div class="field">
+          <%= f.label :password, t("auth.password"), class: "field-label" %>
+          <%= f.password_field :password, required: true, autocomplete: "current-password", class: "input w-full font-body", data: { dev_login_target: "password" } %>
         </div>
 
         <%= f.submit t("auth.sign_in"), class: "btn-wine w-full btn-md mt-2" %>

@@ -19,7 +19,7 @@
           <div class="flex items-center gap-2 ml-4">
             <%= form_with model: [:owner, @restaurant, wine_list, item], method: :patch, class: "flex items-center gap-1" do |f| %>
               <%= f.label :position, t("owner.wine_lists.members.position"), class: "sr-only" %>
-              <%= f.number_field :position, value: item.position, min: 0, class: "input input-bordered input-xs w-16 font-body" %>
+              <%= f.number_field :position, value: item.position, min: 0, class: "input input-xs w-16 font-body" %>
               <%= f.submit t("shared.save"), class: "btn btn-ghost btn-xs" %>
             <% end %>
             <%= button_to owner_restaurant_wine_list_wine_list_item_path(@restaurant, wine_list, item), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.members.confirm_remove") } do %>
@@ -37,9 +37,9 @@
   <% available_wines = @restaurant.wines.by_position.where.not(id: items.map(&:wine_id)) %>
   <% if available_wines.any? %>
     <%= form_with url: owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list), method: :post, class: "flex items-end gap-3" do |f| %>
-      <div class="form-control flex-1">
-        <%= f.label :wine_id, t("owner.wine_lists.members.add_label"), class: "label font-body text-xs uppercase tracking-wider text-base-content/60" %>
-        <%= f.select :wine_id, available_wines.map { |w| [w.name, w.id] }, {}, class: "select select-bordered w-full font-body" %>
+      <div class="field flex-1">
+        <%= f.label :wine_id, t("owner.wine_lists.members.add_label"), class: "field-label" %>
+        <%= f.select :wine_id, available_wines.map { |w| [w.name, w.id] }, {}, class: "select w-full font-body" %>
       </div>
       <%= f.submit t("owner.wine_lists.members.add"), class: "btn-wine btn-sm" %>
     <% end %>

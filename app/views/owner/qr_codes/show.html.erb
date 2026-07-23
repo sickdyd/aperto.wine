@@ -27,7 +27,7 @@
     <div>
       <h3 class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-2"><%= t("owner.qr_code.menu_link") %></h3>
       <div class="flex items-center gap-2">
-        <input type="text" value="<%= @menu_url %>" readonly class="input input-bordered w-full font-body text-sm" id="menu-url">
+        <input type="text" value="<%= @menu_url %>" readonly class="input w-full font-body text-sm" id="menu-url">
         <button onclick="navigator.clipboard.writeText(document.getElementById('menu-url').value)" class="btn btn-ghost btn-sm">
           <%= icon "copy", css: "size-4" %>
         </button>
