@@ -79,4 +79,23 @@ class TableBulkGenerationTest < ActiveSupport::TestCase
     assert_not over_cap.save
     assert over_cap.errors[:base].any?
   end
+
+  test "rejects floor_label over 97 chars (area max is 100 minus ' 10' suffix for floor)" do
+    long_label = "x" * 98
+    gen = TableBulkGeneration.new(restaurant: @restaurant, floors_count: 2, tables_per_floor: 1,
+                                  floor_label: long_label, name_pattern: "t_number")
+    assert_not gen.save
+    assert gen.errors[:floor_label].any?
+    assert_equal 0, @restaurant.restaurant_tables.count
+    # Verify the exact error message references the limit
+    assert gen.errors[:floor_label].to_s.include?("97")
+  end
+
+  test "counts remain 0 after failed validation, not nil" do
+    gen = TableBulkGeneration.new(restaurant: @restaurant, floors_count: 2, tables_per_floor: 1,
+                                  floor_label: "", name_pattern: "t_number")
+    assert_not gen.save
+    assert_equal 0, gen.created_count
+    assert_equal 0, gen.skipped_count
+  end
 end

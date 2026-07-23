@@ -21,24 +21,33 @@ class TableBulkGeneration
   validates :floors_count, numericality: { only_integer: true, in: 1..MAX_FLOORS }
   validates :tables_per_floor, numericality: { only_integer: true, in: 1..MAX_TABLES_PER_FLOOR }
   validates :name_pattern, inclusion: { in: NAME_PATTERNS }
+  # RestaurantTable#area max length is 100; area_for appends " #{floor}" (up to " 10" = 3 chars),
+  # so floor_label must not exceed 97 to stay within the limit.
+  validates :floor_label, length: { maximum: 97 }, allow_blank: true
   validate :floor_label_required_for_multiple_floors
   validate :total_within_cap
 
   def save
+    @created_count = 0
+    @skipped_count = 0
     return false unless valid?
 
     existing = restaurant.restaurant_tables.pluck(:area, :name)
                          .map { |area, name| [ area, name.downcase ] }.to_set
-    @created_count = 0
-    @skipped_count = 0
 
     RestaurantTable.transaction do
       each_table do |area, name, position|
         if existing.include?([ area, name.downcase ])
           @skipped_count += 1
         else
-          restaurant.restaurant_tables.create!(name:, area:, position:, active: true)
-          @created_count += 1
+          begin
+            restaurant.restaurant_tables.create!(name:, area:, position:, active: true)
+            @created_count += 1
+          rescue ActiveRecord::RecordInvalid
+            # Concurrent duplicate submission created the same (area, name) between
+            # the snapshot above and this create attempt; skip this table.
+            @skipped_count += 1
+          end
         end
       end
     end
