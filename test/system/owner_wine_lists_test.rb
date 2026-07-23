@@ -43,11 +43,15 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     visit edit_owner_restaurant_wine_list_path(restaurant_id: restaurant, id: new_list)
     assert_text I18n.t("owner.wine_lists.members.title"), wait: 5
 
-    select "Barolo Riserva", from: "wine_id"
-    click_button I18n.t("owner.wine_lists.members.add")
+    barolo = restaurant.wines.find_by!(name: "Barolo Riserva")
+    within "[data-wine-id='#{barolo.id}']" do
+      click_button I18n.t("owner.wine_lists.members.add_to_list")
+    end
 
     assert_text I18n.t("owner.wine_lists.members.added"), wait: 5
-    assert_text "Barolo Riserva"
+    within "[data-sortable-target='members']" do
+      assert_text "Barolo Riserva"
+    end
   end
 
   test "the same wine can be added to two different lists" do
@@ -61,8 +65,9 @@ class OwnerWineListsTest < ApplicationSystemTestCase
       visit edit_owner_restaurant_wine_list_path(restaurant_id: restaurant, id: list)
       assert_text "Wines on this list", wait: 5
 
-      select wine.name, from: "wine_id"
-      click_button "Add"
+      within "[data-wine-id='#{wine.id}']" do
+        click_button "Add to list"
+      end
       assert_text "Wine added to the list.", wait: 5
     end
 

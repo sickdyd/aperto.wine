@@ -235,6 +235,12 @@ it:
         all_added: "Tutti i vini di questo ristorante sono già in questa lista."
         no_wines: "Il tuo catalogo vini è vuoto — aggiungi prima i vini, poi mettili in evidenza qui."
         go_to_wines: "Vai ai miei vini"
+        available_title: "Vini disponibili"
+        add_to_list: "Aggiungi alla lista"
+        drag_label: "Trascina per riordinare"
+        drag_hint: "Trascina un vino sulla lista per aggiungerlo, oppure trascina le righe per riordinarle. Preferisci la tastiera? Usa i pulsanti \"Aggiungi alla lista\" e i controlli dell'ordine."
+        reorder_failed: "Impossibile salvare il nuovo ordine. Riprova."
+        add_failed: "Impossibile aggiungere quel vino. Riprova."
     tables:
       title: "Tavoli in sala"
       intro: "Dai a ogni tavolo il suo codice QR: quando un cliente lo scansiona, i suoi ordini arrivano già associati al tavolo."

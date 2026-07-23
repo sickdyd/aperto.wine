@@ -235,6 +235,12 @@ en:
         all_added: "All of this restaurant's wines are already on this list."
         no_wines: "Your wine catalog is empty — add wines first, then feature them here."
         go_to_wines: "Go to My Wines"
+        available_title: "Available wines"
+        add_to_list: "Add to list"
+        drag_label: "Drag to reorder"
+        drag_hint: "Drag a wine onto the list to add it, or drag list rows to reorder. Prefer the keyboard? Use the \"Add to list\" and sort-order controls instead."
+        reorder_failed: "Could not save the new order. Please try again."
+        add_failed: "Could not add that wine. Please try again."
     tables:
       title: "Dining Tables"
       intro: "Give every table its own QR code: when a customer scans it, their orders arrive tagged with the table."
