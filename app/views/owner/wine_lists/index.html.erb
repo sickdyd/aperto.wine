@@ -50,31 +50,53 @@
   </div>
 
   <%# Custom curated lists. %>
-  <% @wine_lists.each do |wine_list| %>
-    <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all">
-      <div class="flex items-center gap-3 min-w-0">
-        <%= form_with model: [ :owner, @restaurant, wine_list ], method: :patch, data: { controller: "auto-submit" } do |f| %>
-          <%= f.check_box :active,
-                class: "toggle toggle-primary toggle-sm",
-                aria: { label: t("owner.wine_lists.toggle_label") },
-                data: { action: "change->auto-submit#submit" } %>
-        <% end %>
-        <div class="min-w-0">
-          <span class="font-body font-medium text-sm truncate"><%= wine_list.name %></span>
-          <p class="text-xs text-base-content/50 truncate">
-            <%= [ wine_list.season, t("owner.wine_lists.wine_count", count: wine_list.wine_list_items.size) ].compact_blank.join(" · ") %>
-          </p>
-        </div>
+  <% if @wine_lists.any? %>
+    <div data-controller="list-filter">
+      <div class="mb-2 max-w-sm">
+        <label for="wine_lists_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
+        <input type="search"
+               id="wine_lists_filter"
+               class="input w-full font-body text-sm"
+               placeholder="<%= t("owner.shared.filter.placeholder") %>"
+               data-list-filter-target="input"
+               data-action="input->list-filter#filter">
       </div>
 
-      <div class="flex items-center gap-1 ml-4">
-        <a href="<%= edit_owner_restaurant_wine_list_path(@restaurant, wine_list) %>" class="btn btn-ghost btn-xs">
-          <%= icon "pencil-simple", css: "size-3.5" %>
-        </a>
-        <%= button_to owner_restaurant_wine_list_path(@restaurant, wine_list), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.confirm_delete") } do %>
-          <%= icon "trash", css: "size-3.5" %>
+      <div class="space-y-2">
+        <% @wine_lists.each do |wine_list| %>
+          <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all"
+               data-list-filter-target="item"
+               data-search-terms="<%= wine_list.name.downcase %>">
+            <div class="flex items-center gap-3 min-w-0">
+              <%= form_with model: [ :owner, @restaurant, wine_list ], method: :patch, data: { controller: "auto-submit" } do |f| %>
+                <%= f.check_box :active,
+                      class: "toggle toggle-primary toggle-sm",
+                      aria: { label: t("owner.wine_lists.toggle_label") },
+                      data: { action: "change->auto-submit#submit" } %>
+              <% end %>
+              <div class="min-w-0">
+                <span class="font-body font-medium text-sm truncate"><%= wine_list.name %></span>
+                <p class="text-xs text-base-content/50 truncate">
+                  <%= [ wine_list.season, t("owner.wine_lists.wine_count", count: wine_list.wine_list_items.size) ].compact_blank.join(" · ") %>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1 ml-4">
+              <a href="<%= edit_owner_restaurant_wine_list_path(@restaurant, wine_list) %>" class="btn btn-ghost btn-xs">
+                <%= icon "pencil-simple", css: "size-3.5" %>
+              </a>
+              <%= button_to owner_restaurant_wine_list_path(@restaurant, wine_list), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.confirm_delete") } do %>
+                <%= icon "trash", css: "size-3.5" %>
+              <% end %>
+            </div>
+          </div>
         <% end %>
       </div>
+
+      <p data-list-filter-target="empty" hidden class="text-sm text-base-content/50 text-center py-8">
+        <%= t("owner.shared.filter.no_results") %>
+      </p>
     </div>
   <% end %>
 </div>

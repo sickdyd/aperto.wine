@@ -1,0 +1,20 @@
+<div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100 cursor-grab"
+     data-wine-id="<%= wine.id %>"
+     data-list-filter-target="item"
+     data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety].compact_blank.join(" ").downcase %>">
+  <div class="flex items-center gap-2 min-w-0">
+    <%= wine_color_dot(wine.color) %>
+    <span class="font-body text-sm truncate"><%= wine.name %></span>
+    <% if wine.producer.present? %>
+      <span class="text-xs text-base-content/50 truncate"><%= wine.producer %></span>
+    <% end %>
+  </div>
+
+  <%= button_to owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list),
+        params: { wine_id: wine.id },
+        class: "btn btn-ghost btn-xs shrink-0",
+        aria: { label: "#{t('owner.wine_lists.members.add_to_list')}: #{wine.name}" } do %>
+    <%= icon "plus", css: "size-3.5" %>
+    <span><%= t("owner.wine_lists.members.add_to_list") %></span>
+  <% end %>
+</div>

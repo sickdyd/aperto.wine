@@ -1,0 +1,26 @@
+<div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100" data-id="<%= item.id %>">
+  <div class="flex items-center gap-2 min-w-0">
+    <span data-sortable-handle
+          aria-label="<%= t("owner.wine_lists.members.drag_label") %>"
+          title="<%= t("owner.wine_lists.members.drag_label") %>"
+          class="cursor-grab touch-none text-base-content/30 hover:text-base-content/60 shrink-0">
+      <%= icon "dots-six-vertical", css: "size-4" %>
+    </span>
+    <%= wine_color_dot(item.wine.color) %>
+    <span class="font-body text-sm truncate"><%= item.wine.name %></span>
+    <% unless item.wine.available? %>
+      <span class="badge badge-ghost badge-xs"><%= t("menu.unavailable") %></span>
+    <% end %>
+  </div>
+
+  <div class="flex items-center gap-2 ml-4">
+    <%= form_with model: [:owner, @restaurant, wine_list, item], method: :patch, class: "flex items-center gap-1" do |f| %>
+      <%= f.label :position, t("owner.wine_lists.members.position"), class: "sr-only" %>
+      <%= f.number_field :position, value: item.position, min: 0, class: "input input-xs w-16 font-body" %>
+      <%= f.submit t("shared.save"), class: "btn btn-ghost btn-xs" %>
+    <% end %>
+    <%= button_to owner_restaurant_wine_list_wine_list_item_path(@restaurant, wine_list, item), method: :delete, class: "btn btn-ghost btn-xs text-error", aria: { label: "#{t('shared.delete')}: #{item.wine.name}" }, data: { turbo_confirm: t("owner.wine_lists.members.confirm_remove") } do %>
+      <%= icon "trash", css: "size-3.5" %>
+    <% end %>
+  </div>
+</div>

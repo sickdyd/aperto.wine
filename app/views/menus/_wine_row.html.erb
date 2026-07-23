@@ -7,7 +7,9 @@
 %>
 <% unavailable_label = local_assigns.fetch(:unavailable_label) { t("shared.sold_out") } %>
 <% open_bottle = wine.wine_bottles.find { |b| b.status == "open" } %>
-<div class="p-4 rounded-lg border border-base-content/5 <%= wine.available? ? '' : 'opacity-50' %>">
+<div class="p-4 rounded-lg border border-base-content/5 <%= wine.available? ? '' : 'opacity-50' %>"
+     data-list-filter-target="item"
+     data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.vintage_year, wine.region].compact_blank.join(" ").downcase %>">
   <div class="flex items-start justify-between">
     <div class="shrink-0 mr-3 mt-1.5">
       <%= wine_color_dot(wine.color) %>

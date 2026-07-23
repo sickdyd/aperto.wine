@@ -31,7 +31,11 @@ Rails.application.routes.draw do
           collection do
             patch :toggle_all_wines
           end
-          resources :wine_list_items, only: [ :create, :update, :destroy ]
+          resources :wine_list_items, only: [ :create, :update, :destroy ] do
+            collection do
+              patch :sort
+            end
+          end
         end
         resource :qr_code, only: [ :show ], controller: "qr_codes"
         resources :tables, except: [ :show ], controller: "restaurant_tables" do

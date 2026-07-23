@@ -1,59 +1,63 @@
-<section class="max-w-2xl">
+<% items = wine_list.wine_list_items.includes(:wine).by_position %>
+<% available_wines = @restaurant.wines.by_position.where.not(id: items.map(&:wine_id)) %>
+
+<section id="wine_list_members"
+         class="max-w-4xl"
+         data-controller="sortable"
+         data-sortable-create-url-value="<%= owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list) %>"
+         data-sortable-sort-url-value="<%= sort_owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list) %>"
+         data-sortable-reorder-failed-message="<%= t("owner.wine_lists.members.reorder_failed") %>"
+         data-sortable-add-failed-message="<%= t("owner.wine_lists.members.add_failed") %>">
   <h2 class="font-display text-xl font-light mb-1"><%= t("owner.wine_lists.members.title") %></h2>
-  <p class="text-sm text-base-content/50 mb-6"><%= t("owner.wine_lists.members.intro") %></p>
+  <p class="text-sm text-base-content/50 mb-2"><%= t("owner.wine_lists.members.intro") %></p>
+  <p id="wine_list_drag_hint" class="sr-only"><%= t("owner.wine_lists.members.drag_hint") %></p>
 
-  <%# Current members %>
-  <% items = wine_list.wine_list_items.includes(:wine).by_position %>
-  <% if items.any? %>
-    <div class="space-y-2 mb-8">
-      <% items.each do |item| %>
-        <div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100">
-          <div class="flex items-center gap-2 min-w-0">
-            <%= wine_color_dot(item.wine.color) %>
-            <span class="font-body text-sm truncate"><%= item.wine.name %></span>
-            <% unless item.wine.available? %>
-              <span class="badge badge-ghost badge-xs"><%= t("menu.unavailable") %></span>
-            <% end %>
-          </div>
-
-          <div class="flex items-center gap-2 ml-4">
-            <%= form_with model: [:owner, @restaurant, wine_list, item], method: :patch, class: "flex items-center gap-1" do |f| %>
-              <%= f.label :position, t("owner.wine_lists.members.position"), class: "sr-only" %>
-              <%= f.number_field :position, value: item.position, min: 0, class: "input input-xs w-16 font-body" %>
-              <%= f.submit t("shared.save"), class: "btn btn-ghost btn-xs" %>
-            <% end %>
-            <%= button_to owner_restaurant_wine_list_wine_list_item_path(@restaurant, wine_list, item), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.members.confirm_remove") } do %>
-              <%= icon "trash", css: "size-3.5" %>
-            <% end %>
-          </div>
-        </div>
+  <div class="grid gap-8 md:grid-cols-2 mt-6">
+    <%# --- On this list (sortable members) --- %>
+    <div>
+      <div data-sortable-target="members"
+           aria-describedby="wine_list_drag_hint"
+           class="space-y-2 min-h-16">
+        <%= render partial: "owner/wine_lists/member_item", collection: items, as: :item, locals: { wine_list: wine_list } %>
+      </div>
+      <% if items.empty? %>
+        <p class="text-sm text-base-content/40 italic"><%= t("owner.wine_lists.members.empty") %></p>
       <% end %>
     </div>
-  <% else %>
-    <p class="text-sm text-base-content/40 italic mb-8"><%= t("owner.wine_lists.members.empty") %></p>
-  <% end %>
 
-  <%# Add a wine from the restaurant's shared catalog (reuse the already-loaded
-      items to avoid an extra query) %>
-  <% available_wines = @restaurant.wines.by_position.where.not(id: items.map(&:wine_id)) %>
-  <% if available_wines.any? %>
-    <%= form_with url: owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list), method: :post, class: "flex items-end gap-3" do |f| %>
-      <div class="field flex-1">
-        <%= f.label :wine_id, t("owner.wine_lists.members.add_label"), class: "field-label" %>
-        <%= f.select :wine_id, available_wines.map { |w| [w.name, w.id] }, {}, class: "select w-full font-body" %>
-      </div>
-      <%= f.submit t("owner.wine_lists.members.add"), class: "btn-wine btn-sm" %>
-    <% end %>
-    <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="inline-block mt-3 text-xs text-base-content/50 link link-hover">
-      <%= t("owner.wine_lists.manage_wines") %>
-    </a>
-  <% elsif items.any? %>
-    <p class="text-xs text-base-content/40"><%= t("owner.wine_lists.members.all_added") %></p>
-  <% else %>
-    <p class="text-sm text-base-content/50 mb-3"><%= t("owner.wine_lists.members.no_wines") %></p>
-    <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn-wine btn-sm">
-      <%= icon "wine", css: "size-4" %>
-      <%= t("owner.wine_lists.members.go_to_wines") %>
-    </a>
-  <% end %>
+    <%# --- Available wines (drag source + Add button) --- %>
+    <div data-controller="list-filter">
+      <h3 class="font-body text-sm font-medium text-base-content/70 mb-3"><%= t("owner.wine_lists.members.available_title") %></h3>
+      <% if available_wines.any? %>
+        <div class="mb-3">
+          <label for="available_wines_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
+          <input type="search"
+                 id="available_wines_filter"
+                 class="input input-sm w-full font-body text-sm"
+                 placeholder="<%= t("owner.shared.filter.placeholder") %>"
+                 data-list-filter-target="input"
+                 data-action="input->list-filter#filter">
+        </div>
+        <div data-sortable-target="available"
+             aria-describedby="wine_list_drag_hint"
+             class="space-y-2">
+          <%= render partial: "owner/wine_lists/available_wine", collection: available_wines, as: :wine, locals: { wine_list: wine_list } %>
+        </div>
+        <p data-list-filter-target="empty" hidden class="text-xs text-base-content/40 mt-3">
+          <%= t("owner.shared.filter.no_results") %>
+        </p>
+        <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="inline-block mt-3 text-xs text-base-content/50 link link-hover">
+          <%= t("owner.wine_lists.manage_wines") %>
+        </a>
+      <% elsif items.any? %>
+        <p class="text-xs text-base-content/40"><%= t("owner.wine_lists.members.all_added") %></p>
+      <% else %>
+        <p class="text-sm text-base-content/50 mb-3"><%= t("owner.wine_lists.members.no_wines") %></p>
+        <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn-wine btn-sm">
+          <%= icon "wine", css: "size-4" %>
+          <%= t("owner.wine_lists.members.go_to_wines") %>
+        </a>
+      <% end %>
+    </div>
+  </div>
 </section>
