@@ -89,22 +89,30 @@
     @apply w-12 h-px bg-primary/40 mx-auto;
   }
 
-  .bottle-sm {
-    @apply w-8 h-auto;
+  /* Wine-type color marker shown next to each wine on the public menu.
+     The subtle inset ring keeps the pale white-wine dot visible. */
+  .wine-dot {
+    @apply inline-block size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-base-content/15;
   }
 
-  .bottle-md {
-    @apply w-12 h-auto;
+  .wine-dot-red {
+    background-color: #722F37;
   }
 
-  .bottle-lg {
-    @apply w-20 h-auto;
+  .wine-dot-white {
+    background-color: #F5E6B8;
   }
 
-  .bottle-svg {
-    width: 100%;
-    height: auto;
-    display: block;
+  .wine-dot-rose {
+    background-color: #E8A0A0;
+  }
+
+  .wine-dot-sparkling {
+    background-color: #F0DC82;
+  }
+
+  .wine-dot-dessert {
+    background-color: #D4A840;
   }
 
   /* Form vocabulary — daisyUI 5 replaced form-control/label-text; these are the

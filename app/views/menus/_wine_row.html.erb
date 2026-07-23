@@ -11,8 +11,8 @@
      data-list-filter-target="item"
      data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.vintage_year, wine.region].compact_blank.join(" ").downcase %>">
   <div class="flex items-start justify-between">
-    <div class="shrink-0 mr-3 self-center">
-      <%= bottle_icon(wine, bottle: open_bottle, size: :sm) %>
+    <div class="shrink-0 mr-3 mt-1.5">
+      <%= wine_color_dot(wine.color) %>
     </div>
     <div class="flex-1 min-w-0">
       <h3 class="font-body font-medium text-sm"><%= wine.name %></h3>

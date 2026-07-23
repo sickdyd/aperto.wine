@@ -3,7 +3,7 @@
      data-list-filter-target="item"
      data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety].compact_blank.join(" ").downcase %>">
   <div class="flex items-center gap-2 min-w-0">
-    <span class="inline-block w-2.5 h-2.5 rounded-full <%= wine_color_class(wine.color) %>"></span>
+    <%= wine_color_dot(wine.color) %>
     <span class="font-body text-sm truncate"><%= wine.name %></span>
     <% if wine.producer.present? %>
       <span class="text-xs text-base-content/50 truncate"><%= wine.producer %></span>

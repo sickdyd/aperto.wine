@@ -28,7 +28,7 @@
 
       <div class="mb-8" data-list-filter-target="group">
         <h2 class="font-display text-lg font-medium mb-3 flex items-center gap-2">
-          <span class="inline-block w-3 h-3 rounded-full <%= wine_color_class(color) %>"></span>
+          <%= wine_color_dot(color, label: false) %>
           <%= t("owner.wines.colors.#{color}") %>
           <span class="text-xs text-base-content/40 font-body">(<%= wines_by_color.size %>)</span>
         </h2>

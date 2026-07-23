@@ -6,7 +6,7 @@
           class="cursor-grab touch-none text-base-content/30 hover:text-base-content/60 shrink-0">
       <%= icon "dots-six-vertical", css: "size-4" %>
     </span>
-    <span class="inline-block w-2.5 h-2.5 rounded-full <%= wine_color_class(item.wine.color) %>"></span>
+    <%= wine_color_dot(item.wine.color) %>
     <span class="font-body text-sm truncate"><%= item.wine.name %></span>
     <% unless item.wine.available? %>
       <span class="badge badge-ghost badge-xs"><%= t("menu.unavailable") %></span>
