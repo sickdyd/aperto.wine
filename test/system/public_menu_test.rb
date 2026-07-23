@@ -39,7 +39,7 @@ class PublicMenuTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    assert_text "Sold out"
+    assert_text I18n.t("shared.sold_out")
   end
 
   test "menu has a search field" do
@@ -53,7 +53,7 @@ class PublicMenuTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    assert_text "Powered by"
+    assert_text I18n.t("menu.powered_by")
     assert_link "aperto.wine"
   end
 
@@ -85,6 +85,6 @@ class PublicMenuTest < ApplicationSystemTestCase
     visit menu_path(id: restaurants(:trattoria).id)
 
     assert_text "Reserve Barbaresco"
-    assert_text "Currently unavailable"
+    assert_text I18n.t("menu.unavailable")
   end
 end

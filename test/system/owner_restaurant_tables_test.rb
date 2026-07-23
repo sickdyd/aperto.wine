@@ -7,7 +7,7 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     fill_in "email", with: user.email
     fill_in "password", with: "password123"
     find("input[type='submit']").click
-    assert_text "My Restaurants", wait: 5
+    assert_text I18n.t("owner.restaurants.title"), wait: 5
   end
 
   test "owner can create a table and open its QR code" do
@@ -15,25 +15,25 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
 
     visit owner_restaurant_tables_path(restaurant_id: restaurant)
-    assert_text "Dining Tables", wait: 5
+    assert_text I18n.t("owner.tables.title"), wait: 5
     # Area headings are CSS-uppercased, so match case-insensitively.
     assert_text(/sala principale/i)
 
-    click_link "Add Table", match: :first
-    assert_text "New Table", wait: 5
+    click_link I18n.t("owner.tables.add"), match: :first
+    assert_text I18n.t("owner.tables.new_title"), wait: 5
 
-    fill_in "Table Name", with: "Tavolo 30"
-    fill_in "Room / Area", with: "Terrazza"
+    fill_in I18n.t("owner.tables.form.name"), with: "Tavolo 30"
+    fill_in I18n.t("owner.tables.form.area"), with: "Terrazza"
     find("input[type='submit']").click
 
-    assert_text "Table created.", wait: 5
+    assert_text I18n.t("owner.tables.created"), wait: 5
     assert_text "Tavolo 30"
     assert_text(/terrazza/i)
 
     # Open the new table's QR page
     new_table = RestaurantTable.find_by!(name: "Tavolo 30")
     visit qr_owner_restaurant_table_path(restaurant_id: restaurant, id: new_table)
-    assert_text "QR Code — Tavolo 30", wait: 5
+    assert_text I18n.t("owner.tables.qr_title", table: "Tavolo 30"), wait: 5
     assert_selector "#qr-code svg"
   end
 
@@ -44,10 +44,10 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     assert_text "Osteria del Borgo", wait: 5
 
     within ".drawer-side" do
-      click_link "Dining Tables"
+      click_link I18n.t("owner.restaurants.tables")
     end
     assert_current_path owner_restaurant_tables_path(restaurant_id: restaurant.id)
-    assert_selector ".drawer-side a.menu-active", text: "Dining Tables"
+    assert_selector ".drawer-side a.menu-active", text: I18n.t("owner.restaurants.tables")
   end
 
   test "bulk print page shows a QR card per active table" do
@@ -55,7 +55,7 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
 
     visit bulk_print_owner_restaurant_tables_path(restaurant_id: restaurant)
-    assert_text "Print QR Codes", wait: 5
+    assert_text I18n.t("owner.tables.bulk_print_title"), wait: 5
     assert_selector ".qr-card", count: restaurant.restaurant_tables.active.count
   end
 end

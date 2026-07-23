@@ -7,7 +7,7 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     fill_in "email", with: user.email
     fill_in "password", with: "password123"
     find("input[type='submit']").click
-    assert_text "My Restaurants", wait: 5
+    assert_text I18n.t("owner.restaurants.title"), wait: 5
   end
 
   # ── Index ─────────────────────────────────────────────────────────────────
@@ -15,14 +15,14 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
   test "owner can see their restaurants list" do
     sign_in_as_owner
 
-    assert_selector "h1", text: "My Restaurants"
+    assert_selector "h1", text: I18n.t("owner.restaurants.title")
     assert_text "Osteria del Borgo"
   end
 
   test "owner sees add restaurant button" do
     sign_in_as_owner
 
-    assert_link "Add Restaurant"
+    assert_link I18n.t("owner.restaurants.add")
   end
 
   # ── Create ────────────────────────────────────────────────────────────────
@@ -30,30 +30,30 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
   test "owner can create a new restaurant" do
     sign_in_as_owner
 
-    click_link "Add Restaurant", match: :first
-    assert_text "New Restaurant", wait: 5
+    click_link I18n.t("owner.restaurants.add"), match: :first
+    assert_text I18n.t("owner.restaurants.new_title"), wait: 5
 
-    fill_in "Restaurant Name", with: "La Trattoria"
-    fill_in "Address", with: "Via Verdi 10, Torino"
+    fill_in I18n.t("owner.restaurants.form.name"), with: "La Trattoria"
+    fill_in I18n.t("owner.restaurants.form.address"), with: "Via Verdi 10, Torino"
     find("input[type='submit']").click
 
-    assert_text "Restaurant created successfully.", wait: 5
+    assert_text I18n.t("owner.restaurants.created"), wait: 5
     assert_text "La Trattoria"
   end
 
   test "owner sees validation error when creating restaurant without required fields" do
     sign_in_as_owner
 
-    click_link "Add Restaurant"
+    click_link I18n.t("owner.restaurants.add")
 
     # Fill only name (address is also required) then clear it to trigger server-side
-    fill_in "Restaurant Name", with: "Missing Address"
+    fill_in I18n.t("owner.restaurants.form.name"), with: "Missing Address"
     # Address field intentionally left blank; clear via JS to bypass HTML5 required
     page.execute_script("document.querySelector('input[name=\"restaurant[address]\"]').removeAttribute('required')")
-    click_button "Create Restaurant"
+    click_button I18n.t("helpers.submit.create", model: Restaurant.model_name.human)
 
     assert_selector "[role='alert']"
-    assert_text "Address can't be blank"
+    assert_text "#{Restaurant.human_attribute_name(:address)} #{I18n.t("errors.messages.blank")}"
   end
 
   # ── Edit ──────────────────────────────────────────────────────────────────
@@ -64,10 +64,10 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     visit edit_owner_restaurant_path(id: restaurant.id)
 
-    fill_in "Restaurant Name", with: "Osteria Aggiornata"
-    click_button "Update Restaurant"
+    fill_in I18n.t("owner.restaurants.form.name"), with: "Osteria Aggiornata"
+    click_button I18n.t("helpers.submit.update", model: Restaurant.model_name.human)
 
-    assert_text "Restaurant updated successfully."
+    assert_text I18n.t("owner.restaurants.updated")
     assert_text "Osteria Aggiornata"
   end
 
@@ -77,7 +77,7 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     visit owner_restaurant_path(id: restaurant.id)
 
-    click_link "Edit"
+    click_link I18n.t("shared.edit")
     assert_current_path edit_owner_restaurant_path(id: restaurant.id)
   end
 
@@ -87,19 +87,19 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     sign_in_as_owner
 
     # Create a new restaurant to safely delete without fixture side-effects
-    click_link "Add Restaurant"
-    fill_in "Restaurant Name", with: "To Delete"
-    fill_in "Address", with: "Via Elimina 1, Roma"
-    click_button "Create Restaurant"
-    assert_text "Restaurant created successfully."
+    click_link I18n.t("owner.restaurants.add")
+    fill_in I18n.t("owner.restaurants.form.name"), with: "To Delete"
+    fill_in I18n.t("owner.restaurants.form.address"), with: "Via Elimina 1, Roma"
+    click_button I18n.t("helpers.submit.create", model: Restaurant.model_name.human)
+    assert_text I18n.t("owner.restaurants.created")
 
     # We are now on the show page for the new restaurant — delete from here
     accept_confirm do
-      click_button "Delete"
+      click_button I18n.t("shared.delete")
     end
 
     assert_current_path owner_restaurants_path
-    assert_text "Restaurant deleted."
+    assert_text I18n.t("owner.restaurants.deleted")
     assert_no_text "To Delete"
   end
 
@@ -114,9 +114,9 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
   test "customer is redirected away from owner area" do
     user = users(:customer)
     visit sign_in_path
-    fill_in "Email", with: user.email
-    fill_in "Password", with: "password123"
-    click_button "Sign In"
+    fill_in I18n.t("auth.email"), with: user.email
+    fill_in I18n.t("auth.password"), with: "password123"
+    click_button I18n.t("auth.sign_in")
     # Customer lands on root after sign-in
     assert_current_path root_path
 

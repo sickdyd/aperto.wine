@@ -32,7 +32,7 @@ class WineAutofillTest < ApplicationSystemTestCase
     fill_in "email", with: user.email
     fill_in "password", with: "password123"
     find("input[type='submit']").click
-    assert_text "My Restaurants", wait: 5
+    assert_text I18n.t("owner.restaurants.title"), wait: 5
   end
 
   test "selecting a suggestion fills the descriptive fields" do

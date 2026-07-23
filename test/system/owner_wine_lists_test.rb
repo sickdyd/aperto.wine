@@ -7,7 +7,7 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     fill_in "email", with: user.email
     fill_in "password", with: "password123"
     find("input[type='submit']").click
-    assert_text "My Restaurants", wait: 5
+    assert_text I18n.t("owner.restaurants.title"), wait: 5
   end
 
   test "owner can create a curated wine list and add a wine to it" do
@@ -15,26 +15,26 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
 
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
-    assert_text "All Wines", wait: 5 # the default list is always present
+    assert_text I18n.t("owner.wine_lists.all_wines"), wait: 5 # the default list is always present
 
-    click_link "Add List", match: :first
-    assert_text "New Wine List", wait: 5
+    click_link I18n.t("owner.wine_lists.add"), match: :first
+    assert_text I18n.t("owner.wine_lists.new_title"), wait: 5
 
-    fill_in "List Name", with: "Spring Picks"
+    fill_in I18n.t("owner.wine_lists.form.name"), with: "Spring Picks"
     find("input[type='submit']").click
 
-    assert_text "Wine list created.", wait: 5
+    assert_text I18n.t("owner.wine_lists.created"), wait: 5
     assert_text "Spring Picks"
 
     # Edit the new list and add a wine to it
     new_list = WineList.find_by!(name: "Spring Picks")
     visit edit_owner_restaurant_wine_list_path(restaurant_id: restaurant, id: new_list)
-    assert_text "Wines on this list", wait: 5
+    assert_text I18n.t("owner.wine_lists.members.title"), wait: 5
 
     select "Barolo Riserva", from: "wine_id"
-    click_button "Add"
+    click_button I18n.t("owner.wine_lists.members.add")
 
-    assert_text "Wine added to the list.", wait: 5
+    assert_text I18n.t("owner.wine_lists.members.added"), wait: 5
     assert_text "Barolo Riserva"
   end
 
@@ -79,8 +79,8 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     )
 
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
-    assert_text "All Wines", wait: 5
-    assert_text "Default"
-    assert_link "Add List"
+    assert_text I18n.t("owner.wine_lists.all_wines"), wait: 5
+    assert_text I18n.t("owner.wine_lists.default")
+    assert_link I18n.t("owner.wine_lists.add")
   end
 end
