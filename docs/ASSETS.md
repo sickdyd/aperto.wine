@@ -24,12 +24,14 @@ in order — most needs are covered by what is already installed locally.
 - Wine-relevant icons available: `wine`, `cheers`, `champagne`, `brandy`, `martini`,
   `beer-bottle`.
 
-### Hand-made bottle shapes
+### Wine color dots
 
-- **Location:** `app/views/shared/bottles/` (`_bottle`, `_bordeaux`, `_burgundy`,
-  `_champagne`, `_flute`)
-- **Rendered via** `bottle_icon(wine, bottle:, size:)` in `app/helpers/wines_helper.rb`.
-- Extend these partials for new bottle silhouettes rather than importing external art.
+- **CSS:** `.wine-dot` base class plus `.wine-dot-<color>` modifiers (red, white, rose,
+  sparkling, dessert) in `app/assets/tailwind/application.css`.
+- **Rendered via** `wine_color_dot(color, label: true)` in `app/helpers/wines_helper.rb` —
+  a small wine-type color marker used on the public menu rows, color section headers,
+  and owner wine lists. Pass `label: false` when visible text next to the dot already
+  names the color; otherwise it appends a screen-reader-only label.
 
 ## 2. Cherry-pick from other MIT/ISC icon libraries
 
