@@ -1,1 +1,55 @@
-<h1><%= t("owner.tables.bulk.title") %></h1>
+<% content_for(:title) { "#{@restaurant.name} — #{t('owner.tables.bulk.title')}" } %>
+
+<div class="mb-8">
+  <h1 class="font-display text-3xl font-light"><%= t("owner.tables.bulk.title") %></h1>
+  <p class="text-sm text-base-content/50 mt-2"><%= t("owner.tables.bulk.intro") %></p>
+</div>
+
+<%= form_with model: @generation, url: bulk_create_owner_restaurant_tables_path(@restaurant), scope: :table_bulk_generation, class: "space-y-8 max-w-xl" do |f| %>
+  <% if @generation.errors.any? %>
+    <div role="alert" class="alert alert-error text-sm">
+      <%= icon "warning", css: "size-4" %>
+      <div>
+        <% @generation.errors.full_messages.each do |msg| %>
+          <p><%= msg %></p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <fieldset class="form-section">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="field">
+        <%= f.label :floors_count, t("owner.tables.bulk.floors_count"), class: "field-label" %>
+        <%= f.number_field :floors_count, min: 1, max: TableBulkGeneration::MAX_FLOORS, required: true, class: "input w-full font-body" %>
+      </div>
+      <div class="field">
+        <%= f.label :tables_per_floor, t("owner.tables.bulk.tables_per_floor"), class: "field-label" %>
+        <%= f.number_field :tables_per_floor, min: 1, max: TableBulkGeneration::MAX_TABLES_PER_FLOOR, required: true, class: "input w-full font-body" %>
+      </div>
+    </div>
+
+    <div class="field">
+      <%= f.label :floor_label, t("owner.tables.bulk.floor_label"), class: "field-label" %>
+      <%= f.text_field :floor_label, class: "input w-full font-body" %>
+      <p class="text-xs text-base-content/50 mt-1"><%= t("owner.tables.bulk.floor_label_hint") %></p>
+    </div>
+
+    <div class="field">
+      <span class="field-label"><%= t("owner.tables.bulk.name_pattern") %></span>
+      <div class="space-y-2 mt-1">
+        <% TableBulkGeneration::NAME_PATTERNS.each do |pattern| %>
+          <label class="flex items-center gap-3 p-3 rounded-lg border border-base-content/10 cursor-pointer hover:border-primary/20 transition-all">
+            <%= f.radio_button :name_pattern, pattern, class: "radio radio-primary radio-sm" %>
+            <span class="text-sm font-body"><%= t("owner.tables.bulk.patterns.#{pattern}") %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <%= f.submit t("owner.tables.bulk.submit"), class: "btn-wine" %>
+    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+  </div>
+<% end %>

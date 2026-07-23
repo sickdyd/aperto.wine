@@ -10,6 +10,10 @@
           <%= t("owner.tables.print_all") %>
         </a>
       <% end %>
+      <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost btn-sm">
+        <%= icon "magic-wand", css: "size-4" %>
+        <%= t("owner.tables.bulk.generate") %>
+      </a>
       <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine btn-sm">
         <%= icon "plus", css: "size-4" %>
         <%= t("owner.tables.add") %>
@@ -73,9 +77,15 @@
     </div>
     <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.tables.empty_title") %></h2>
     <p class="text-base-content/50 mb-6"><%= t("owner.tables.empty_description") %></p>
-    <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine btn-sm">
-      <%= icon "plus", css: "size-4" %>
-      <%= t("owner.tables.add_first") %>
-    </a>
+    <div class="flex items-center justify-center gap-2">
+      <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn-wine btn-sm">
+        <%= icon "magic-wand", css: "size-4" %>
+        <%= t("owner.tables.bulk.generate") %>
+      </a>
+      <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn btn-ghost btn-sm">
+        <%= icon "plus", css: "size-4" %>
+        <%= t("owner.tables.add_first") %>
+      </a>
+    </div>
   </div>
 <% end %>
