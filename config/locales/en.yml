@@ -305,6 +305,7 @@ en:
     title: "Wine List"
     all_wines: "All Wines"
     search_placeholder: "Search wines..."
+    sections_nav_label: "Menu sections"
     opened_at: "Opened %{time} ago"
     unavailable: "Currently unavailable"
     empty: "No wines available at the moment."

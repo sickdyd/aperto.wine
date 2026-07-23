@@ -305,6 +305,7 @@ it:
     title: "Carta dei Vini"
     all_wines: "Tutti i Vini"
     search_placeholder: "Cerca vini..."
+    sections_nav_label: "Sezioni del menu"
     opened_at: "Aperta %{time} fa"
     unavailable: "Non disponibile al momento"
     empty: "Nessun vino disponibile al momento."
