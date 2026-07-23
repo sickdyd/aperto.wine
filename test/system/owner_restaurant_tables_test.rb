@@ -58,4 +58,23 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     assert_text I18n.t("owner.tables.bulk_print_title"), wait: 5
     assert_selector ".qr-card", count: restaurant.restaurant_tables.active.count
   end
+
+  test "owner bulk-generates tables by floor" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+
+    visit owner_restaurant_tables_path(restaurant_id: restaurant)
+    click_on I18n.t("owner.tables.bulk.generate")
+
+    fill_in I18n.t("owner.tables.bulk.floors_count"), with: 2
+    fill_in I18n.t("owner.tables.bulk.tables_per_floor"), with: 3
+    fill_in I18n.t("owner.tables.bulk.floor_label"), with: "Piano"
+    choose I18n.t("owner.tables.bulk.patterns.t_number")
+    click_on I18n.t("owner.tables.bulk.submit")
+
+    assert_text I18n.t("owner.tables.bulk.created", created: 6)
+    assert_text "Piano 1"
+    assert_text "Piano 2"
+    assert_text "T3"
+  end
 end

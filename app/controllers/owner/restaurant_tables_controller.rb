@@ -51,6 +51,20 @@ module Owner
       end
     end
 
+    def bulk_new
+      @generation = TableBulkGeneration.new(restaurant: @restaurant, floor_label: t("owner.tables.bulk.floor_default"))
+    end
+
+    def bulk_create
+      @generation = TableBulkGeneration.new(restaurant: @restaurant, **bulk_params.to_h.symbolize_keys)
+
+      if @generation.save
+        redirect_to owner_restaurant_tables_path(@restaurant), notice: bulk_notice(@generation), status: :see_other
+      else
+        render :bulk_new, status: :unprocessable_entity
+      end
+    end
+
     private
 
     def set_restaurant
@@ -63,6 +77,18 @@ module Owner
 
     def table_params
       params.require(:restaurant_table).permit(:name, :area, :position, :active)
+    end
+
+    def bulk_params
+      params.require(:table_bulk_generation).permit(:floors_count, :tables_per_floor, :floor_label, :name_pattern)
+    end
+
+    def bulk_notice(generation)
+      if generation.skipped_count.positive?
+        t("owner.tables.bulk.created_with_skipped", created: generation.created_count, skipped: generation.skipped_count)
+      else
+        t("owner.tables.bulk.created", created: generation.created_count)
+      end
     end
   end
 end

@@ -260,6 +260,26 @@ en:
       back_to_tables: "Back to tables"
       empty_title: "No tables yet"
       empty_description: "Add your tables to print a QR code for each one and see which table every order comes from."
+      bulk:
+        table_word: "Table"
+        floor_default: "Floor"
+        too_many: "You can generate at most %{max} tables at once."
+        title: "Generate Tables"
+        created: "%{created} tables created."
+        created_with_skipped: "%{created} tables created, %{skipped} skipped (name already in use)."
+        generate: "Generate tables"
+        intro: "Create all your tables in one go. Floors become rooms; every table gets its own QR code, ready to print."
+        floors_count: "Floors"
+        tables_per_floor: "Tables per floor"
+        floor_label: "Floor name"
+        floor_label_hint: "Groups tables by floor, e.g. \"Floor 1\", \"Floor 2\". With a single floor you can leave it blank or use a room name."
+        name_pattern: "Table naming"
+        patterns:
+          table_number: "Table 1, Table 2, …"
+          t_number: "T1, T2, …"
+          number_only: "1, 2, …"
+          floor_table: "1-1, 1-2, … (floor-table)"
+        submit: "Generate"
       form:
         name: "Table Name"
         name_placeholder: "e.g. Table 1"
@@ -301,6 +321,13 @@ en:
         approved: "Approved"
         cancelled: "Cancelled"
         completed: "Completed"
+  activemodel:
+    attributes:
+      table_bulk_generation:
+        floors_count: "Floors"
+        tables_per_floor: "Tables per floor"
+        floor_label: "Floor name"
+        name_pattern: "Table naming"
   menu:
     title: "Wine List"
     all_wines: "All Wines"

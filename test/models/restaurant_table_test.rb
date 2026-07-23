@@ -86,4 +86,9 @@ class RestaurantTableTest < ActiveSupport::TestCase
       restaurant.destroy!
     end
   end
+
+  test "blank area is normalized to nil" do
+    table = RestaurantTable.new(area: "  ")
+    assert_nil table.area
+  end
 end

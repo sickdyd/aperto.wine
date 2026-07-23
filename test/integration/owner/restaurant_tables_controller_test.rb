@@ -163,5 +163,45 @@ module Owner
       )
       assert_response :not_found
     end
+
+    # --- BULK NEW / BULK CREATE ---
+
+    test "bulk_new renders the generation form" do
+      sign_in_as @owner
+      get bulk_new_owner_restaurant_tables_path(@restaurant)
+      assert_response :success
+    end
+
+    test "bulk_create generates tables and redirects with notice" do
+      sign_in_as @owner
+      assert_difference -> { @restaurant.restaurant_tables.count }, 4 do
+        post bulk_create_owner_restaurant_tables_path(@restaurant), params: {
+          table_bulk_generation: { floors_count: 2, tables_per_floor: 2,
+                                   floor_label: "Piano", name_pattern: "t_number" }
+        }
+      end
+      assert_redirected_to owner_restaurant_tables_path(@restaurant)
+      assert_equal 303, response.status
+    end
+
+    test "bulk_create re-renders with 422 on invalid input" do
+      sign_in_as @owner
+      assert_no_difference -> { @restaurant.restaurant_tables.count } do
+        post bulk_create_owner_restaurant_tables_path(@restaurant), params: {
+          table_bulk_generation: { floors_count: 0, tables_per_floor: 2, name_pattern: "t_number" }
+        }
+      end
+      assert_response :unprocessable_entity
+    end
+
+    test "bulk actions are scoped to the owner's restaurants" do
+      sign_in_as @owner
+      get bulk_new_owner_restaurant_tables_path(restaurants(:trattoria))
+      assert_response :not_found
+      post bulk_create_owner_restaurant_tables_path(restaurants(:trattoria)), params: {
+        table_bulk_generation: { floors_count: 1, tables_per_floor: 1, name_pattern: "t_number" }
+      }
+      assert_response :not_found
+    end
   end
 end
