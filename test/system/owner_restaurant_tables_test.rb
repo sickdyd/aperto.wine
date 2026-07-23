@@ -73,8 +73,10 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     click_on I18n.t("owner.tables.bulk.submit")
 
     assert_text I18n.t("owner.tables.bulk.created", created: 6)
-    assert_text "Piano 1"
-    assert_text "Piano 2"
+    # Area headings are CSS-uppercased; newer Chrome returns the transformed
+    # text, so match case-insensitively.
+    assert_text(/piano 1/i)
+    assert_text(/piano 2/i)
     assert_text "T3"
   end
 end
