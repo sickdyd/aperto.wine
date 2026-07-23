@@ -45,7 +45,8 @@ export default class extends Controller {
         // able to become a scroll. Require a brief hold before a drag
         // starts, and a small movement threshold, so taps/swipes pass
         // through untouched.
-        delayOnTouchOnly: 150,
+        delay: 150,
+        delayOnTouchOnly: true,
         touchStartThreshold: 5,
         animation: 150
       }))
