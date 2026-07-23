@@ -149,6 +149,20 @@ module Owner
       assert_equal 2, first.reload.position
     end
 
+    test "sort with duplicate item_ids dedupes to a deterministic order" do
+      sign_in_as @owner
+      first = wine_list_items(:summer_barolo)
+      second = wine_list_items(:summer_sold_out)
+      summer = wine_lists(:summer)
+
+      patch sort_owner_restaurant_wine_list_wine_list_items_path(restaurant_id: @restaurant, wine_list_id: summer),
+        params: { item_ids: [ second.id, first.id, second.id ] }
+
+      assert_redirected_to edit_owner_restaurant_wine_list_path(restaurant_id: @restaurant, id: summer)
+      assert_equal 1, second.reload.position
+      assert_equal 2, first.reload.position
+    end
+
     test "sort via turbo_stream-style request responds head :ok" do
       sign_in_as @owner
       first = wine_list_items(:summer_barolo)

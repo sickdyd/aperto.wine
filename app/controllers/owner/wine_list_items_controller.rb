@@ -36,17 +36,33 @@ module Owner
 
     # Bulk reorder: persists the full submitted order in one transaction so
     # drag-and-drop reordering doesn't require one request per moved row.
+    #
+    # A single bulk `update_all` (one UPDATE ... CASE, one round trip) replaces
+    # what used to be a per-id `find` plus a per-row `update!` (up to 3N
+    # queries, with row locks held across N round trips and a deadlock window
+    # between concurrent sorts of the same list). Skipping per-row validations
+    # here is deliberate and safe: this only ever rewrites `position` on rows
+    # already scoped to `@wine_list`, so it can't violate the same-restaurant
+    # or per-list wine-uniqueness invariants — those are enforced at create
+    # time (see WineListItem#wine_and_list_share_restaurant and the unique
+    # index on [wine_list_id, wine_id]).
     def sort
       # Permit only an array of scalars: a hash-shaped or otherwise malformed
       # payload (e.g. item_ids[0][x]=y) is dropped entirely instead of
       # reaching `find` as an ActionController::Parameters object.
-      item_ids = Array(params.permit(item_ids: [])[:item_ids]).reject(&:blank?)
+      item_ids = Array(params.permit(item_ids: [])[:item_ids]).reject(&:blank?).uniq
       return head :unprocessable_entity if item_ids.empty?
 
-      items = item_ids.map { |id| @wine_list.wine_list_items.find(id) }
+      items = @wine_list.wine_list_items.where(id: item_ids)
+      raise ActiveRecord::RecordNotFound if items.size != item_ids.size
 
       WineListItem.transaction do
-        items.each_with_index { |item, index| item.update!(position: index + 1) }
+        when_clauses = item_ids.map { "WHEN id = ? THEN ?" }.join(" ")
+        bindings = item_ids.each_with_index.flat_map { |id, index| [ id, index + 1 ] }
+        case_sql = WineListItem.sanitize_sql_array(
+          [ "CASE #{when_clauses} END", *bindings ]
+        )
+        items.update_all("position = #{case_sql}")
       end
 
       respond_to do |format|
