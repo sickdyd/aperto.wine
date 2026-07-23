@@ -9,7 +9,7 @@
       <% items.each do |item| %>
         <div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100">
           <div class="flex items-center gap-2 min-w-0">
-            <span class="inline-block w-2.5 h-2.5 rounded-full <%= wine_color_class(item.wine.color) %>"></span>
+            <%= wine_color_dot(item.wine.color) %>
             <span class="font-body text-sm truncate"><%= item.wine.name %></span>
             <% unless item.wine.available? %>
               <span class="badge badge-ghost badge-xs"><%= t("menu.unavailable") %></span>

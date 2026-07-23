@@ -42,6 +42,16 @@ class PublicMenuTest < ApplicationSystemTestCase
     assert_text I18n.t("shared.sold_out")
   end
 
+  test "menu marks each wine with a color dot" do
+    restaurant = restaurants(:osteria)
+    visit menu_path(id: restaurant.id)
+
+    # barolo is a red wine
+    assert_selector ".wine-dot.wine-dot-red"
+    # gavi is a white wine
+    assert_selector ".wine-dot.wine-dot-white"
+  end
+
   test "menu has a search field" do
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
