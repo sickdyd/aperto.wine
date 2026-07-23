@@ -11,27 +11,45 @@ module Owner
       item = @wine_list.wine_list_items.build(wine: wine)
 
       if item.save
-        redirect_to edit_path, notice: t("owner.wine_lists.members.added"), status: :see_other
+        respond_with_members(notice: t("owner.wine_lists.members.added"))
       else
-        redirect_to edit_path, alert: t("owner.wine_lists.members.already_added"), status: :see_other
+        respond_with_members(alert: t("owner.wine_lists.members.already_added"))
       end
     rescue ActiveRecord::RecordNotUnique
       # The unique index can still fire under concurrent adds even though the
       # model validation passed at build time.
-      redirect_to edit_path, alert: t("owner.wine_lists.members.already_added"), status: :see_other
+      respond_with_members(alert: t("owner.wine_lists.members.already_added"))
     end
 
     def update
       if @wine_list_item.update(wine_list_item_params)
-        redirect_to edit_path, notice: t("owner.wine_lists.members.reordered"), status: :see_other
+        respond_with_members(notice: t("owner.wine_lists.members.reordered"))
       else
-        redirect_to edit_path, alert: @wine_list_item.errors.full_messages.to_sentence, status: :see_other
+        respond_with_members(alert: @wine_list_item.errors.full_messages.to_sentence)
       end
     end
 
     def destroy
       @wine_list_item.destroy!
-      redirect_to edit_path, notice: t("owner.wine_lists.members.removed"), status: :see_other
+      respond_with_members(notice: t("owner.wine_lists.members.removed"))
+    end
+
+    # Bulk reorder: persists the full submitted order in one transaction so
+    # drag-and-drop reordering doesn't require one request per moved row.
+    def sort
+      item_ids = Array(params[:item_ids]).reject(&:blank?)
+      return head :unprocessable_entity if item_ids.empty?
+
+      items = item_ids.map { |id| @wine_list.wine_list_items.find(id) }
+
+      WineListItem.transaction do
+        items.each_with_index { |item, index| item.update!(position: index + 1) }
+      end
+
+      respond_to do |format|
+        format.turbo_stream { head :ok }
+        format.html { redirect_to edit_path, notice: t("owner.wine_lists.members.reordered"), status: :see_other }
+      end
     end
 
     private
@@ -54,6 +72,24 @@ module Owner
 
     def wine_list_item_params
       params.require(:wine_list_item).permit(:position)
+    end
+
+    # Shared response for create/update/destroy: a turbo_stream re-render of
+    # the members container for JS clients, with an html redirect fallback
+    # (and matching flash) for no-JS requests.
+    def respond_with_members(notice: nil, alert: nil)
+      respond_to do |format|
+        format.turbo_stream do
+          flash.now[:notice] = notice if notice
+          flash.now[:alert] = alert if alert
+          render turbo_stream: turbo_stream.replace(
+            "wine_list_members",
+            partial: "owner/wine_lists/members",
+            locals: { wine_list: @wine_list }
+          )
+        end
+        format.html { redirect_to edit_path, notice: notice, alert: alert, status: :see_other }
+      end
     end
   end
 end
