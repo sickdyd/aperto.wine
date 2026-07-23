@@ -82,11 +82,14 @@ module Owner
         format.turbo_stream do
           flash.now[:notice] = notice if notice
           flash.now[:alert] = alert if alert
-          render turbo_stream: turbo_stream.replace(
-            "wine_list_members",
-            partial: "owner/wine_lists/members",
-            locals: { wine_list: @wine_list }
-          )
+          render turbo_stream: [
+            turbo_stream.replace(
+              "wine_list_members",
+              partial: "owner/wine_lists/members",
+              locals: { wine_list: @wine_list }
+            ),
+            turbo_stream.replace("flash-messages", partial: "owner/shared/flash")
+          ]
         end
         format.html { redirect_to edit_path, notice: notice, alert: alert, status: :see_other }
       end

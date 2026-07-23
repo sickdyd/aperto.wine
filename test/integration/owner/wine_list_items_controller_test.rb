@@ -73,6 +73,7 @@ module Owner
       assert_response :success
       assert_equal Mime[:turbo_stream], response.media_type
       assert_match "wine_list_members", response.body
+      assert_match I18n.t("owner.wine_lists.members.already_added"), response.body
     end
 
     # --- UPDATE (reorder) ---

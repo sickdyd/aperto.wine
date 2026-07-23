@@ -29,22 +29,7 @@
         </header>
 
         <%# Flash messages %>
-        <% if notice %>
-          <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-            <div role="alert" class="alert alert-success text-sm">
-              <%= icon "check-circle", css: "size-4" %>
-              <span><%= notice %></span>
-            </div>
-          </div>
-        <% end %>
-        <% if alert %>
-          <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-            <div role="alert" class="alert alert-error text-sm">
-              <%= icon "warning", css: "size-4" %>
-              <span><%= alert %></span>
-            </div>
-          </div>
-        <% end %>
+        <%= render "owner/shared/flash" %>
 
         <%# Main content %>
         <main class="w-full max-w-6xl mx-auto flex-1 px-4 sm:px-6 lg:px-8 py-8">
