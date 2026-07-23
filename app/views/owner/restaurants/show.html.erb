@@ -25,9 +25,17 @@
 
 <%# Restaurant dashboard cards %>
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-8">
-  <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
+  <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
     <div class="flex items-center gap-3 mb-2">
       <%= icon "wine", css: "size-5 text-primary/70" %>
+      <span class="font-body text-sm font-medium"><%= t("owner.nav.wines") %></span>
+    </div>
+    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.manage_wines") %></p>
+  </a>
+
+  <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
+    <div class="flex items-center gap-3 mb-2">
+      <%= icon "scroll", css: "size-5 text-primary/70" %>
       <span class="font-body text-sm font-medium"><%= t("owner.restaurants.wine_lists") %></span>
     </div>
     <p class="text-xs text-base-content/50"><%= t("owner.restaurants.manage_wine_lists") %></p>

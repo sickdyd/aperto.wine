@@ -38,6 +38,40 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     assert_text "Barolo Riserva"
   end
 
+  test "the same wine can be added to two different lists" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+    wine = restaurant.wines.create!(
+      name: "Nebbiolo di Prova", color: :red, bottle_size_ml: 750, available_glasses: 4
+    )
+
+    [ wine_lists(:summer), wine_lists(:winter) ].each do |list|
+      visit edit_owner_restaurant_wine_list_path(restaurant_id: restaurant, id: list)
+      assert_text "Wines on this list", wait: 5
+
+      select wine.name, from: "wine_id"
+      click_button "Add"
+      assert_text "Wine added to the list.", wait: 5
+    end
+
+    assert_equal 2, wine.wine_lists.where(id: [ wine_lists(:summer).id, wine_lists(:winter).id ]).count
+  end
+
+  test "list edit page points to the shared catalog when the restaurant has no wines" do
+    sign_in_as_owner
+    restaurant = users(:owner).restaurants.create!(
+      name: "Empty Cellar", address: "Via Vuota 1", proximity_radius_meters: 100
+    )
+    list = restaurant.wine_lists.create!(name: "First List")
+
+    visit edit_owner_restaurant_wine_list_path(restaurant_id: restaurant, id: list)
+    assert_text "Your wine catalog is empty", wait: 5
+
+    click_link "Go to My Wines"
+    assert_current_path owner_restaurant_wines_path(restaurant_id: restaurant.id)
+    assert_text "No wines yet"
+  end
+
   test "a restaurant with no custom lists still shows the default All Wines list" do
     sign_in_as_owner
     restaurant = users(:owner).restaurants.create!(

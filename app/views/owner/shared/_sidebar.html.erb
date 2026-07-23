@@ -51,8 +51,14 @@
           <% end %>
         </li>
         <li>
-          <%= link_to owner_restaurant_wine_lists_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?(%w[wine_lists wine_list_items wines])) do %>
+          <%= link_to owner_restaurant_wines_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?("wines")) do %>
             <%= icon "wine", css: "size-4" %>
+            <%= t("owner.nav.wines") %>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to owner_restaurant_wine_lists_path(@restaurant), **owner_nav_link_attrs(owner_nav_active?(%w[wine_lists wine_list_items])) do %>
+            <%= icon "scroll", css: "size-4" %>
             <%= t("owner.restaurants.wine_lists") %>
           <% end %>
         </li>

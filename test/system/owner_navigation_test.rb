@@ -30,11 +30,32 @@ class OwnerNavigationTest < ApplicationSystemTestCase
 
     within ".drawer-side" do
       assert_link "Overview"
+      assert_link "My Wines"
       assert_link "Wine Lists"
       assert_link "Orders"
       assert_link "QR Code"
       assert_link "Settings"
     end
+  end
+
+  test "My Wines and Wine Lists are separate sections with independent highlighting" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+    visit owner_restaurant_path(id: restaurant.id)
+
+    within ".drawer-side" do
+      click_link "My Wines"
+    end
+    assert_current_path owner_restaurant_wines_path(restaurant_id: restaurant.id)
+    assert_selector ".drawer-side a.menu-active", text: "My Wines"
+    assert_no_selector ".drawer-side a.menu-active", text: "Wine Lists"
+
+    within ".drawer-side" do
+      click_link "Wine Lists"
+    end
+    assert_current_path owner_restaurant_wine_lists_path(restaurant_id: restaurant.id)
+    assert_selector ".drawer-side a.menu-active", text: "Wine Lists"
+    assert_no_selector ".drawer-side a.menu-active", text: "My Wines"
   end
 
   # ── Section navigation ────────────────────────────────────────────────────
