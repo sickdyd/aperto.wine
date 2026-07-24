@@ -13,30 +13,4 @@ export PORT="${PORT:-3000}"
 export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
 
-# Serve HTTPS locally when mkcert certs are available, since browsers
-# force-upgrade localhost to https. Certs are generated on first run into
-# the gitignored config/dev_ssl/ (requires `mkcert -install` once).
-# NOTE: never define DEV_SERVER_OPTS or PORT in .env — foreman would then
-# substitute the value into the Procfile command string itself, where the
-# `&` in the ssl:// binding is parsed as a shell operator and truncates
-# the command. Exported from here, it expands safely inside the shell.
-DEV_SSL_DIR="config/dev_ssl"
-if [ ! -f "$DEV_SSL_DIR/cert.pem" ] || [ ! -f "$DEV_SSL_DIR/key.pem" ]; then
-  if command -v mkcert >/dev/null 2>&1; then
-    mkdir -p "$DEV_SSL_DIR"
-    if ! mkcert -key-file "$DEV_SSL_DIR/key.pem" -cert-file "$DEV_SSL_DIR/cert.pem" \
-      localhost 127.0.0.1 ::1; then
-      rm -f "$DEV_SSL_DIR/key.pem" "$DEV_SSL_DIR/cert.pem"
-      echo "mkcert failed; falling back to plain HTTP" >&2
-    fi
-  else
-    echo "mkcert not found; serving plain HTTP (brew install mkcert && mkcert -install to enable HTTPS)" >&2
-  fi
-fi
-
-if [ -f "$DEV_SSL_DIR/cert.pem" ] && [ -f "$DEV_SSL_DIR/key.pem" ]; then
-  export DEV_SERVER_OPTS="-b ssl://127.0.0.1:${PORT}?key=${DEV_SSL_DIR}/key.pem&cert=${DEV_SSL_DIR}/cert.pem"
-  echo "Serving HTTPS: https://127.0.0.1:${PORT} (certs in ${DEV_SSL_DIR})"
-fi
-
 exec foreman start -f Procfile.dev "$@"
