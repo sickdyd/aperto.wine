@@ -196,9 +196,7 @@ it:
         aria_label: Nome del vino con suggerimenti automatici
     wine_lists:
       title: "Carte dei Vini"
-      intro: "La carta pubblica mostra ogni lista attiva. Tieni attiva la lista predefinita \"Tutti i Vini\" per mostrare la carta completa, oppure crea liste selezionate e attivale o disattivale qui."
-      all_wines: "Tutti i Vini"
-      default: "Predefinita"
+      intro: "La carta pubblica mostra ogni lista attiva. Crea liste selezionate e attivale o disattivale qui."
       manage_wines: "Gestisci vini"
       toggle_label: "Mostra sulla carta pubblica"
       add: "Aggiungi Lista"

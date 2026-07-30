@@ -196,9 +196,7 @@ en:
         aria_label: Wine name with autocomplete suggestions
     wine_lists:
       title: "Wine Lists"
-      intro: "Your public menu shows every enabled list. Keep the default \"All Wines\" list on to show your full menu, or build curated lists and toggle them on and off here."
-      all_wines: "All Wines"
-      default: "Default"
+      intro: "Your public menu shows every enabled list. Build curated lists and toggle them on and off here."
       manage_wines: "Manage wines"
       toggle_label: "Show on public menu"
       add: "Add List"

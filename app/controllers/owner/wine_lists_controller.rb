@@ -5,7 +5,6 @@ module Owner
 
     def index
       @wine_lists = @restaurant.wine_lists.by_position.includes(:wine_list_items)
-      @available_wine_count = @restaurant.wines.active.count
     end
 
     def new
@@ -36,13 +35,6 @@ module Owner
     def destroy
       @wine_list.destroy!
       redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.deleted"), status: :see_other
-    end
-
-    # Enable/disable the default "All Wines" list, which always reflects every
-    # available wine. Backed by a flag on the restaurant (it has no membership).
-    def toggle_all_wines
-      @restaurant.update(all_wines_list_active: params[:active].present?)
-      redirect_to owner_restaurant_wine_lists_path(@restaurant), status: :see_other
     end
 
     private
