@@ -48,7 +48,8 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     end
 
     assert_text I18n.t("owner.wine_lists.members.added"), wait: 5
-    within "[data-sortable-target='members']" do
+    # Members are grouped into one drop container per colour; barolo is red.
+    within "[data-sortable-target='members'][data-color='red']" do
       assert_text "Barolo Riserva"
     end
   end

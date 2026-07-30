@@ -233,12 +233,17 @@ en:
         already_added: "That wine is already on this list."
         confirm_remove: "Remove this wine from the list?"
         all_added: "All of this restaurant's wines are already on this list."
+        add_all: "Add all wines"
+        added_all:
+          one: "Added 1 wine to the list."
+          other: "Added %{count} wines to the list."
         no_wines: "Your wine catalog is empty — add wines first, then feature them here."
         go_to_wines: "Go to My Wines"
         available_title: "Available wines"
         add_to_list: "Add to list"
         drag_label: "Drag to reorder"
-        drag_hint: "Drag a wine onto the list to add it, or drag list rows to reorder. Prefer the keyboard? Use the \"Add to list\" and sort-order controls instead."
+        drag_hint: "Drag a wine onto its colour group to add it, or drag list rows to reorder within a colour. Prefer the keyboard? Use the \"Add to list\" and sort-order controls instead."
+        empty_color: "Drop a wine of this colour here."
         reorder_failed: "Could not save the new order. Please try again."
         add_failed: "Could not add that wine. Please try again."
     tables:

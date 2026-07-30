@@ -31,6 +31,7 @@ Rails.application.routes.draw do
           resources :wine_list_items, only: [ :create, :update, :destroy ] do
             collection do
               patch :sort
+              post :create_all
             end
           end
         end

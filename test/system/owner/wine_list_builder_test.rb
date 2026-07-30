@@ -17,6 +17,16 @@ module Owner
       assert_text I18n.t("owner.wine_lists.members.title"), wait: 5
     end
 
+    # Members are split into one drop container per wine colour, so member
+    # selectors must name a colour to stay unambiguous.
+    def members_selector(colour)
+      "[data-sortable-target='members'][data-color='#{colour}']"
+    end
+
+    def red_members
+      members_selector("red")
+    end
+
     # --- PRIMARY: button path (keyboard / mobile accessible fallback) ---
 
     test "owner adds an available wine to the list with the Add button" do
@@ -30,13 +40,13 @@ module Owner
       end
 
       assert_text I18n.t("owner.wine_lists.members.added"), wait: 5
-      within "[data-sortable-target='members']" do
+      within red_members do
         assert_text "Barolo Riserva"
       end
 
       # Persisted server-side: a reload still shows it on the list.
       visit_list(list)
-      within "[data-sortable-target='members']" do
+      within red_members do
         assert_text "Barolo Riserva"
       end
       assert WineListItem.exists?(wine_list: list, wine: barolo)
@@ -72,6 +82,22 @@ module Owner
       assert_equal 5, wine_list_items(:summer_barolo).reload.position
     end
 
+    test "owner puts the whole cellar on a list with Add all wines" do
+      sign_in_as_owner
+      list = wine_lists(:winter) # member: gavi; the rest of osteria is available
+      restaurant = restaurants(:osteria)
+      visit_list(list)
+
+      expected_added = restaurant.wines.where.not(id: list.wines.select(:id)).count
+
+      click_button I18n.t("owner.wine_lists.members.add_all")
+
+      assert_text I18n.t("owner.wine_lists.members.added_all", count: expected_added), wait: 5
+      assert_equal restaurant.wines.count, list.reload.wines.count
+      # Nothing left to add, so the button is gone on the repainted column.
+      assert_no_button I18n.t("owner.wine_lists.members.add_all")
+    end
+
     test "filtering the available wines column hides non-matching wines" do
       sign_in_as_owner
       list = wine_lists(:winter) # member: gavi; available: barolo, sold_out
@@ -101,11 +127,29 @@ module Owner
       visit_list(list)
 
       source = find("[data-wine-id='#{barolo.id}']")
-      target = find("[data-sortable-target='members']")
+      target = find(red_members) # barolo is red
       source.drag_to(target)
 
       assert_text I18n.t("owner.wine_lists.members.added"), wait: 5
       assert WineListItem.exists?(wine_list: list, wine: barolo)
+    end
+
+    test "dropping a wine on a colour group that isn't its own is rejected" do
+      sign_in_as_owner
+      list = wine_lists(:winter) # member: gavi (white); available includes barolo (red)
+      barolo = wines(:barolo)
+      visit_list(list)
+
+      source = find("[data-wine-id='#{barolo.id}']")
+      source.drag_to(find(members_selector("white")))
+
+      # The put guard refuses the drop, so nothing is created. Give the failure
+      # path the same budget a successful add would have had before asserting.
+      assert_no_text I18n.t("owner.wine_lists.members.added"), wait: 2
+      assert_not WineListItem.exists?(wine_list: list, wine: barolo)
+      within members_selector("white") do
+        assert_no_text "Barolo Riserva"
+      end
     end
 
     test "owner drag-reorders members and the new order persists" do
@@ -122,9 +166,10 @@ module Owner
       handle.drag_to(target)
 
       # DOM reflects the new order immediately; wait for it before asserting.
+      # Both wines are red, so the reorder happens inside the red group.
       assert_equal(
         [ soldout_item.id.to_s, barolo_item.id.to_s ],
-        all("[data-sortable-target='members'] [data-id]").map { |el| el["data-id"] }
+        all("#{red_members} [data-id]").map { |el| el["data-id"] }
       )
       # onUpdate fires an async PATCH; poll until it persists.
       assert_reorder_persisted(barolo_item, soldout_item)
