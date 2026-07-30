@@ -56,31 +56,38 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "inactive lists are not shown on the public menu" do
-    # osteria's summer/winter lists are inactive → menu falls back to flat list
+    # osteria's summer/winter lists are inactive; only osteria_list renders
     get menu_path(id: restaurants(:osteria))
     assert_response :success
     assert_no_match "Summer Selection", response.body
     assert_no_match "Winter Selection", response.body
   end
 
-  test "the default All Wines list shows every active wine grouped by color" do
+  test "an active list groups its wines by colour, red before white" do
     get menu_path(id: restaurants(:osteria))
     assert_response :success
     assert_match "Barolo Riserva", response.body
     assert_match "Gavi di Gavi", response.body
+
+    # osteria_list holds a red (Barolo) and a white (Gavi) wine; sections must
+    # render in Wine's color enum order (red: 0, white: 1), not alphabetically
+    # or by item position.
+    red_index = response.body.index(I18n.t("owner.wines.colors.red"))
+    white_index = response.body.index(I18n.t("owner.wines.colors.white"))
+    assert_operator red_index, :<, white_index
   end
 
-  test "disabling All Wines shows only the enabled custom lists" do
-    restaurants(:osteria).update!(all_wines_list_active: false)
+  test "deactivating the restaurant's only list shows only the enabled custom lists" do
+    wine_lists(:osteria_list).update!(active: false)
     wine_lists(:summer).update!(active: true) # summer holds barolo + sold_out_wine
     get menu_path(id: restaurants(:osteria))
     assert_response :success
     assert_match "Barolo Riserva", response.body      # featured on summer
-    assert_no_match "Gavi di Gavi", response.body      # only in All Wines, now off
+    assert_no_match "Gavi di Gavi", response.body      # only on the deactivated list
   end
 
-  test "menu is empty when All Wines is off and no custom list is active" do
-    restaurants(:osteria).update!(all_wines_list_active: false)
+  test "menu is empty when the restaurant's only list is inactive" do
+    wine_lists(:osteria_list).update!(active: false)
     get menu_path(id: restaurants(:osteria))
     assert_response :success
     assert_match I18n.t("menu.empty"), response.body

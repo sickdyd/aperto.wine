@@ -336,7 +336,6 @@ en:
         name_pattern: "Table naming"
   menu:
     title: "Wine List"
-    all_wines: "All Wines"
     search_placeholder: "Search wines..."
     no_results: "No wines match your search."
     sections_nav_label: "Menu sections"

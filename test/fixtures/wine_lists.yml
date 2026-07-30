@@ -1,8 +1,14 @@
+osteria_list:
+  restaurant: osteria
+  name: Wine List
+  position: 1
+  active: true
+
 summer:
   restaurant: osteria
   name: Summer Selection
   season: Summer
-  position: 1
+  position: 2
   active: false
 
 winter:

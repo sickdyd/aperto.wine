@@ -336,7 +336,6 @@ it:
         name_pattern: "Nome dei tavoli"
   menu:
     title: "Carta dei Vini"
-    all_wines: "Tutti i Vini"
     search_placeholder: "Cerca vini..."
     no_results: "Nessun vino corrisponde alla ricerca."
     sections_nav_label: "Sezioni del menu"

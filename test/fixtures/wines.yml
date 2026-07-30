@@ -59,3 +59,15 @@ trattoria_sold_out:
   available_glasses: 0
   position: 2
   active: true
+
+# A white wine on trattoria's list — gives "House Picks" a second colour
+# group, driving the multi-section jump-nav test.
+trattoria_white:
+  restaurant: trattoria
+  name: Arneis dei Colli
+  producer: Vietti
+  color: 1
+  bottle_size_ml: 750
+  available_glasses: 5
+  position: 3
+  active: true
