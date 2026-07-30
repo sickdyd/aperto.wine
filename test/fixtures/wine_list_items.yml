@@ -49,3 +49,21 @@ trattoria_white_item:
   wine_list: trattoria_list
   wine: trattoria_white
   position: 3
+
+# mixed_order_list: item positions deliberately contradict colour enum order
+# (white first, dessert second, red last) so the helper's grouping can only
+# be enum-order-based, never position-order-based, to pass.
+mixed_order_white:
+  wine_list: mixed_order_list
+  wine: gavi
+  position: 1
+
+mixed_order_dessert:
+  wine_list: mixed_order_list
+  wine: osteria_moscato
+  position: 2
+
+mixed_order_red:
+  wine_list: mixed_order_list
+  wine: barolo
+  position: 3

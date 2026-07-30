@@ -69,11 +69,16 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     assert_match "Barolo Riserva", response.body
     assert_match "Gavi di Gavi", response.body
 
-    # osteria_list holds a red (Barolo) and a white (Gavi) wine; sections must
-    # render in Wine's color enum order (red: 0, white: 1), not alphabetically
-    # or by item position.
-    red_index = response.body.index(I18n.t("owner.wines.colors.red"))
-    white_index = response.body.index(I18n.t("owner.wines.colors.white"))
+    # osteria_list holds a red (Barolo) and a white (Gavi) wine; the colour
+    # sections must render in Wine's color enum order (red: 0, white: 1), not
+    # alphabetically or by item position. Anchor on the section ids rather than
+    # the colour names — the names also appear in the jump nav above, so
+    # matching those would measure nav order instead of render order.
+    list_id = wine_lists(:osteria_list).id
+    red_index = response.body.index("id=\"list-#{list_id}-red\"")
+    white_index = response.body.index("id=\"list-#{list_id}-white\"")
+    assert_not_nil red_index
+    assert_not_nil white_index
     assert_operator red_index, :<, white_index
   end
 

@@ -38,6 +38,19 @@ class MenusHelperTest < ActionView::TestCase
     assert_equal [ "white" ], colour_groups.map(&:first)
   end
 
+  test "renderable_wine_lists orders colours by enum, not alphabetically or by item position" do
+    # mixed_order_list's item positions are white(1), dessert(2), red(3) — the
+    # exact reverse of a naive "position order" implementation, and its
+    # colour set (dessert, red, white) sorts alphabetically as
+    # ["dessert", "red", "white"], which diverges from Wine's declared enum
+    # order (red: 0, white: 1, dessert: 4). Only an enum-order-based
+    # implementation produces ["red", "white", "dessert"] here.
+    rendered = renderable_wine_lists([ wine_lists(:mixed_order_list) ])
+
+    _list, colour_groups = rendered.first
+    assert_equal [ "red", "white", "dessert" ], colour_groups.map(&:first)
+  end
+
   test "menu_nav_sections uses the plain colour name when only one list renders" do
     rendered = renderable_wine_lists([ wine_lists(:trattoria_list) ])
 

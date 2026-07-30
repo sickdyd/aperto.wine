@@ -35,7 +35,9 @@
       <% end %>
 
       <% rendered_lists.each do |wine_list, colour_groups| %>
-        <div class="mb-10">
+        <%# Also a filter group, nested around the colour sections: without this
+            a list whose wines all filter out would leave a bare heading behind. %>
+        <div class="mb-10" data-list-filter-target="group">
           <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
           <% if wine_list.season.present? %>
             <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
@@ -45,10 +47,10 @@
 
           <% colour_groups.each do |colour, items| %>
             <section id="list-<%= wine_list.id %>-<%= colour %>" class="mb-10 scroll-mt-20" data-list-filter-target="group">
-              <h2 class="font-display text-xl font-medium mb-4 flex items-center gap-2">
+              <h3 class="font-display text-lg font-medium mb-4 flex items-center gap-2">
                 <%= wine_color_dot(colour, label: false) %>
                 <%= t("owner.wines.colors.#{colour}") %>
-              </h2>
+              </h3>
 
               <div class="space-y-3">
                 <% items.each do |item| %>

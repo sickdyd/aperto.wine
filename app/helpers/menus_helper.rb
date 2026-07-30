@@ -10,9 +10,9 @@ module MenusHelper
                   .sort_by { |item| [ item.position, item.id ] }
       next if items.empty?
 
+      by_colour = items.group_by { |item| item.wine.color }
       colour_groups = Wine.colors.keys.filter_map do |colour|
-        colour_items = items.select { |item| item.wine.color == colour }
-        [ colour, colour_items ] if colour_items.any?
+        [ colour, by_colour[colour] ] if by_colour.key?(colour)
       end
 
       [ list, colour_groups ]
