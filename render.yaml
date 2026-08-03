@@ -9,6 +9,11 @@
 # Staging stays a flat top-level definition: top-level resources keep their
 # currently assigned environment across syncs.
 #
+# region is set on every resource: it is fixed when a resource is created and can
+# only be changed by destroying and recreating it. Frankfurt is the closest
+# region to the Italian restaurants this serves. A service and its database must
+# share a region to talk over the private network.
+#
 # HTTP_AUTH_USER / HTTP_AUTH_PASSWORD (sync: false — set in the dashboard)
 # gate the whole site behind HTTP basic auth while pre-launch; unset them to
 # open the site, no deploy required.
@@ -16,6 +21,7 @@
 databases:
   - name: aperto-wine-staging-db
     plan: basic-256mb
+    region: frankfurt
     ipAllowList: []
 
 services:
@@ -23,7 +29,12 @@ services:
     name: aperto-wine-staging
     runtime: ruby
     plan: standard
+    region: frankfurt
     buildCommand: ./bin/render-build.sh
+    # Migrations run here rather than in the build: Render runs preDeployCommand
+    # after the build and before traffic switches, so a failed migration halts
+    # the deploy with the previous version still serving. Requires a paid plan.
+    preDeployCommand: bundle exec rails db:migrate
     startCommand: bundle exec rails server -p $PORT -e production
     healthCheckPath: /up
     envVars:
@@ -33,6 +44,10 @@ services:
           property: connectionString
       - key: SECRET_KEY_BASE
         generateValue: true
+      # Only the start command passes -e; the build and pre-deploy commands
+      # inherit RAILS_ENV, so set it explicitly rather than relying on a default.
+      - key: RAILS_ENV
+        value: production
       # No dedicated worker on staging: Puma runs the Solid Queue supervisor
       # in-process (config/puma.rb gates on this).
       - key: SOLID_QUEUE_IN_PUMA
@@ -59,6 +74,12 @@ services:
         sync: false
       - key: HTTP_AUTH_PASSWORD
         sync: false
+      # Wine-Searcher autofill. WineSearcher::Client#configured? short-circuits
+      # to no results while these are unset, so the app boots fine without them.
+      - key: WINE_SEARCHER_API_KEY
+        sync: false
+      - key: WINE_SEARCHER_API_URL
+        sync: false
 
 # ------------------------------------------------------------------------
 # PRODUCTION — intentionally commented out until launch so the Blueprint
@@ -73,6 +94,7 @@ services:
 #         databases:
 #           - name: aperto-wine-production-db
 #             plan: basic-256mb
+#             region: frankfurt
 #             ipAllowList: []
 #
 #         # Shared env group for production services. Secrets are entered ONCE
@@ -83,6 +105,8 @@ services:
 #             envVars:
 #               - key: SECRET_KEY_BASE
 #                 generateValue: true
+#               - key: RAILS_ENV
+#                 value: production
 #               - key: APP_HOST
 #                 sync: false
 #               - key: APP_PROTOCOL
@@ -103,6 +127,10 @@ services:
 #                 sync: false
 #               - key: HTTP_AUTH_PASSWORD
 #                 sync: false
+#               - key: WINE_SEARCHER_API_KEY
+#                 sync: false
+#               - key: WINE_SEARCHER_API_URL
+#                 sync: false
 #
 #         services:
 #           # Unlike jeero there is no separate worker yet (the app has no
@@ -113,11 +141,13 @@ services:
 #             name: aperto-wine-production
 #             runtime: ruby
 #             plan: standard
+#             region: frankfurt
 #             # Production deploys from the `production` branch, not main. Merges
 #             # to main deploy staging only; promote by advancing `production`
 #             # (e.g. git push origin main:production).
 #             branch: production
 #             buildCommand: ./bin/render-build.sh
+#             preDeployCommand: bundle exec rails db:migrate
 #             startCommand: bundle exec rails server -p $PORT -e production
 #             healthCheckPath: /up
 #             envVars:
