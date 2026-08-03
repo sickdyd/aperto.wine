@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_23_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_080000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -87,7 +87,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_23_000002) do
   create_table "restaurants", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "address", null: false
-    t.boolean "all_wines_list_active", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.decimal "latitude", precision: 10, scale: 7
