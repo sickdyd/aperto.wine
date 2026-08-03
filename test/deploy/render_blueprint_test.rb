@@ -31,6 +31,14 @@ class RenderBlueprintTest < ActiveSupport::TestCase
       "region is fixed at creation time; leaving it unset silently defaults to Oregon"
   end
 
+  # Render's own validator rejects this combination with "pre-deploy command is
+  # not supported for free tier services". Dropping to free to save money would
+  # therefore mean migrations silently stop running.
+  test "the plan is a paid tier, which the pre-deploy command requires" do
+    refute_equal "free", @staging["plan"],
+      "preDeployCommand is unavailable on free; starter is the cheapest tier that supports it"
+  end
+
   test "migrations run as a pre-deploy command, not during the build" do
     assert_includes @staging["preDeployCommand"].to_s, "db:migrate",
       "Render runs preDeployCommand after the build and before traffic switches, " \

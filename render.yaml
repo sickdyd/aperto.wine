@@ -28,7 +28,11 @@ services:
   - type: web
     name: aperto-wine-staging
     runtime: ruby
-    plan: standard
+    # starter is the cheapest paid tier, which preDeployCommand requires (it is
+    # unavailable on free only). 512 MB fits this service: WEB_CONCURRENCY=0
+    # keeps Puma to a single process and RAILS_MAX_THREADS=1 to one thread, with
+    # Solid Queue running in-process alongside it.
+    plan: starter
     region: frankfurt
     buildCommand: ./bin/render-build.sh
     # Migrations run here rather than in the build: Render runs preDeployCommand
