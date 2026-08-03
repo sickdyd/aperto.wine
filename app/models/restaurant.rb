@@ -1,4 +1,11 @@
 class Restaurant < ApplicationRecord
+  # Phase one of a two-phase drop of `all_wines_list_active`. The column is
+  # still in the database; ignoring it here keeps this release from naming it
+  # in INSERT/UPDATE statements, so the follow-up release that actually runs
+  # `remove_column` cannot break instances still running this code. Remove
+  # this line in the same release as that migration.
+  self.ignored_columns += %i[all_wines_list_active]
+
   belongs_to :user
   has_many :wines, dependent: :destroy
   has_many :wine_lists, dependent: :destroy
