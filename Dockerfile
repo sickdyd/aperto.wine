@@ -27,6 +27,18 @@ ENV RAILS_ENV="production" \
     BUNDLE_WITHOUT="development" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
+# Throw-away stage that installs the npm packages the Tailwind build needs.
+# app/assets/tailwind/application.css loads daisyui with @plugin, and the
+# standalone tailwindcss binary resolves plugins from node_modules — so the
+# packages have to exist even though nothing here ever runs Node. .dockerignore
+# excludes the host's node_modules on purpose, so this installs from the lockfile.
+FROM node:22-slim AS node_modules
+
+WORKDIR /rails
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
@@ -47,9 +59,18 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
+COPY --from=node_modules /rails/node_modules ./node_modules
+
 # Precompile bootsnap code for faster boot times.
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
+
+# app/assets/svg/icons is gitignored (see docs/ASSETS.md): the Phosphor set is
+# synced per checkout rather than committed, so a clean clone does not have it
+# and every icon(...) call would raise Icons::IconNotFound at request time.
+# Redirecting stdin keeps the gem's interactive "remove the temp files?" prompt
+# from stalling the build if the upstream clone fails.
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails generate rails_icons:sync --library=phosphor --force --quiet </dev/null
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
