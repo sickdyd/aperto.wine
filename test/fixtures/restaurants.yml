@@ -20,3 +20,10 @@ trattoria:
   address: Via Verdi 7, Torino
   proximity_radius_meters: 150
   active: true
+
+enoteca:
+  user: owner
+  name: Enoteca del Borgo
+  address: Via Torino 3, Milano
+  proximity_radius_meters: 150
+  active: true

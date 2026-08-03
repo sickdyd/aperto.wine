@@ -290,6 +290,13 @@ it:
           number_only: "1, 2, …"
           floor_table: "1-1, 1-2, … (piano-tavolo)"
         submit: "Genera"
+        delete_all: "Elimina tutti i tavoli"
+        delete_all_hint: "Rimuove tutti i tavoli di questo ristorante. Gli ordini passati vengono conservati; i codici QR stampati smettono di funzionare."
+        confirm_delete_all: "Eliminare tutti i tavoli di questo ristorante? Ogni codice QR stampato smetterà di identificare il suo tavolo. Gli ordini passati vengono conservati."
+        deleted_all:
+          zero: "Nessun tavolo da eliminare."
+          one: "1 tavolo eliminato. Gli ordini passati vengono conservati."
+          other: "%{count} tavoli eliminati. Gli ordini passati vengono conservati."
       form:
         name: "Nome Tavolo"
         name_placeholder: "es. Tavolo 1"

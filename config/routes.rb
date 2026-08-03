@@ -44,6 +44,7 @@ Rails.application.routes.draw do
             get :bulk_print
             get :bulk_new
             post :bulk_create
+            delete :destroy_all
           end
         end
         resources :orders, only: [ :index, :show ] do

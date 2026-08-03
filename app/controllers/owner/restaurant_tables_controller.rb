@@ -65,6 +65,13 @@ module Owner
       end
     end
 
+    def destroy_all
+      # One DELETE statement: the orders FK is ON DELETE SET NULL, so past orders
+      # survive with restaurant_table_id nulled out (see db/schema.rb foreign keys).
+      count = RestaurantTable.where(restaurant_id: @restaurant.id).delete_all
+      redirect_to owner_restaurant_tables_path(@restaurant), notice: t("owner.tables.bulk.deleted_all", count: count), status: :see_other
+    end
+
     private
 
     def set_restaurant

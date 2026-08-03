@@ -290,6 +290,13 @@ en:
           number_only: "1, 2, …"
           floor_table: "1-1, 1-2, … (floor-table)"
         submit: "Generate"
+        delete_all: "Delete all tables"
+        delete_all_hint: "Removes every table for this restaurant. Past orders are kept; printed QR codes stop working."
+        confirm_delete_all: "Delete all tables for this restaurant? Every printed QR code will stop identifying its table. Past orders are kept."
+        deleted_all:
+          zero: "No tables to delete."
+          one: "1 table deleted. Past orders are kept."
+          other: "%{count} tables deleted. Past orders are kept."
       form:
         name: "Table Name"
         name_placeholder: "e.g. Table 1"

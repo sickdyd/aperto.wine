@@ -53,3 +53,13 @@
     <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
   </div>
 <% end %>
+
+<% if @restaurant.restaurant_tables.any? %>
+  <div class="mt-12 pt-8 border-t border-base-content/10 max-w-xl">
+    <%= button_to destroy_all_owner_restaurant_tables_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm text-error", data: { turbo_confirm: t("owner.tables.bulk.confirm_delete_all") } do %>
+      <%= icon "trash", css: "size-4" %>
+      <%= t("owner.tables.bulk.delete_all") %>
+    <% end %>
+    <p class="text-xs text-base-content/50 mt-1"><%= t("owner.tables.bulk.delete_all_hint") %></p>
+  </div>
+<% end %>

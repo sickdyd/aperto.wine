@@ -79,4 +79,29 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     assert_text(/piano 2/i)
     assert_text "T3"
   end
+
+  test "owner deletes all tables from the generator page" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+
+    visit bulk_new_owner_restaurant_tables_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.tables.bulk.title"), wait: 5
+
+    accept_confirm do
+      click_on I18n.t("owner.tables.bulk.delete_all")
+    end
+
+    assert_current_path owner_restaurant_tables_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.tables.empty_title"), wait: 5
+    assert_equal 0, restaurant.restaurant_tables.count
+  end
+
+  test "delete-all-tables button is hidden when the restaurant has no tables" do
+    sign_in_as_owner
+    restaurant = restaurants(:inactive_restaurant)
+
+    visit bulk_new_owner_restaurant_tables_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.tables.bulk.title"), wait: 5
+    assert_no_text I18n.t("owner.tables.bulk.delete_all")
+  end
 end
