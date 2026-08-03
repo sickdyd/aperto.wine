@@ -6,6 +6,28 @@ on:
     branches: [ main ]
 
 jobs:
+  # The Dockerfile is the Kamal deploy path, and Render auto-detects it for any
+  # service created from the dashboard instead of the Blueprint. Nothing else in
+  # CI executes it, so a broken image build only ever surfaced as a failed
+  # deploy. Building it here keeps that feedback in the PR.
+  build_image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   scan_ruby:
     runs-on: ubuntu-latest
 
