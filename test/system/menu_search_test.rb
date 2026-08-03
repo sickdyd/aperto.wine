@@ -57,4 +57,17 @@ class MenuSearchTest < ApplicationSystemTestCase
     assert_text I18n.t("owner.wines.colors.red"), wait: 5
     assert_no_text I18n.t("owner.wines.colors.white")
   end
+
+  test "a list heading hides once every wine on that list is filtered out" do
+    visit_menu
+
+    assert_text wine_lists(:osteria_list).name, wait: 5
+
+    fill_in I18n.t("menu.search_placeholder"), with: "nonexistent wine xyz"
+
+    # The list name wrapper is its own filter group, so a list with no matching
+    # wines must not leave a bare heading stranded above the no-results line.
+    assert_text I18n.t("menu.no_results"), wait: 5
+    assert_no_text wine_lists(:osteria_list).name
+  end
 end

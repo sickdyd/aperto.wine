@@ -21,6 +21,41 @@ module Owner
       respond_with_members(alert: t("owner.wine_lists.members.already_added"))
     end
 
+    # Adds every one of the restaurant's wines that isn't already on the list,
+    # appended after the existing items in `Wine.by_position` order. This is the
+    # replacement for the old synthetic "All Wines" list: an owner who wants the
+    # whole cellar on the menu makes one list and presses this once.
+    #
+    # `insert_all` with `unique_by` gives one round trip and an ON CONFLICT DO
+    # NOTHING, so a double submit (or a concurrent add of the same wine) is a
+    # no-op rather than a duplicate or a 500. Bypassing per-row validations is
+    # safe for the same reason it is in #sort: both sides are already scoped to
+    # @restaurant, so the same-restaurant invariant can't be violated, and the
+    # unique index enforces per-list wine uniqueness.
+    def create_all
+      wines = @restaurant.wines
+                         .by_position
+                         .where.not(id: @wine_list.wine_list_items.select(:wine_id))
+
+      return respond_with_members(alert: t("owner.wine_lists.members.all_added")) if wines.empty?
+
+      next_position = (@wine_list.wine_list_items.maximum(:position) || 0) + 1
+      now = Time.current
+      rows = wines.each_with_index.map do |wine, index|
+        {
+          wine_list_id: @wine_list.id,
+          wine_id: wine.id,
+          position: next_position + index,
+          created_at: now,
+          updated_at: now
+        }
+      end
+
+      added = WineListItem.insert_all(rows, unique_by: %i[wine_list_id wine_id]).count
+
+      respond_with_members(notice: t("owner.wine_lists.members.added_all", count: added))
+    end
+
     def update
       if @wine_list_item.update(wine_list_item_params)
         respond_with_members(notice: t("owner.wine_lists.members.reordered"))

@@ -1,4 +1,4 @@
-<div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100" data-id="<%= item.id %>">
+<div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100" data-id="<%= item.id %>" data-color="<%= item.wine.color %>">
   <div class="flex items-center gap-2 min-w-0">
     <span data-sortable-handle
           aria-label="<%= t("owner.wine_lists.members.drag_label") %>"
@@ -19,7 +19,7 @@
       <%= f.number_field :position, value: item.position, min: 0, class: "input input-xs w-16 font-body" %>
       <%= f.submit t("shared.save"), class: "btn btn-ghost btn-xs" %>
     <% end %>
-    <%= button_to owner_restaurant_wine_list_wine_list_item_path(@restaurant, wine_list, item), method: :delete, class: "btn btn-ghost btn-xs text-error", aria: { label: "#{t('shared.delete')}: #{item.wine.name}" }, data: { turbo_confirm: t("owner.wine_lists.members.confirm_remove") } do %>
+    <%= button_to owner_restaurant_wine_list_wine_list_item_path(@restaurant, wine_list, item), method: :delete, class: "btn btn-ghost btn-xs text-error", aria: { label: "#{t('shared.delete')}: #{item.wine.name}" } do %>
       <%= icon "trash", css: "size-3.5" %>
     <% end %>
   </div>

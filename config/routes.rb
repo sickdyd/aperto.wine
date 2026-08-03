@@ -28,12 +28,10 @@ Rails.application.routes.draw do
       resources :restaurants do
         resources :wines, except: [ :show ]
         resources :wine_lists, except: [ :show ] do
-          collection do
-            patch :toggle_all_wines
-          end
           resources :wine_list_items, only: [ :create, :update, :destroy ] do
             collection do
               patch :sort
+              post :create_all
             end
           end
         end

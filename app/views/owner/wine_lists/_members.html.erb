@@ -1,5 +1,13 @@
 <% items = wine_list.wine_list_items.includes(:wine).by_position %>
 <% available_wines = @restaurant.wines.by_position.where.not(id: items.map(&:wine_id)) %>
+<%# One drop container per colour, in Wine's colour enum order. A colour is
+    rendered when it has an item on the list OR an available wine — so every
+    wine that can be dragged always has a target, while unused colours stay
+    hidden. Ordering is within a colour; positions remain a single flat
+    sequence across the whole list. %>
+<% items_by_colour = items.group_by { |item| item.wine.color } %>
+<% available_by_colour = available_wines.group_by(&:color) %>
+<% active_colours = Wine.colors.keys.select { |c| items_by_colour.key?(c) || available_by_colour.key?(c) } %>
 
 <section id="wine_list_members"
          class="max-w-4xl"
@@ -13,21 +21,44 @@
   <p id="wine_list_drag_hint" class="sr-only"><%= t("owner.wine_lists.members.drag_hint") %></p>
 
   <div class="grid gap-8 md:grid-cols-2 mt-6">
-    <%# --- On this list (sortable members) --- %>
+    <%# --- On this list (sortable members, one group per colour) --- %>
     <div>
-      <div data-sortable-target="members"
-           aria-describedby="wine_list_drag_hint"
-           class="space-y-2 min-h-16">
-        <%= render partial: "owner/wine_lists/member_item", collection: items, as: :item, locals: { wine_list: wine_list } %>
-      </div>
-      <% if items.empty? %>
+      <% if active_colours.empty? %>
         <p class="text-sm text-base-content/40 italic"><%= t("owner.wine_lists.members.empty") %></p>
+      <% end %>
+
+      <% active_colours.each do |colour| %>
+        <div class="mb-5">
+          <h4 class="font-body text-xs uppercase tracking-wider text-base-content/50 mb-2 flex items-center gap-2">
+            <%= wine_color_dot(colour, label: false) %>
+            <%= t("owner.wines.colors.#{colour}") %>
+          </h4>
+          <div data-sortable-target="members"
+               data-color="<%= colour %>"
+               aria-describedby="wine_list_drag_hint"
+               class="space-y-2 min-h-12 rounded-lg <%= "border border-dashed border-base-content/15" if items_by_colour[colour].blank? %>">
+            <%= render partial: "owner/wine_lists/member_item", collection: items_by_colour[colour] || [], as: :item, locals: { wine_list: wine_list } %>
+            <% if items_by_colour[colour].blank? %>
+              <p data-sortable-placeholder class="text-xs text-base-content/40 italic p-3"><%= t("owner.wine_lists.members.empty_color") %></p>
+            <% end %>
+          </div>
+        </div>
       <% end %>
     </div>
 
     <%# --- Available wines (drag source + Add button) --- %>
     <div data-controller="list-filter">
-      <h3 class="font-body text-sm font-medium text-base-content/70 mb-3"><%= t("owner.wine_lists.members.available_title") %></h3>
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <h3 class="font-body text-sm font-medium text-base-content/70"><%= t("owner.wine_lists.members.available_title") %></h3>
+        <%# Adds every available wine regardless of what's typed in the filter
+            below — the filter is a client-side display filter only. %>
+        <% if available_wines.any? %>
+          <%= button_to t("owner.wine_lists.members.add_all"),
+                create_all_owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list),
+                method: :post,
+                class: "btn btn-ghost btn-xs whitespace-nowrap" %>
+        <% end %>
+      </div>
       <% if available_wines.any? %>
         <div class="mb-3">
           <label for="available_wines_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>

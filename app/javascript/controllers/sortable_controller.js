@@ -5,10 +5,18 @@ import Sortable from "sortablejs"
 // Drag-and-drop for the wine list builder. Enhances the always-working button
 // controls (Add to list / delete / sort-order field) — never replaces them.
 //
-// Two SortableJS instances share the "wine-list" group:
-//   - members  : reorder rows (onUpdate -> PATCH sort) and receive clones from
-//                the available column (onAdd -> POST create).
+// SortableJS instances share the "wine-list" group:
+//   - members  : one container per wine colour. Reorder rows (onUpdate ->
+//                PATCH sort) and receive clones from the available column
+//                (onAdd -> POST create). A `put` guard rejects any drop whose
+//                colour doesn't match the container, so ordering is always
+//                within a colour — both from the available column and between
+//                member containers.
 //   - available: source only (pull clone, put false, sort false).
+//
+// Positions stay a single flat sequence across the whole list: memberIds()
+// concatenates every colour container in document order, so the colour split
+// is presentation only.
 //
 // This element is the turbo_stream replace target, so Stimulus re-connects
 // after every server repaint and rebuilds the instances cleanly.
@@ -19,16 +27,21 @@ export default class extends Controller {
   connect() {
     this.sortables = []
 
-    if (this.hasMembersTarget) {
-      this.sortables.push(new Sortable(this.membersTarget, {
-        group: "wine-list",
+    this.membersTargets.forEach((container) => {
+      this.sortables.push(new Sortable(container, {
+        group: {
+          name: "wine-list",
+          put: (to, _from, dragEl) => dragEl.dataset.color === to.el.dataset.color
+        },
         handle: "[data-sortable-handle]",
+        // The "drop a wine here" hint in an empty colour group is not a row.
+        filter: "[data-sortable-placeholder]",
         animation: 150,
-        onStart: () => { this.snapshot = this.memberIds() },
+        onStart: () => { this.snapshot = this.memberSnapshot() },
         onUpdate: () => this.persistOrder(),
         onAdd: (event) => this.addWine(event)
       }))
-    }
+    })
 
     if (this.hasAvailableTarget) {
       this.sortables.push(new Sortable(this.availableTarget, {
@@ -107,20 +120,39 @@ export default class extends Controller {
     })
   }
 
+  // Every colour container's rows, in document order — the flat position
+  // sequence the server persists.
   memberIds() {
-    return Array.from(this.membersTarget.children)
-      .map((row) => row.dataset.id)
-      .filter(Boolean)
+    return this.membersTargets.flatMap((container) =>
+      Array.from(container.children)
+        .map((row) => row.dataset.id)
+        .filter(Boolean)
+    )
+  }
+
+  // Which container each row sat in, and in what order, before the drag — a
+  // flat id list can't restore a row that moved between colour containers.
+  memberSnapshot() {
+    return this.membersTargets.map((container) => ({
+      container,
+      ids: Array.from(container.children).map((row) => row.dataset.id).filter(Boolean)
+    }))
   }
 
   restoreSnapshot() {
     if (!this.snapshot) return
     const byId = new Map(
-      Array.from(this.membersTarget.children).map((row) => [row.dataset.id, row])
+      this.membersTargets.flatMap((container) =>
+        Array.from(container.children)
+          .filter((row) => row.dataset.id)
+          .map((row) => [row.dataset.id, row])
+      )
     )
-    this.snapshot.forEach((id) => {
-      const row = byId.get(id)
-      if (row) this.membersTarget.appendChild(row)
+    this.snapshot.forEach(({ container, ids }) => {
+      ids.forEach((id) => {
+        const row = byId.get(id)
+        if (row) container.appendChild(row)
+      })
     })
   }
 

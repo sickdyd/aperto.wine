@@ -237,5 +237,96 @@ module Owner
       assert_equal original_first_position, first.reload.position
       assert_equal original_second_position, second.reload.position
     end
+
+    # --- CREATE_ALL (add every available wine at once) ---
+
+    test "create_all requires authentication" do
+      post create_all_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: @wine_list
+      )
+      assert_redirected_to sign_in_path
+    end
+
+    test "create_all adds every restaurant wine not already on the list" do
+      sign_in_as @owner
+      # winter holds only gavi; the rest of osteria's cellar should land on it.
+      missing = @restaurant.wines.where.not(id: @wine_list.wines.select(:id))
+      assert_operator missing.count, :>, 0
+
+      assert_difference "WineListItem.count", missing.count do
+        post create_all_owner_restaurant_wine_list_wine_list_items_path(
+          restaurant_id: @restaurant, wine_list_id: @wine_list
+        )
+      end
+
+      assert_redirected_to edit_owner_restaurant_wine_list_path(restaurant_id: @restaurant, id: @wine_list)
+      assert_equal @restaurant.wines.count, @wine_list.reload.wines.count
+    end
+
+    test "create_all appends after existing items in wine position order" do
+      sign_in_as @owner
+      existing = wine_list_items(:winter_gavi)
+      expected_order = @restaurant.wines
+                                  .by_position
+                                  .where.not(id: @wine_list.wines.select(:id))
+                                  .to_a
+
+      post create_all_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: @wine_list
+      )
+
+      added = @wine_list.reload.wine_list_items.by_position.reject { |item| item.id == existing.id }
+      assert_equal expected_order, added.map(&:wine)
+      # Appended, not interleaved: every new position sits above the old one.
+      assert_operator added.map(&:position).min, :>, existing.reload.position
+    end
+
+    test "create_all is a no-op when every wine is already on the list" do
+      sign_in_as @owner
+      post create_all_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: @wine_list
+      )
+
+      assert_no_difference "WineListItem.count" do
+        post create_all_owner_restaurant_wine_list_wine_list_items_path(
+          restaurant_id: @restaurant, wine_list_id: @wine_list
+        )
+      end
+    end
+
+    test "create_all twice creates no duplicate items" do
+      sign_in_as @owner
+      2.times do
+        post create_all_owner_restaurant_wine_list_wine_list_items_path(
+          restaurant_id: @restaurant, wine_list_id: @wine_list
+        )
+      end
+
+      wine_ids = @wine_list.reload.wine_list_items.pluck(:wine_id)
+      assert_equal wine_ids.uniq.size, wine_ids.size
+    end
+
+    test "create_all via turbo_stream repaints the members container" do
+      sign_in_as @owner
+      post create_all_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: @wine_list
+      ), headers: { "Accept" => TURBO_STREAM_ACCEPT }
+
+      assert_response :success
+      assert_match "wine_list_members", response.body
+    end
+
+    test "create_all for a restaurant the signed-in owner does not own is rejected (404)" do
+      sign_in_as @owner
+      other_restaurant = restaurants(:trattoria)
+      other_list = wine_lists(:trattoria_list)
+
+      assert_no_difference "WineListItem.count" do
+        post create_all_owner_restaurant_wine_list_wine_list_items_path(
+          restaurant_id: other_restaurant, wine_list_id: other_list
+        )
+      end
+      assert_response :not_found
+    end
   end
 end

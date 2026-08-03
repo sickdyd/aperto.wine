@@ -16,7 +16,6 @@ class OwnerWineListsTest < ApplicationSystemTestCase
 
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
     assert_text I18n.t("owner.wine_lists.title"), wait: 5
-
     link = find_link(I18n.t("owner.restaurants.preview_menu"))
     assert_equal menu_path(id: restaurant.id), URI.parse(link[:href]).path
     assert_equal "_blank", link[:target]
@@ -27,7 +26,7 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
 
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
-    assert_text I18n.t("owner.wine_lists.all_wines"), wait: 5 # the default list is always present
+    assert_text I18n.t("owner.wine_lists.title"), wait: 5
 
     click_link I18n.t("owner.wine_lists.add"), match: :first
     assert_text I18n.t("owner.wine_lists.new_title"), wait: 5
@@ -49,7 +48,8 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     end
 
     assert_text I18n.t("owner.wine_lists.members.added"), wait: 5
-    within "[data-sortable-target='members']" do
+    # Members are grouped into one drop container per colour; barolo is red.
+    within "[data-sortable-target='members'][data-color='red']" do
       assert_text "Barolo Riserva"
     end
   end
@@ -89,15 +89,15 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     assert_text "No wines yet"
   end
 
-  test "a restaurant with no custom lists still shows the default All Wines list" do
+  test "a restaurant with no lists shows the empty state" do
     sign_in_as_owner
     restaurant = users(:owner).restaurants.create!(
       name: "Empty Cellar", address: "Via Vuota 1", proximity_radius_meters: 100
     )
 
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
-    assert_text I18n.t("owner.wine_lists.all_wines"), wait: 5
-    assert_text I18n.t("owner.wine_lists.default")
-    assert_link I18n.t("owner.wine_lists.add")
+    assert_text I18n.t("owner.wine_lists.empty_title"), wait: 5
+    assert_text I18n.t("owner.wine_lists.empty_description")
+    assert_link I18n.t("owner.wine_lists.add_first")
   end
 end

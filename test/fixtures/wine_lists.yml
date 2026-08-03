@@ -1,15 +1,21 @@
+osteria_list:
+  restaurant: osteria
+  name: Wine List
+  position: 1
+  active: true
+
 summer:
   restaurant: osteria
   name: Summer Selection
   season: Summer
-  position: 1
+  position: 2
   active: false
 
 winter:
   restaurant: osteria
   name: Winter Selection
   season: Winter
-  position: 2
+  position: 3
   active: false
 
 trattoria_list:
@@ -17,3 +23,16 @@ trattoria_list:
   name: House Picks
   position: 1
   active: true
+
+# Inactive — never queried by the controller. Exists only so the helper unit
+# tests can prove colour grouping follows Wine's color enum order rather than
+# alphabetical order or item position order: its item positions (white
+# first, dessert second, red last) deliberately contradict enum order
+# (red: 0, white: 1, dessert: 4), and its colours (dessert, red, white)
+# deliberately contradict alphabetical order (dessert, red, white — which
+# happens to differ from enum order only in where "dessert" lands).
+mixed_order_list:
+  restaurant: osteria
+  name: Mixed Order Check
+  position: 4
+  active: false

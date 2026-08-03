@@ -1,3 +1,21 @@
+# Osteria's only active list — the public-menu tests that expect Barolo and
+# Gavi to render (grouped by colour) target this list.
+osteria_barolo:
+  wine_list: osteria_list
+  wine: barolo
+  position: 1
+
+osteria_gavi:
+  wine_list: osteria_list
+  wine: gavi
+  position: 2
+
+# Active but zero glasses — drives the "sold out badge" public-menu test.
+osteria_sold_out:
+  wine_list: osteria_list
+  wine: sold_out_wine
+  position: 3
+
 summer_barolo:
   wine_list: summer
   wine: barolo
@@ -26,3 +44,26 @@ trattoria_soldout:
   wine_list: trattoria_list
   wine: trattoria_sold_out
   position: 2
+
+trattoria_white_item:
+  wine_list: trattoria_list
+  wine: trattoria_white
+  position: 3
+
+# mixed_order_list: item positions deliberately contradict colour enum order
+# (white first, dessert second, red last) so the helper's grouping can only
+# be enum-order-based, never position-order-based, to pass.
+mixed_order_white:
+  wine_list: mixed_order_list
+  wine: gavi
+  position: 1
+
+mixed_order_dessert:
+  wine_list: mixed_order_list
+  wine: osteria_moscato
+  position: 2
+
+mixed_order_red:
+  wine_list: mixed_order_list
+  wine: barolo
+  position: 3

@@ -35,11 +35,11 @@ class PublicMenuTest < ApplicationSystemTestCase
     assert_text "75ml"
   end
 
-  test "sold out wine shows sold out badge" do
+  test "sold out wine shows unavailable badge" do
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    assert_text I18n.t("shared.sold_out")
+    assert_text I18n.t("menu.unavailable")
   end
 
   test "menu marks each wine with a color dot" do
@@ -89,33 +89,40 @@ class PublicMenuTest < ApplicationSystemTestCase
   end
 
   test "menu with multiple sections shows jump navigation chips" do
+    # trattoria_list ("House Picks") holds both red and white wines, so it
+    # renders two colour sections — enough for jump-nav chips to appear.
+    list = wine_lists(:trattoria_list)
     visit menu_path(id: restaurants(:trattoria).id)
 
     within section_nav_selector do
-      assert_link "House Picks"
       assert_link I18n.t("owner.wines.colors.red")
+      assert_link I18n.t("owner.wines.colors.white")
     end
 
-    assert_selector "section#list-#{wine_lists(:trattoria_list).id}"
-    assert_selector "section#color-red"
+    assert_selector "section#list-#{list.id}-red"
+    assert_selector "section#list-#{list.id}-white"
   end
 
   test "clicking a jump chip navigates to that section anchor" do
+    list = wine_lists(:trattoria_list)
     visit menu_path(id: restaurants(:trattoria).id)
 
     within section_nav_selector do
       click_link I18n.t("owner.wines.colors.red")
     end
 
-    assert page.has_current_path?(/#color-red\z/, url: true),
-           "expected URL to gain the #color-red fragment, got #{current_url}"
+    assert page.has_current_path?(/#list-#{list.id}-red\z/, url: true),
+           "expected URL to gain the #list-#{list.id}-red fragment, got #{current_url}"
   end
 
   test "menu with a single section shows no jump navigation" do
-    restaurants(:trattoria).update!(all_wines_list_active: false)
-    visit menu_path(id: restaurants(:trattoria).id)
+    # A restaurant with exactly one active list holding wines of a single
+    # colour renders one section — too few for jump-nav chips to appear.
+    wine_lists(:osteria_list).update!(active: false)
+    wine_lists(:summer).update!(active: true) # summer holds only red wines
+    visit menu_path(id: restaurants(:osteria).id)
 
-    assert_text "House Picks"
+    assert_text "Summer Selection"
     assert_no_selector section_nav_selector
   end
 
