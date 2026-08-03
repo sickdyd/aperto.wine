@@ -121,8 +121,12 @@ export default class extends Controller {
     this.activeIndex = -1
   }
 
+  // The vintage is a guess (the newest one on record) that select() writes into
+  // the form, so it belongs in the label — otherwise the owner cannot see what
+  // is about to be filled in.
   #label(wine) {
     let label = wine.name
+    if (wine.vintage_year) label += ` ${wine.vintage_year}`
     if (wine.producer) label += ` — ${wine.producer}`
     if (wine.region) label += ` (${wine.region})`
     return label

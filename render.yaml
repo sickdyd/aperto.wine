@@ -34,7 +34,14 @@ services:
     # Migrations run here rather than in the build: Render runs preDeployCommand
     # after the build and before traffic switches, so a failed migration halts
     # the deploy with the previous version still serving. Requires a paid plan.
-    preDeployCommand: bundle exec rails db:migrate
+    # The wine reference import follows the migration for the same reason it
+    # cannot live in the build: it writes to the database. Rails only auto-seeds
+    # when it CREATES the database, so without this every deploy after the first
+    # would leave the catalogue empty and the owner type-ahead would return
+    # nothing. The importer upserts on external_id, so re-running it is
+    # idempotent, and it exits non-zero on a truncated parse rather than
+    # shipping a half-empty catalogue.
+    preDeployCommand: bundle exec rails db:migrate && bundle exec rails wine_references:import
     startCommand: bundle exec rails server -p $PORT -e production
     healthCheckPath: /up
     envVars:
@@ -147,7 +154,7 @@ services:
 #             # (e.g. git push origin main:production).
 #             branch: production
 #             buildCommand: ./bin/render-build.sh
-#             preDeployCommand: bundle exec rails db:migrate
+#             preDeployCommand: bundle exec rails db:migrate && bundle exec rails wine_references:import
 #             startCommand: bundle exec rails server -p $PORT -e production
 #             healthCheckPath: /up
 #             envVars:
