@@ -29,7 +29,10 @@
         <%= f.submit t("auth.sign_in"), class: "btn-wine w-full btn-md mt-2" %>
       <% end %>
 
-      <% if Rails.env.development? %>
+      <%# Opt-in on deployed environments (staging sets SHOW_DEV_LOGIN=1; the
+          production block in render.yaml deliberately does not). The buttons
+          only pre-fill the form — the password is still verified on submit. %>
+      <% if Rails.env.development? || ENV["SHOW_DEV_LOGIN"] == "1" %>
         <div class="mt-8 pt-6 border-t border-base-content/10">
           <p class="text-center text-xs uppercase tracking-wider text-base-content/40 mb-3">Dev quick login</p>
           <div class="flex flex-wrap justify-center gap-2">

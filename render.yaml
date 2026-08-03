@@ -85,6 +85,11 @@ services:
         sync: false
       - key: HTTP_AUTH_PASSWORD
         sync: false
+      # Pre-fills the sign-in form with the demo accounts from
+      # db/seeds/demo.rb. Staging only — the production block below leaves it
+      # unset, and the app treats any value other than "1" as off.
+      - key: SHOW_DEV_LOGIN
+        value: "1"
 
 # ------------------------------------------------------------------------
 # PRODUCTION — intentionally commented out until launch so the Blueprint

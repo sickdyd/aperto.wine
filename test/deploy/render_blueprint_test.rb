@@ -105,6 +105,8 @@ class RenderBlueprintTest < ActiveSupport::TestCase
   end
 
   def referenced_env_vars
-    Rails.root.glob("app/**/*.rb").flat_map { |file| file.read.scan(ENV_REFERENCE) }.flatten.uniq.sort
+    # Views count: SHOW_DEV_LOGIN is read from an .erb template and nowhere else,
+    # so an .rb-only sweep would miss it.
+    Rails.root.glob("app/**/*.{rb,erb}").flat_map { |file| file.read.scan(ENV_REFERENCE) }.flatten.uniq.sort
   end
 end
