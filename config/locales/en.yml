@@ -231,7 +231,6 @@ en:
         removed: "Wine removed from the list."
         reordered: "List order updated."
         already_added: "That wine is already on this list."
-        confirm_remove: "Remove this wine from the list?"
         all_added: "All of this restaurant's wines are already on this list."
         add_all: "Add all wines"
         added_all:

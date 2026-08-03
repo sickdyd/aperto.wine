@@ -58,10 +58,13 @@ module Owner
       barolo = wines(:barolo)
       visit_list(list)
 
-      accept_confirm do
-        within "[data-id='#{wine_list_items(:summer_barolo).id}']" do
-          find("button[type='submit']").click
-        end
+      # Removing a wine is a one-click action: no confirmation dialog stands
+      # between the owner and the delete button.
+      assert_no_selector "[data-id='#{wine_list_items(:summer_barolo).id}'] " \
+                         "button[type='submit'][data-turbo-confirm]"
+
+      within "[data-id='#{wine_list_items(:summer_barolo).id}']" do
+        find("button[type='submit']").click
       end
 
       assert_text I18n.t("owner.wine_lists.members.removed"), wait: 5
