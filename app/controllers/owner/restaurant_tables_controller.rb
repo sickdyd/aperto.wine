@@ -65,6 +65,11 @@ module Owner
       end
     end
 
+    def destroy_all
+      count = @restaurant.restaurant_tables.destroy_all.size
+      redirect_to owner_restaurant_tables_path(@restaurant), notice: t("owner.tables.bulk.deleted_all", count: count), status: :see_other
+    end
+
     private
 
     def set_restaurant

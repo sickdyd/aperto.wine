@@ -172,6 +172,21 @@ module Owner
       assert_response :success
     end
 
+    test "bulk_new shows the delete-all-tables button when the restaurant has tables" do
+      sign_in_as @owner
+      get bulk_new_owner_restaurant_tables_path(@restaurant)
+      assert_response :success
+      assert_match I18n.t("owner.tables.bulk.delete_all"), response.body
+    end
+
+    test "bulk_new hides the delete-all-tables button when the restaurant has no tables" do
+      sign_in_as @owner
+      empty_restaurant = restaurants(:inactive_restaurant)
+      get bulk_new_owner_restaurant_tables_path(empty_restaurant)
+      assert_response :success
+      assert_no_match I18n.t("owner.tables.bulk.delete_all"), response.body
+    end
+
     test "bulk_create generates tables and redirects with notice" do
       sign_in_as @owner
       assert_difference -> { @restaurant.restaurant_tables.count }, 4 do
@@ -202,6 +217,52 @@ module Owner
         table_bulk_generation: { floors_count: 1, tables_per_floor: 1, name_pattern: "t_number" }
       }
       assert_response :not_found
+    end
+
+    # --- DESTROY ALL ---
+
+    test "destroy_all deletes every table of the owner's restaurant and redirects with notice" do
+      sign_in_as @owner
+      assert_difference -> { @restaurant.restaurant_tables.count }, -4 do
+        delete destroy_all_owner_restaurant_tables_path(@restaurant)
+      end
+      assert_redirected_to owner_restaurant_tables_path(@restaurant)
+      assert_equal 303, response.status
+      follow_redirect!
+      assert_match I18n.t("owner.tables.bulk.deleted_all", count: 4), response.body
+    end
+
+    test "destroy_all does not delete tables belonging to a different restaurant owned by the same user" do
+      sign_in_as @owner
+      trattoria = restaurants(:trattoria)
+      other_table = restaurant_tables(:trattoria_t1)
+
+      delete destroy_all_owner_restaurant_tables_path(@restaurant)
+
+      assert RestaurantTable.exists?(other_table.id)
+      assert_equal trattoria.id, other_table.reload.restaurant_id
+    end
+
+    test "destroy_all on another user's restaurant is rejected (404)" do
+      sign_in_as @owner
+      trattoria = restaurants(:trattoria)
+      other_table = restaurant_tables(:trattoria_t1)
+
+      assert_no_difference -> { RestaurantTable.count } do
+        delete destroy_all_owner_restaurant_tables_path(trattoria)
+      end
+      assert_response :not_found
+      assert RestaurantTable.exists?(other_table.id)
+    end
+
+    test "destroy_all nullifies restaurant_table_id on existing orders instead of destroying them" do
+      sign_in_as @owner
+      order = orders(:pending_order)
+      order.update!(restaurant_table: @table)
+
+      delete destroy_all_owner_restaurant_tables_path(@restaurant)
+
+      assert_nil order.reload.restaurant_table_id
     end
   end
 end
