@@ -81,12 +81,6 @@ services:
         sync: false
       - key: HTTP_AUTH_PASSWORD
         sync: false
-      # Wine-Searcher autofill. WineSearcher::Client#configured? short-circuits
-      # to no results while these are unset, so the app boots fine without them.
-      - key: WINE_SEARCHER_API_KEY
-        sync: false
-      - key: WINE_SEARCHER_API_URL
-        sync: false
 
 # ------------------------------------------------------------------------
 # PRODUCTION — intentionally commented out until launch so the Blueprint
@@ -133,10 +127,6 @@ services:
 #               - key: HTTP_AUTH_USER
 #                 sync: false
 #               - key: HTTP_AUTH_PASSWORD
-#                 sync: false
-#               - key: WINE_SEARCHER_API_KEY
-#                 sync: false
-#               - key: WINE_SEARCHER_API_URL
 #                 sync: false
 #
 #         services:

@@ -70,13 +70,21 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     end
   end
 
-  test "secrets are not committed to the blueprint" do
-    %w[HTTP_AUTH_USER HTTP_AUTH_PASSWORD WINE_SEARCHER_API_KEY].each do |name|
+  test "the pre-launch auth gate is declared as a dashboard secret" do
+    %w[HTTP_AUTH_USER HTTP_AUTH_PASSWORD].each do |name|
       entry = @staging["envVars"].find { |var| var["key"] == name }
 
       assert entry, "#{name} should be declared"
       assert_equal false, entry["sync"], "#{name} must be set in the dashboard, not in the repo"
-      assert_nil entry["value"], "#{name} must not carry a literal value"
+    end
+  end
+
+  # Deliberately not a fixed list of secret names: one rotted when the
+  # Wine-Searcher client was deleted. Any sync:false entry is dashboard-managed
+  # by definition, so a literal value on one is the thing worth catching.
+  test "no dashboard-managed variable carries a committed value" do
+    @staging["envVars"].select { |var| var["sync"] == false }.each do |var|
+      assert_nil var["value"], "#{var["key"]} is sync:false but carries a literal value"
     end
   end
 
