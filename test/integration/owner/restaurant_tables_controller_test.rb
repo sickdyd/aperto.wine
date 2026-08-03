@@ -234,13 +234,14 @@ module Owner
 
     test "destroy_all does not delete tables belonging to a different restaurant owned by the same user" do
       sign_in_as @owner
-      trattoria = restaurants(:trattoria)
-      other_table = restaurant_tables(:trattoria_t1)
+      second_restaurant = restaurants(:enoteca)
+      other_table = restaurant_tables(:enoteca_t1)
+      assert_equal @owner.id, second_restaurant.user_id
 
       delete destroy_all_owner_restaurant_tables_path(@restaurant)
 
       assert RestaurantTable.exists?(other_table.id)
-      assert_equal trattoria.id, other_table.reload.restaurant_id
+      assert_equal second_restaurant.id, other_table.reload.restaurant_id
     end
 
     test "destroy_all on another user's restaurant is rejected (404)" do

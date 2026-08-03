@@ -36,3 +36,10 @@ trattoria_t1:
   token: trattoria_t1_fixture_token_mno345
   position: 1
   active: true
+
+enoteca_t1:
+  restaurant: enoteca
+  name: Tavolo 1
+  token: enoteca_t1_fixture_token_pqr678
+  position: 1
+  active: true
