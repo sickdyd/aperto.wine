@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
@@ -283,6 +284,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_080000) do
     t.datetime "updated_at", null: false
     t.index ["restaurant_id", "position"], name: "index_wine_lists_on_restaurant_id_and_position"
     t.index ["restaurant_id"], name: "index_wine_lists_on_restaurant_id"
+  end
+
+  create_table "wine_references", force: :cascade do |t|
+    t.decimal "abv", precision: 5, scale: 2
+    t.string "color"
+    t.string "country"
+    t.datetime "created_at", null: false
+    t.string "external_id", null: false
+    t.string "food_pairings", default: [], null: false, array: true
+    t.string "grape_variety"
+    t.string "name", null: false
+    t.string "producer"
+    t.string "region"
+    t.datetime "updated_at", null: false
+    t.integer "vintages", default: [], null: false, array: true
+    t.index ["external_id"], name: "index_wine_references_on_external_id", unique: true
+    t.index ["name"], name: "index_wine_references_on_name_trgm", opclass: :gin_trgm_ops, using: :gin
+    t.index ["producer"], name: "index_wine_references_on_producer_trgm", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "wines", force: :cascade do |t|
