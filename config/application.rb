@@ -28,6 +28,12 @@ module ApertoWine
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # rails_icons resolves SVGs straight off the filesystem (Icons::Icon::FilePath)
+    # and never through the asset pipeline, so leaving app/assets/svg on the
+    # Propshaft load path only makes precompile digest ~9k files (35 MB) into
+    # public/assets that nothing ever requests.
+    config.assets.excluded_paths += [ Rails.root.join("app/assets/svg") ]
+
     config.i18n.default_locale = :it
     config.i18n.available_locales = %i[en it]
     config.i18n.fallbacks = true
