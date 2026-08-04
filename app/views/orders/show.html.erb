@@ -1,0 +1,74 @@
+<% content_for(:title) { "#{@order.restaurant.name} — #{t('orders.status.title')}" } %>
+
+<main class="min-h-screen max-w-2xl mx-auto px-4 py-8">
+  <%# Header %>
+  <header class="text-center mb-10">
+    <a href="<%= menu_path(id: @order.restaurant) %>" class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mb-4">
+      <%= icon "arrow-left", css: "size-3.5" %>
+      <%= t("orders.status.back_to_menu") %>
+    </a>
+    <h1 class="font-display text-3xl font-light"><%= t("orders.status.title") %></h1>
+    <p class="text-sm text-base-content/50 mt-1"><%= @order.restaurant.name %></p>
+    <p class="text-xs text-base-content/40 mt-1">
+      <%= order_customer_label(@order) %> · <%= t("orders.status.placed_at", time: l(@order.created_at, format: :long)) %>
+    </p>
+    <div class="divider-wine mt-6"></div>
+  </header>
+
+  <%# Status %>
+  <div class="flex flex-col items-center text-center mb-8">
+    <span class="badge <%= order_status_badge_class(@order.status) %> badge-lg font-body">
+      <%= t("orders.status.statuses.#{@order.status}") %>
+    </span>
+    <p class="text-sm text-base-content/60 mt-3"><%= t("orders.status.hints.#{@order.status}") %></p>
+  </div>
+
+  <%# Table %>
+  <p class="text-sm text-base-content/60 flex items-center justify-center gap-1 mb-6">
+    <%= icon "picnic-table", css: "size-3.5" %>
+    <% if @order.restaurant_table %>
+      <%= t("orders.status.table_label") %>: <%= [ @order.restaurant_table.area, @order.restaurant_table.name ].compact_blank.join(" · ") %>
+    <% else %>
+      <%= t("orders.status.no_table") %>
+    <% end %>
+  </p>
+
+  <%# Items %>
+  <div class="space-y-3">
+    <% @order.order_items.includes(:wine).each do |item| %>
+      <div class="p-4 rounded-lg border border-base-content/5">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <h3 class="font-body font-medium text-sm"><%= item.wine.name %></h3>
+            <p class="text-xs text-base-content/50 mt-0.5">
+              <%= [ item.wine.producer, item.wine.vintage_year ].compact_blank.join(" · ") %>
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-4 text-xs mt-3">
+          <div>
+            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.glass_size") %></p>
+            <p class="font-medium mt-0.5"><%= item.glass_size_ml %>ml</p>
+          </div>
+          <div>
+            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.quantity") %></p>
+            <p class="font-medium mt-0.5"><%= item.quantity %></p>
+          </div>
+          <div>
+            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.price") %></p>
+            <p class="font-medium mt-0.5"><%= format_cents(item.unit_price_cents) %></p>
+          </div>
+          <div>
+            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.subtotal") %></p>
+            <p class="font-medium mt-0.5"><%= format_cents(item.subtotal_cents) %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="flex items-center justify-between mt-8 pt-6 border-t border-base-content/10">
+    <span class="font-body text-xs uppercase tracking-wider text-base-content/60"><%= t("orders.status.total") %></span>
+    <span class="font-display text-2xl font-medium"><%= format_cents(@order.total_amount_cents) %></span>
+  </div>
+</main>

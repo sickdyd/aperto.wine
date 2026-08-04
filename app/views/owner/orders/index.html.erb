@@ -36,7 +36,7 @@
               <% end %>
             </div>
             <p class="text-xs text-base-content/50 mt-1">
-              <%= order.customer.name %> · <%= l(order.created_at, format: :short) %> · <%= format_cents(order.total_amount_cents) %>
+              <%= order_customer_label(order) %> · <%= l(order.created_at, format: :short) %> · <%= format_cents(order.total_amount_cents) %>
             </p>
             <p class="text-xs text-base-content/40 mt-1">
               <%= order.order_items.map { |i| "#{i.quantity}× #{i.wine.name} (#{i.glass_size_ml}ml)" }.join(", ") %>

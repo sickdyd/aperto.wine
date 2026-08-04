@@ -2,6 +2,7 @@
   Renders a single wine row for the public menu.
   Locals:
     wine               - the Wine to render (required)
+    restaurant         - the owning Restaurant, for the add-to-cart route (required)
     unavailable_label  - badge text when the wine isn't pourable
                          (defaults to the flat-menu "Sold out" wording)
 %>
@@ -21,24 +22,45 @@
       </p>
     </div>
 
-    <% if wine.available? %>
-      <div class="text-right ml-4">
-        <% Wine::GLASS_SIZES.each do |size| %>
-          <% price = wine.price_for_glass(size) %>
-          <% if price&.positive? %>
-            <span class="inline-block text-xs text-base-content/60 ml-2">
-              <%= size %>ml <span class="font-medium text-base-content"><%= format_cents(price) %></span>
-            </span>
-          <% end %>
-        <% end %>
-      </div>
-    <% else %>
-      <span class="badge badge-ghost badge-sm"><%= unavailable_label %></span>
+    <% unless wine.available? %>
+      <span class="badge badge-ghost badge-sm ml-4 shrink-0"><%= unavailable_label %></span>
     <% end %>
   </div>
 
   <% if wine.description.present? %>
     <p class="text-xs text-base-content/40 mt-2 italic"><%= wine.description %></p>
+  <% end %>
+
+  <%# One compact pill per priced glass size, wrapping on narrow screens rather
+      than forcing the row wider than the phone viewport. Each pill's visible
+      label is just size + price (never the wine's name, already the row's
+      heading) — the aria-label carries the wine name so a screen-reader user
+      moving button-to-button hears "Add Barolo, 125 ml" instead of "Add"
+      repeated once per size (see Task 3's identical fix for quantity
+      buttons). min-h-11/min-w-11 hold the 44x44 CSS px WCAG 2.1 AA tap
+      target even though btn-xs's own box is visually smaller. %>
+  <% if wine.available? %>
+    <div class="flex flex-wrap gap-2 mt-3">
+      <% Wine::GLASS_SIZES.each do |size| %>
+        <% price = wine.price_for_glass(size) %>
+        <% if price&.positive? %>
+          <%# normal-case cancels .btn-wine-outline's uppercase transform —
+              this label is "125ml · €22.00", not button copy like "UPDATE",
+              and the rest of the menu (including this same "125ml" text
+              elsewhere) is asserted case-sensitively. %>
+          <%= button_to cart_items_path(restaurant_id: restaurant), method: :post,
+                params: { wine_id: wine.id, glass_size_ml: size, quantity: 1 },
+                class: "btn-wine-outline btn-xs min-h-11 min-w-11 px-3 normal-case",
+                "aria-label": t("menu.add_to_cart", wine: wine.name, size: size) do %>
+            <%# aria-hidden: the button's own accessible name comes entirely
+                from aria-label above (wine + size). Without this, WCAG 2.5.3
+                Label in Name flags a mismatch, because this visible text
+                (size + price) is never a substring of that name. %>
+            <span aria-hidden="true"><%= size %>ml · <%= format_cents(price) %></span>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
   <% end %>
 
   <% if open_bottle&.opened_at %>

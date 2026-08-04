@@ -36,12 +36,26 @@ module Owner
       assert_response :success
     end
 
+    test "GET /owner/restaurants/:id/orders renders successfully for a guest order and shows the guest's name" do
+      sign_in_as @owner
+      get owner_restaurant_orders_path(restaurant_id: @restaurant)
+      assert_response :success
+      assert_match "Jane Diner", response.body
+    end
+
     # --- SHOW ---
 
     test "GET /owner/restaurants/:id/orders/:id as owner shows order" do
       sign_in_as @owner
       get owner_restaurant_order_path(restaurant_id: @restaurant, id: @pending_order)
       assert_response :success
+    end
+
+    test "GET /owner/restaurants/:id/orders/:id renders successfully for a guest order and shows the guest's name" do
+      sign_in_as @owner
+      get owner_restaurant_order_path(restaurant_id: @restaurant, id: orders(:guest_order))
+      assert_response :success
+      assert_match "Jane Diner", response.body
     end
 
     # --- APPROVE ---

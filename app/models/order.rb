@@ -1,12 +1,15 @@
 class Order < ApplicationRecord
   belongs_to :restaurant
-  belongs_to :customer, class_name: "User"
+  belongs_to :customer, class_name: "User", optional: true
   belongs_to :restaurant_table, optional: true
   has_many :order_items, dependent: :destroy
+
+  has_secure_token :public_token
 
   enum :status, { pending: 0, approved: 1, cancelled: 2, completed: 3 }
 
   validates :total_amount_cents, numericality: { greater_than_or_equal_to: 0 }
+  validates :guest_name, length: { maximum: 64 }
 
   scope :recent, -> { order(created_at: :desc) }
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -57,7 +57,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_120000) do
 
   create_table "orders", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "customer_id", null: false
+    t.bigint "customer_id"
+    t.string "guest_name"
+    t.string "public_token", null: false
     t.bigint "restaurant_id", null: false
     t.bigint "restaurant_table_id"
     t.integer "status", default: 0, null: false
@@ -65,6 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_120000) do
     t.datetime "updated_at", null: false
     t.index ["customer_id", "status"], name: "index_orders_on_customer_id_and_status"
     t.index ["customer_id"], name: "index_orders_on_customer_id"
+    t.index ["public_token"], name: "index_orders_on_public_token", unique: true
     t.index ["restaurant_id", "status"], name: "index_orders_on_restaurant_id_and_status"
     t.index ["restaurant_id"], name: "index_orders_on_restaurant_id"
     t.index ["restaurant_table_id"], name: "index_orders_on_restaurant_table_id"

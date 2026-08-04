@@ -1,6 +1,9 @@
 <% content_for(:title) { t("auth.sign_up") } %>
+<%# Keeps the shared flash banner (app/views/shared/_flash) as narrow as this
+    page's own form instead of the site-wide max-w-2xl default. %>
+<% content_for(:flash_class) { "max-w-md mx-auto px-6" } %>
 
-<div class="min-h-screen flex items-center justify-center px-6">
+<div class="flex-1 flex items-center justify-center px-6">
   <div class="w-full max-w-md">
     <div class="text-center mb-10">
       <a href="<%= root_path %>" class="font-display text-2xl font-semibold text-primary">aperto.wine</a>

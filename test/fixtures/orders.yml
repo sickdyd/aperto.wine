@@ -3,9 +3,27 @@ pending_order:
   customer: customer
   status: 0
   total_amount_cents: 3600
+  public_token: pending_order_fixture_token_abc123
 
 approved_order:
   restaurant: osteria
   customer: customer
   status: 1
   total_amount_cents: 1800
+  public_token: approved_order_fixture_token_def456
+
+guest_order:
+  restaurant: osteria
+  customer:
+  guest_name: Jane Diner
+  status: 0
+  total_amount_cents: 900
+  public_token: guest_order_fixture_token_ghi789
+
+inactive_restaurant_order:
+  restaurant: inactive_restaurant
+  customer:
+  guest_name: Ghost Diner
+  status: 0
+  total_amount_cents: 500
+  public_token: inactive_restaurant_order_token_jkl012

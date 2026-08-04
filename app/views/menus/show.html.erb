@@ -1,6 +1,8 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('menu.title')}" } %>
 
-<div class="min-h-screen max-w-2xl mx-auto px-4 py-8">
+<%# Extra bottom padding keeps the sticky cart bar from covering the last
+    wine row once it appears (see the "cart_bar" partial below). %>
+<main class="min-h-screen max-w-2xl mx-auto px-4 py-8 <%= "pb-24" unless @cart.empty? %>">
   <%# Header %>
   <header class="text-center mb-10">
     <h1 class="font-display text-3xl font-light"><%= @restaurant.name %></h1>
@@ -54,7 +56,7 @@
 
               <div class="space-y-3">
                 <% items.each do |item| %>
-                  <%= render "wine_row", wine: item.wine, unavailable_label: t("menu.unavailable") %>
+                  <%= render "wine_row", wine: item.wine, restaurant: @restaurant, unavailable_label: t("menu.unavailable") %>
                 <% end %>
               </div>
             </section>
@@ -79,4 +81,8 @@
       <a href="<%= root_path %>" class="text-primary/60 hover:text-primary">aperto.wine</a>
     </p>
   </footer>
-</div>
+</main>
+
+<% unless @cart.empty? %>
+  <%= render "cart_bar", cart: @cart, restaurant: @restaurant %>
+<% end %>

@@ -1,0 +1,101 @@
+<% content_for(:title) { "#{@restaurant.name} — #{t('cart.title')}" } %>
+
+<main class="min-h-screen max-w-2xl mx-auto px-4 py-8">
+  <%# Header %>
+  <header class="text-center mb-10">
+    <a href="<%= menu_path(id: @restaurant) %>" class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mb-4">
+      <%= icon "arrow-left", css: "size-3.5" %>
+      <%= t("cart.back_to_menu") %>
+    </a>
+    <h1 class="font-display text-3xl font-light"><%= t("cart.title") %></h1>
+    <p class="text-sm text-base-content/50 mt-1"><%= @restaurant.name %></p>
+    <% if @table %>
+      <span class="badge badge-ghost badge-sm mt-3 font-body"><%= t("cart.table_context", table: @table.name) %></span>
+    <% else %>
+      <p class="text-xs text-base-content/50 mt-3 font-body"><%= t("cart.no_table_context") %></p>
+    <% end %>
+    <div class="divider-wine mt-6"></div>
+  </header>
+
+  <%# @cart.items/#dropped_items are loaded together from one query (see
+      Cart#load_cart_data) — read each once so the rest of this page never
+      re-triggers it. %>
+  <% dropped_items = @cart.dropped_items %>
+  <% items = @cart.items %>
+
+  <% if dropped_items.any? %>
+    <div role="alert" class="alert alert-warning font-body text-sm mb-6">
+      <%= icon "warning", css: "size-4" %>
+      <span><%= t("cart.dropped_items_notice") %></span>
+    </div>
+
+    <div class="space-y-3 mb-6">
+      <% dropped_items.each do |dropped| %>
+        <%= render "dropped_cart_item", dropped: dropped, restaurant: @restaurant %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Distinct from @cart.empty? (which only counts orderable items): a
+      cart can hold nothing but a dropped line, and the diner must still be
+      able to clear it — see Cart#any_lines?. %>
+  <% if @cart.any_lines? %>
+    <% if items.any? %>
+      <div class="space-y-3">
+        <% items.each do |item| %>
+          <%= render "cart_item", item: item, restaurant: @restaurant %>
+        <% end %>
+      </div>
+
+      <div class="flex items-center justify-between mt-8 pt-6 border-t border-base-content/10">
+        <span class="font-body text-xs uppercase tracking-wider text-base-content/60"><%= t("cart.total") %></span>
+        <span class="font-display text-2xl font-medium"><%= format_cents(@cart.total_cents) %></span>
+      </div>
+    <% end %>
+
+    <div class="flex justify-end mt-4">
+      <%= button_to t("cart.clear_cart"), cart_path(restaurant_id: @restaurant), method: :delete,
+            class: "btn btn-ghost btn-sm text-base-content/60",
+            data: { turbo_confirm: t("cart.confirm_clear") } %>
+    </div>
+
+    <% if items.any? %>
+      <%= form_with url: orders_path(restaurant_id: @restaurant), method: :post, class: "form-section mt-8 pt-6 border-t border-base-content/10" do |f| %>
+        <div class="field">
+          <%= f.label :guest_name, t("orders.form.guest_name"), class: "field-label" %>
+          <%= f.text_field :guest_name, maxlength: 64, placeholder: t("orders.form.guest_name_placeholder"),
+                class: "input w-full font-body" %>
+        </div>
+
+        <%# Honeypot: a real text input a scripted bot will happily fill, but
+            genuinely inert for a human — hidden visually, out of tab order,
+            and invisible to assistive technology, not merely type="hidden"
+            (which many bots already know to skip). Named away from anything
+            browser autofill or a password manager targets (not website,
+            email, name, phone, address, url, company) — those get filled by
+            well-meaning autofill even with autocomplete="off", which is
+            advisory and routinely ignored. A screen-reader or keyboard user
+            must never be asked to fill it. %>
+        <div class="hidden" aria-hidden="true">
+          <%= f.text_field :contact_reference, tabindex: -1, autocomplete: "off" %>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-wine w-full"><%= t("orders.form.submit") %></button>
+        </div>
+      <% end %>
+    <% else %>
+      <%# Only dropped lines remain — nothing left to order until the diner
+          removes them (above) or clears the cart. %>
+      <div class="text-center py-8">
+        <p class="text-base-content/50 mb-6"><%= t("cart.empty") %></p>
+        <a href="<%= menu_path(id: @restaurant) %>" class="btn-wine"><%= t("cart.browse_menu") %></a>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="text-center py-16">
+      <p class="text-base-content/50 mb-6"><%= t("cart.empty") %></p>
+      <a href="<%= menu_path(id: @restaurant) %>" class="btn-wine"><%= t("cart.browse_menu") %></a>
+    </div>
+  <% end %>
+</main>

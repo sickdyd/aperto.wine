@@ -84,3 +84,39 @@ osteria_moscato:
   available_glasses: 6
   position: 1
   active: true
+
+# None of the other trattoria wines have any glass price set, so cart specs
+# (which need a second restaurant with a purchasable wine, to prove carts
+# stay independent and cross-restaurant adds are rejected) need one that does.
+# Published on wine_lists(:trattoria_reserve) — see that fixture's comment.
+#
+# Colour is sparkling (not red/white) deliberately: trattoria_list already
+# renders Red and White jump-nav sections, so a second active list holding
+# another red or white wine would render a duplicate same-coloured nav chip
+# and make `click_link "Red"`/`click_link "White"` ambiguous in
+# test/system/public_menu_test.rb.
+trattoria_franciacorta:
+  restaurant: trattoria
+  name: Franciacorta Brut
+  producer: Ca' del Bosco
+  color: 3
+  bottle_size_ml: 750
+  price_125ml_cents: 1000
+  available_glasses: 8
+  position: 4
+  active: true
+
+# Priced, available and active, but deliberately on no wine_list_items row at
+# all — proves the cart rejects a wine that was never published on any list
+# (Task 6: cart lookups are scoped through published lists, not the bare
+# tenant association).
+unlisted_wine:
+  restaurant: osteria
+  name: Unlisted Reserve
+  producer: Vietti
+  color: 0
+  bottle_size_ml: 750
+  price_125ml_cents: 1000
+  available_glasses: 5
+  position: 100
+  active: true

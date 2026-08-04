@@ -37,7 +37,16 @@
     <% end %>
   </head>
 
-  <body class="bg-base-100 text-base-content font-body antialiased">
-    <%= yield %>
+  <body class="bg-base-100 text-base-content font-body antialiased min-h-screen flex flex-col">
+    <%= render "shared/flash" %>
+    <%# flex-1: the centred auth pages size themselves off remaining space
+        below the flash (see sessions/new, registrations/new) rather than
+        their own min-h-screen stacking underneath it and pushing the page
+        past 100vh. Content pages (menu/cart/status) keep their own
+        min-h-screen wrapper unchanged — a little extra scroll from the
+        flash above them was already fine, see Part E of the Task 5 brief. %>
+    <div class="flex-1 flex flex-col">
+      <%= yield %>
+    </div>
   </body>
 </html>
