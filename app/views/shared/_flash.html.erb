@@ -3,9 +3,15 @@
     pages have their own equivalent at owner/shared/_flash, rendered from
     the separate owner layout. The wrapping container only appears when
     there is something to show, so a flash-less page gets no extra
-    whitespace at the top. %>
+    whitespace at the top.
+
+    Width/alignment default to max-w-2xl, matching the menu/cart/status
+    pages this was built for. A page laid out narrower than that (the
+    centred auth pages) sets content_for(:flash_class) above its own
+    content to keep the banner from rendering wider than the form it
+    refers to — see sessions/new and registrations/new. %>
 <% if notice || alert %>
-  <div class="max-w-2xl mx-auto px-4 pt-6">
+  <div class="<%= content_for(:flash_class).presence || "max-w-2xl mx-auto px-4" %> pt-6">
     <% if notice %>
       <div role="alert" class="alert alert-success text-sm mb-6">
         <%= icon "check-circle", css: "size-4" %>

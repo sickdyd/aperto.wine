@@ -1,6 +1,6 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('cart.title')}" } %>
 
-<div class="min-h-screen max-w-2xl mx-auto px-4 py-8">
+<main class="min-h-screen max-w-2xl mx-auto px-4 py-8">
   <%# Header %>
   <header class="text-center mb-10">
     <a href="<%= menu_path(id: @restaurant) %>" class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mb-4">
@@ -72,4 +72,4 @@
       </div>
     <% end %>
   <% end %>
-</div>
+</main>

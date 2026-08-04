@@ -1,6 +1,6 @@
 <% content_for(:title) { "#{@order.restaurant.name} — #{t('orders.status.title')}" } %>
 
-<div class="min-h-screen max-w-2xl mx-auto px-4 py-8">
+<main class="min-h-screen max-w-2xl mx-auto px-4 py-8">
   <%# Header %>
   <header class="text-center mb-10">
     <a href="<%= menu_path(id: @order.restaurant) %>" class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mb-4">
@@ -71,4 +71,4 @@
     <span class="font-body text-xs uppercase tracking-wider text-base-content/60"><%= t("orders.status.total") %></span>
     <span class="font-display text-2xl font-medium"><%= format_cents(@order.total_amount_cents) %></span>
   </div>
-</div>
+</main>

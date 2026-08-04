@@ -53,4 +53,14 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     delete sign_out_path
     assert_redirected_to root_path
   end
+
+  # --- Flash layout (Task 5, Part E regression fix) ---
+
+  test "invalid credentials render exactly one flash, sized to the sign-in form" do
+    post sign_in_path, params: { email: "nobody@example.com", password: "wrongpassword" }
+    assert_response :unprocessable_entity
+    assert_select "[role='alert']", 1
+    assert_select "div.max-w-sm [role='alert']", 1
+    assert_no_match "max-w-2xl", response.body
+  end
 end

@@ -9,5 +9,8 @@ class MenusController < ApplicationController
     # see that method for why it does not use current_table here.
     @wine_lists = @restaurant.wine_lists.active.by_position
                              .includes(wine_list_items: { wine: :wine_bottles })
+    # One Cart per request (it memoizes its reads) — reused by the view to
+    # decide whether the sticky cart bar renders and what it shows.
+    @cart = Cart.new(session: session, restaurant: @restaurant)
   end
 end

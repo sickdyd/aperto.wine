@@ -194,4 +194,65 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     assert_no_match active.name, response.body
     assert_no_match retired.name, response.body
   end
+
+  # --- Add-to-cart controls ---
+
+  test "an available wine renders an add-to-cart control for each priced glass size" do
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+
+    # barolo has 75/100/125ml priced, 150ml explicitly zeroed out
+    assert_select "form[action=?][method=post] input[name='wine_id'][value=?]",
+      cart_items_path(restaurant_id: restaurants(:osteria)), wines(:barolo).id.to_s, 3
+    assert_select "button[aria-label=?]", I18n.t("menu.add_to_cart", wine: wines(:barolo).name, size: 125)
+  end
+
+  test "a sold-out wine renders no add-to-cart control" do
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+
+    assert_no_match I18n.t("menu.add_to_cart", wine: wines(:sold_out_wine).name, size: 75), response.body
+  end
+
+  test "an unpriced glass size on an available wine renders no control for that size" do
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+
+    # barolo has price_150ml_cents: 0, i.e. not offered at 150ml
+    assert_no_match I18n.t("menu.add_to_cart", wine: wines(:barolo).name, size: 150), response.body
+  end
+
+  # --- Sticky cart bar ---
+
+  test "the sticky cart bar is absent when the cart is empty" do
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_select "#cart-bar", false
+  end
+
+  test "the sticky cart bar shows the item count and total once the cart has items" do
+    post cart_items_path(restaurant_id: restaurants(:osteria)), params: { wine_id: wines(:barolo).id, glass_size_ml: 125, quantity: 2 }
+
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_select "#cart-bar"
+    assert_match I18n.t("menu.cart_bar.item_count", count: 2), response.body
+    assert_match ApplicationController.helpers.format_cents(wines(:barolo).price_for_glass(125) * 2), response.body
+  end
+
+  test "the sticky cart bar links to this restaurant's cart page" do
+    post cart_items_path(restaurant_id: restaurants(:osteria)), params: { wine_id: wines(:barolo).id, glass_size_ml: 125, quantity: 1 }
+
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_select "#cart-bar a[href=?]", cart_path(restaurant_id: restaurants(:osteria))
+  end
+
+  test "a restaurant's sticky cart bar never reflects another restaurant's cart" do
+    post cart_items_path(restaurant_id: restaurants(:trattoria)), params: { wine_id: wines(:trattoria_barbera).id, glass_size_ml: 125, quantity: 1 }
+
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_select "#cart-bar", false
+  end
 end

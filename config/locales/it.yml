@@ -355,6 +355,12 @@ it:
     unavailable: "Non disponibile al momento"
     empty: "Nessun vino disponibile al momento."
     powered_by: "Offerto da"
+    add_to_cart: "Aggiungi %{wine}, %{size} ml"
+    cart_bar:
+      item_count:
+        one: "1 articolo"
+        other: "%{count} articoli"
+      view_cart: "Vai al carrello"
   cart:
     title: "Il tuo carrello"
     back_to_menu: "Torna al menu"

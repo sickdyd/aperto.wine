@@ -355,6 +355,12 @@ en:
     unavailable: "Currently unavailable"
     empty: "No wines available at the moment."
     powered_by: "Powered by"
+    add_to_cart: "Add %{wine}, %{size} ml"
+    cart_bar:
+      item_count:
+        one: "1 item"
+        other: "%{count} items"
+      view_cart: "View cart"
   cart:
     title: "Your Cart"
     back_to_menu: "Back to menu"
