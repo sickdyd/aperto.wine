@@ -1,0 +1,14 @@
+<%# Flash banner for public, customer-facing pages (cart, and future order
+    pages). Owner pages have their own equivalent at owner/shared/_flash. %>
+<% if notice %>
+  <div role="alert" class="alert alert-success text-sm mb-6">
+    <%= icon "check-circle", css: "size-4" %>
+    <span><%= notice %></span>
+  </div>
+<% end %>
+<% if alert %>
+  <div role="alert" class="alert alert-error text-sm mb-6">
+    <%= icon "warning", css: "size-4" %>
+    <span><%= alert %></span>
+  </div>
+<% end %>

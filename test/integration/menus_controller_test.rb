@@ -163,4 +163,35 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_nil session[:table_tokens]
   end
+
+  # A diner who scans a table QR and later follows a plain menu link (e.g.
+  # the cart page's "back to menu") must not have that earlier table context
+  # resurface here — /menu/:id has never shown table context, and the cart
+  # is where remembered-table display belongs (see CartsController).
+  test "GET /menu/:id shows no table context even after an earlier table scan this session" do
+    table = restaurant_tables(:sala_t1)
+    get table_menu_path(table_token: table.token)
+    assert_match table.name, response.body
+
+    get menu_path(id: restaurants(:osteria))
+    assert_response :success
+    assert_no_match table.name, response.body
+  end
+
+  # A retired token's own request must show no table context, even when the
+  # session already remembers a *different*, still-active table for the same
+  # restaurant from an earlier scan — CustomerScoped#set_restaurant resolves
+  # table context from this request's token alone, never from session state
+  # left over from a previous visit.
+  test "GET /t/:table_token for a retired table never resurrects a previously remembered table" do
+    active = restaurant_tables(:sala_t1)
+    retired = restaurant_tables(:retired_table)
+    get table_menu_path(table_token: active.token)
+    assert_match active.name, response.body
+
+    get table_menu_path(table_token: retired.token)
+    assert_response :success
+    assert_no_match active.name, response.body
+    assert_no_match retired.name, response.body
+  end
 end

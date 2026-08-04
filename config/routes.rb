@@ -18,6 +18,13 @@ Rails.application.routes.draw do
     # Per-table QR entry point: same menu, resolved from the table's token
     get "t/:table_token", to: "menus#show", as: :table_menu
 
+    # Session-backed cart (customer-facing, no auth required)
+    get    "menu/:restaurant_id/cart",       to: "carts#show",        as: :cart
+    post   "menu/:restaurant_id/cart/items", to: "carts#add_item",    as: :cart_items
+    patch  "menu/:restaurant_id/cart/items", to: "carts#update_item"
+    delete "menu/:restaurant_id/cart/items", to: "carts#remove_item"
+    delete "menu/:restaurant_id/cart",       to: "carts#destroy"
+
     # Owner namespace
     namespace :owner do
       # Wine data autofill proxy — not nested under restaurants: wine reference

@@ -1,0 +1,54 @@
+<% content_for(:title) { "#{@restaurant.name} — #{t('cart.title')}" } %>
+
+<div class="min-h-screen max-w-2xl mx-auto px-4 py-8">
+  <%# Header %>
+  <header class="text-center mb-10">
+    <a href="<%= menu_path(id: @restaurant) %>" class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mb-4">
+      <%= icon "arrow-left", css: "size-3.5" %>
+      <%= t("cart.back_to_menu") %>
+    </a>
+    <h1 class="font-display text-3xl font-light"><%= t("cart.title") %></h1>
+    <p class="text-sm text-base-content/50 mt-1"><%= @restaurant.name %></p>
+    <% if @table %>
+      <span class="badge badge-ghost badge-sm mt-3 font-body"><%= t("cart.table_context", table: @table.name) %></span>
+    <% else %>
+      <p class="text-xs text-base-content/50 mt-3 font-body"><%= t("cart.no_table_context") %></p>
+    <% end %>
+    <div class="divider-wine mt-6"></div>
+  </header>
+
+  <%= render "shared/flash" %>
+
+  <% if @cart.dropped_items.any? %>
+    <div role="alert" class="alert alert-warning font-body text-sm mb-6">
+      <%= icon "warning", css: "size-4" %>
+      <span><%= t("cart.dropped_items_notice") %></span>
+    </div>
+  <% end %>
+
+  <% if @cart.empty? %>
+    <div class="text-center py-16">
+      <p class="text-base-content/50 mb-6"><%= t("cart.empty") %></p>
+      <a href="<%= menu_path(id: @restaurant) %>" class="btn-wine"><%= t("cart.browse_menu") %></a>
+    </div>
+  <% else %>
+    <div class="space-y-3">
+      <% @cart.items.each do |item| %>
+        <%= render "cart_item", item: item, restaurant: @restaurant %>
+      <% end %>
+    </div>
+
+    <div class="flex items-center justify-between mt-8 pt-6 border-t border-base-content/10">
+      <span class="font-body text-xs uppercase tracking-wider text-base-content/60"><%= t("cart.total") %></span>
+      <span class="font-display text-2xl font-medium"><%= format_cents(@cart.total_cents) %></span>
+    </div>
+
+    <div class="flex justify-end mt-4">
+      <%= button_to t("cart.clear_cart"), cart_path(restaurant_id: @restaurant), method: :delete,
+            class: "btn btn-ghost btn-sm text-base-content/60",
+            data: { turbo_confirm: t("cart.confirm_clear") } %>
+    </div>
+
+    <%# Task 4 adds the order-placement form here. %>
+  <% end %>
+</div>

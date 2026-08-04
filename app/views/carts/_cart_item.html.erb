@@ -1,0 +1,52 @@
+<%#
+  Renders a single cart line.
+  Locals:
+    item       - the CartItem to render (required)
+    restaurant - the owning Restaurant, for building the item routes (required)
+%>
+<% field_id = "cart_item_#{item.wine.id}_#{item.glass_size_ml}" %>
+<div class="p-4 rounded-lg border border-base-content/5">
+  <div class="flex items-start justify-between gap-3">
+    <div class="flex-1 min-w-0">
+      <h3 class="font-body font-medium text-sm"><%= item.wine.name %></h3>
+      <p class="text-xs text-base-content/50 mt-0.5">
+        <%= [ item.wine.producer, item.wine.vintage_year ].compact_blank.join(" · ") %>
+      </p>
+    </div>
+
+    <%= button_to cart_items_path(restaurant_id: restaurant), method: :delete,
+          params: { wine_id: item.wine.id, glass_size_ml: item.glass_size_ml },
+          class: "btn btn-ghost btn-xs shrink-0",
+          "aria-label": t("cart.remove_item", wine: item.wine.name) do %>
+      <%= icon "trash", css: "size-3.5" %>
+    <% end %>
+  </div>
+
+  <div class="flex items-end justify-between gap-3 mt-3">
+    <div class="flex gap-4 text-xs">
+      <div>
+        <p class="text-base-content/40 uppercase tracking-wider"><%= t("cart.glass_size_label") %></p>
+        <p class="font-medium mt-0.5"><%= item.glass_size_ml %>ml</p>
+      </div>
+      <div>
+        <p class="text-base-content/40 uppercase tracking-wider"><%= t("cart.unit_price_label") %></p>
+        <p class="font-medium mt-0.5"><%= format_cents(item.unit_price_cents) %></p>
+      </div>
+      <div>
+        <p class="text-base-content/40 uppercase tracking-wider"><%= t("cart.subtotal_label") %></p>
+        <p class="font-medium mt-0.5"><%= format_cents(item.subtotal_cents) %></p>
+      </div>
+    </div>
+
+    <%= form_with url: cart_items_path(restaurant_id: restaurant), method: :patch, class: "flex items-center gap-2" do |f| %>
+      <%= f.hidden_field :wine_id, value: item.wine.id %>
+      <%= f.hidden_field :glass_size_ml, value: item.glass_size_ml %>
+      <label class="sr-only" for="<%= field_id %>_quantity">
+        <%= t("cart.quantity_label", wine: item.wine.name) %>
+      </label>
+      <%= f.select :quantity, 1..Cart::MAX_QUANTITY_PER_ITEM, { selected: item.quantity },
+            id: "#{field_id}_quantity", class: "select select-sm select-bordered" %>
+      <button type="submit" class="btn-wine-outline btn-xs"><%= t("cart.update_quantity") %></button>
+    <% end %>
+  </div>
+</div>
