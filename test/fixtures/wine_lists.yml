@@ -24,6 +24,18 @@ trattoria_list:
   position: 1
   active: true
 
+# Trattoria's second active list — holds only trattoria_barbera, kept out of
+# trattoria_list so it never joins that list's red colour group (several
+# menus_helper/public_menu tests assert trattoria_list's red group is exactly
+# [chianti, trattoria_sold_out]). Exists purely so cart specs have a second
+# restaurant with a *published* purchasable wine (Task 6: the cart now only
+# admits wines reachable through an active list).
+trattoria_reserve:
+  restaurant: trattoria
+  name: Reserve Selection
+  position: 2
+  active: true
+
 # Inactive — never queried by the controller. Exists only so the helper unit
 # tests can prove colour grouping follows Wine's color enum order rather than
 # alphabetical order or item position order: its item positions (white

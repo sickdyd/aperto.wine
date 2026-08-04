@@ -10,10 +10,21 @@ class CartTest < ActiveSupport::TestCase
     @gavi = wines(:gavi)
     @sold_out = wines(:sold_out_wine)
     @barbera = wines(:trattoria_barbera)
+    @unlisted = wines(:unlisted_wine)
+    @inactive_list_only = wines(:osteria_moscato)
   end
 
   def cart_for(restaurant, session: {})
     Cart.new(session: session, restaurant: restaurant)
+  end
+
+  # Ad-hoc wines created mid-test need to sit on a published list to be
+  # addable now that the cart enforces the same publication boundary as the
+  # public menu — wine_lists(:osteria_list) is osteria's active list.
+  def create_published_wine(attributes)
+    wine = @osteria.wines.create!(attributes)
+    wine_lists(:osteria_list).wine_list_items.create!(wine: wine, position: wine.position)
+    wine
   end
 
   # --- add ---
@@ -55,6 +66,55 @@ class CartTest < ActiveSupport::TestCase
 
     assert_not result.success?
     assert_equal :wine_not_found, result.error
+  end
+
+  # --- publication boundary (Task 6 security fix) ---
+  #
+  # The public menu only shows wines reachable through an active wine list
+  # (MenusController#show / WineList.active). The cart must enforce the same
+  # boundary — an owner's "Published" toggle would otherwise be cosmetic:
+  # the wine could still be added by id and ordered.
+
+  test "add rejects a wine whose only list is inactive" do
+    cart = cart_for(@osteria)
+
+    result = cart.add(wine_id: @inactive_list_only.id, glass_size_ml: 125, quantity: 1)
+
+    assert_not result.success?
+    assert_equal :wine_not_found, result.error
+    assert_empty cart.items
+  end
+
+  test "add rejects a wine that belongs to no list at all" do
+    cart = cart_for(@osteria)
+
+    result = cart.add(wine_id: @unlisted.id, glass_size_ml: 125, quantity: 1)
+
+    assert_not result.success?
+    assert_equal :wine_not_found, result.error
+    assert_empty cart.items
+  end
+
+  test "a normally published wine still adds and reads back fine" do
+    cart = cart_for(@osteria)
+
+    result = cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+
+    assert result.success?
+    assert_equal [ @barolo ], cart.items.map(&:wine)
+  end
+
+  test "a wine added while published is dropped on read once its list is un-published" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+
+    wine_lists(:osteria_list).update!(active: false)
+
+    assert_empty cart.items
+    assert_equal 1, cart.dropped_items.size
+    dropped = cart.dropped_items.first
+    assert_equal @barolo.id, dropped.wine_id
+    assert_equal :wine_not_found, dropped.reason
   end
 
   test "add rejects an unavailable wine" do
@@ -135,7 +195,7 @@ class CartTest < ActiveSupport::TestCase
   test "rejects a new distinct line once MAX_DISTINCT_ITEMS is reached, but still allows incrementing an existing line" do
     cart = cart_for(@osteria)
     wines = Array.new(Cart::MAX_DISTINCT_ITEMS) do |i|
-      @osteria.wines.create!(
+      create_published_wine(
         name: "Filler Wine #{i}", color: :red, bottle_size_ml: 750,
         price_125ml_cents: 1000, available_glasses: 5, active: true, position: i
       )
@@ -143,7 +203,7 @@ class CartTest < ActiveSupport::TestCase
     wines.each { |wine| cart.add(wine_id: wine.id, glass_size_ml: 125, quantity: 1) }
     assert_equal Cart::MAX_DISTINCT_ITEMS, cart.items.size
 
-    extra = @osteria.wines.create!(
+    extra = create_published_wine(
       name: "One Too Many", color: :red, bottle_size_ml: 750,
       price_125ml_cents: 1000, available_glasses: 5, active: true, position: 999
     )
@@ -285,7 +345,7 @@ class CartTest < ActiveSupport::TestCase
     cart = cart_for(@osteria, session: session)
     # A wine with no order_items referencing it, so it can actually be
     # destroyed (barolo/gavi are pinned by fixtures via a real FK).
-    doomed_wine = @osteria.wines.create!(
+    doomed_wine = create_published_wine(
       name: "Doomed Wine", color: :red, bottle_size_ml: 750,
       price_125ml_cents: 1000, available_glasses: 5, active: true, position: 998
     )
@@ -340,6 +400,23 @@ class CartTest < ActiveSupport::TestCase
     cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
 
     assert_queries_count(1) { cart.items }
+  end
+
+  test "load_cart_data still issues a single query for a multi-line cart once publication is scoped" do
+    session = {}
+    cart = cart_for(@osteria, session: session)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+    # Smuggle in a line for a wine that was never published, the same way a
+    # tampered session cookie would — #items must still filter it out (as a
+    # dropped item) without regressing into a per-line lookup.
+    session[:carts][@osteria.id.to_s] += [
+      { "wine_id" => @unlisted.id, "glass_size_ml" => 125, "quantity" => 1 }
+    ]
+
+    assert_queries_count(1) { cart.items }
+    assert_equal [ @barolo, @gavi ], cart.items.map(&:wine)
+    assert_equal [ @unlisted.id ], cart.dropped_items.map(&:wine_id)
   end
 
   # --- session shape / no price stored ---

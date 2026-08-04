@@ -8,6 +8,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     @gavi = wines(:gavi)
     @sold_out = wines(:sold_out_wine)
     @barbera = wines(:trattoria_barbera)
+    @unlisted = wines(:unlisted_wine)
   end
 
   # --- add_item ---
@@ -59,6 +60,22 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
 
   test "a wine belonging to another restaurant is rejected" do
     post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barbera.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_id: @osteria)
+    follow_redirect!
+    assert_match I18n.t("cart.errors.wine_not_found"), response.body
+
+    get cart_path(restaurant_id: @osteria)
+    assert_match I18n.t("cart.empty"), response.body
+  end
+
+  # A wine that exists, belongs to this restaurant, is active and priced, but
+  # was never published on any of the restaurant's active wine lists — the
+  # owner's "Published" toggle must gate ordering, not just menu display
+  # (Task 6 security fix). Rejected with the same flash as a wine id that
+  # doesn't exist at all, so the response never leaks which wines the owner
+  # has chosen not to show.
+  test "a wine that is not published on any active list is rejected" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @unlisted.id, glass_size_ml: 125, quantity: 1 }
     assert_redirected_to cart_path(restaurant_id: @osteria)
     follow_redirect!
     assert_match I18n.t("cart.errors.wine_not_found"), response.body

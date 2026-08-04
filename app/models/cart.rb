@@ -28,7 +28,11 @@ class Cart
   # bad input and never carries an i18n string — the controller maps
   # #error onto a flash message. The documented, exhaustive symbol set:
   #
-  #   :wine_not_found     - no such wine, or it belongs to another restaurant
+  #   :wine_not_found     - no such wine, it belongs to another restaurant, or
+  #                          it is not published on any of this restaurant's
+  #                          active wine lists (deliberately not distinguished
+  #                          from "does not exist" — that would leak which
+  #                          wines the owner has chosen not to show)
   #   :wine_unavailable    - the wine exists but Wine#available? is false
   #   :invalid_glass_size  - glass_size_ml is not one of Wine::GLASS_SIZES
   #   :price_unavailable   - the wine has no price for that glass size
@@ -52,8 +56,9 @@ class Cart
 
   # Array of CartItem, in insertion order. Silently skips lines whose wine
   # no longer exists, no longer belongs to this restaurant, is no longer
-  # available, or has lost its price for that size — see #dropped_items.
-  # Never rewrites the session: a read has no side effects.
+  # published on an active wine list, is no longer available, or has lost
+  # its price for that size — see #dropped_items. Never rewrites the
+  # session: a read has no side effects.
   def items
     load_cart_data
     @items
@@ -70,7 +75,7 @@ class Cart
     glass_size = glass_size_ml.to_i
     return failure(:invalid_glass_size) unless Wine::GLASS_SIZES.include?(glass_size)
 
-    wine = restaurant.wines.find_by(id: wine_id)
+    wine = published_wines.find_by(id: wine_id)
     return failure(:wine_not_found) if wine.nil?
     return failure(:wine_unavailable) unless wine.available?
     return failure(:price_unavailable) if wine.price_for_glass(glass_size).nil?
@@ -138,6 +143,17 @@ class Cart
     restaurant.id.to_s
   end
 
+  # The same publication boundary the public menu enforces
+  # (MenusController#show / WineList.active): a wine is orderable only if it
+  # sits on at least one of this restaurant's active wine lists. A wine on no
+  # list, or only on unpublished lists, must be as unreachable to the cart as
+  # it is to the menu — the owner's "Published" toggle is otherwise cosmetic.
+  # `distinct` guards against a wine published on more than one active list
+  # producing duplicate rows from the join.
+  def published_wines
+    restaurant.wines.joins(:wine_lists).merge(WineList.active).distinct
+  end
+
   def all_carts
     session[:carts] || {}
   end
@@ -187,7 +203,7 @@ class Cart
     return if @cart_data_loaded
 
     lines = stored_lines
-    wines_by_id = restaurant.wines.where(id: lines.map { |line| line["wine_id"] }).index_by(&:id)
+    wines_by_id = published_wines.where(id: lines.map { |line| line["wine_id"] }).index_by(&:id)
 
     kept = []
     dropped = []

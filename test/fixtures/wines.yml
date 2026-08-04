@@ -88,6 +88,7 @@ osteria_moscato:
 # None of the other trattoria wines have any glass price set, so cart specs
 # (which need a second restaurant with a purchasable wine, to prove carts
 # stay independent and cross-restaurant adds are rejected) need one that does.
+# Published on wine_lists(:trattoria_reserve) — see that fixture's comment.
 trattoria_barbera:
   restaurant: trattoria
   name: Barbera d'Asti
@@ -97,4 +98,19 @@ trattoria_barbera:
   price_125ml_cents: 1000
   available_glasses: 8
   position: 4
+  active: true
+
+# Priced, available and active, but deliberately on no wine_list_items row at
+# all — proves the cart rejects a wine that was never published on any list
+# (Task 6: cart lookups are scoped through published lists, not the bare
+# tenant association).
+unlisted_wine:
+  restaurant: osteria
+  name: Unlisted Reserve
+  producer: Vietti
+  color: 0
+  bottle_size_ml: 750
+  price_125ml_cents: 1000
+  available_glasses: 5
+  position: 100
   active: true
