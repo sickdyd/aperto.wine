@@ -91,15 +91,26 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   # --- honeypot ---
 
-  test "the honeypot creates no order and still looks like success" do
+  test "the honeypot creates no order and redirects to the menu with the success flash" do
     add_barolo_to_cart
 
     assert_no_difference "Order.count" do
-      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane", website: "http://spam.example" }
+      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane", contact_reference: "http://spam.example" }
     end
-    assert_response :redirect
+    assert_redirected_to menu_path(id: @osteria)
+
     follow_redirect!
     assert_response :success
+    assert_match ERB::Util.html_escape(I18n.t("orders.placed")), response.body
+  end
+
+  test "an array-valued honeypot still trips, closing the strong-params bypass" do
+    add_barolo_to_cart
+
+    assert_no_difference "Order.count" do
+      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane", contact_reference: [ "http://spam.example" ] }
+    end
+    assert_redirected_to menu_path(id: @osteria)
   end
 
   # --- rate limit ---
@@ -117,7 +128,37 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to cart_path(restaurant_id: @osteria)
 
     follow_redirect!
-    assert_match I18n.t("orders.errors.rate_limited"), response.body
+    assert_match ERB::Util.html_escape(I18n.t("orders.errors.rate_limited")), response.body
+  end
+
+  # The reviewer's exploit: a fresh cookie jar per request gives every
+  # request a brand-new session.id, so the session-scoped limiter above
+  # never trips — session.id is always present by the time #create runs
+  # (Cart is session-backed), so its IP fallback never engages either. This
+  # proves the IP-scoped limiter closes that bypass: IP_RATE_LIMIT distinct
+  # sessions from the same remote_ip (127.0.0.1 for every integration test
+  # request) all succeed, and the next one — still a brand-new session —
+  # is the one that trips.
+  test "the IP rate limit trips across distinct sessions, closing the session-only bypass" do
+    assert_difference "Order.count", OrdersController::IP_RATE_LIMIT do
+      OrdersController::IP_RATE_LIMIT.times do
+        reset!
+        add_barolo_to_cart
+        post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+        assert_response :redirect
+        assert_not_equal cart_url(restaurant_id: @osteria), response.location
+      end
+    end
+
+    reset!
+    add_barolo_to_cart
+    assert_no_difference "Order.count" do
+      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+    end
+    assert_redirected_to cart_path(restaurant_id: @osteria)
+
+    follow_redirect!
+    assert_match ERB::Util.html_escape(I18n.t("orders.errors.rate_limited")), response.body
   end
 
   # --- empty cart ---
@@ -143,24 +184,46 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "one diner cannot read another's order via a mismatched token" do
+  # Both orders are placed in genuinely separate sessions — reset! discards
+  # the cookie jar, so nothing about "who's browsing" carries over between
+  # the two placements. This is what actually rules out any lookup that
+  # (accidentally or otherwise) leans on session/current-user state instead
+  # of the public_token alone.
+  test "one diner cannot read another's order" do
     add_barolo_to_cart
     post orders_path(restaurant_id: @osteria), params: { guest_name: "First Diner" }
     first_order = last_order
+
+    reset!
 
     add_barolo_to_cart
     post orders_path(restaurant_id: @osteria), params: { guest_name: "Second Diner" }
     second_order = last_order
 
-    get order_status_path(public_token: first_order.public_token)
-    assert_response :success
-    assert_match "First Diner", response.body
-    assert_no_match "Second Diner", response.body
-
     get order_status_path(public_token: second_order.public_token)
     assert_response :success
     assert_match "Second Diner", response.body
     assert_no_match "First Diner", response.body
+
+    get order_status_path(public_token: first_order.public_token)
+    assert_response :success
+    assert_match "First Diner", response.body
+    assert_no_match "Second Diner", response.body
+  end
+
+  # --- order_invalid ---
+
+  test "an over-length guest name fails cleanly with a flash and no row, not a 500" do
+    add_barolo_to_cart
+    over_length_name = "a" * 65
+
+    assert_no_difference [ "Order.count", "OrderItem.count" ] do
+      post orders_path(restaurant_id: @osteria), params: { guest_name: over_length_name }
+    end
+    assert_redirected_to cart_path(restaurant_id: @osteria)
+
+    follow_redirect!
+    assert_match ERB::Util.html_escape(I18n.t("orders.errors.order_invalid")), response.body
   end
 
   # --- inactive restaurant ---
@@ -168,6 +231,12 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   test "an inactive restaurant 404s on order creation" do
     inactive = restaurants(:inactive_restaurant)
     post orders_path(restaurant_id: inactive), params: { guest_name: "Jane" }
+    assert_response :not_found
+  end
+
+  test "an order on an inactive restaurant 404s on the status page" do
+    order = orders(:inactive_restaurant_order)
+    get order_status_path(public_token: order.public_token)
     assert_response :not_found
   end
 end

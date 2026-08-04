@@ -19,3 +19,11 @@ guest_order:
   status: 0
   total_amount_cents: 900
   public_token: guest_order_fixture_token_ghi789
+
+inactive_restaurant_order:
+  restaurant: inactive_restaurant
+  customer:
+  guest_name: Ghost Diner
+  status: 0
+  total_amount_cents: 500
+  public_token: inactive_restaurant_order_token_jkl012

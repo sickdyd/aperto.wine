@@ -7,12 +7,8 @@
       <h1 class="font-display text-3xl font-light mt-4"><%= t("auth.sign_in") %></h1>
     </div>
 
-    <% if flash[:alert] %>
-      <div role="alert" class="alert alert-error mb-6 text-sm">
-        <%= icon "warning", css: "size-4" %>
-        <span><%= flash[:alert] %></span>
-      </div>
-    <% end %>
+    <%# Flash is now rendered once from the shared application layout
+        (app/views/shared/_flash) — a per-view render here would double it. %>
 
     <div data-controller="dev-login">
       <%= form_with url: sign_in_path, method: :post, class: "space-y-5" do |f| %>

@@ -14,19 +14,41 @@ class OrdersController < ApplicationController
 
   before_action :set_cart, only: :create
 
-  # Keyed on the session id, falling back to the remote IP, mirroring
+  # IP-scoped ceiling: comfortably clears a large table of diners (roughly
+  # 15-20 people) sharing one restaurant's NAT'd wifi, each placing at most
+  # a couple of orders over the course of a sitting, while still bounding a
+  # script that rotates cookie jars per request. 8x the per-session ceiling
+  # keeps it well above legitimate shared-IP traffic without being
+  # effectively unlimited.
+  IP_RATE_LIMIT = 40
+
+  # Two independent limiters, since a fresh cookie jar defeats a
+  # session-only key on its own (see the by: comment below).
+  #
+  # Session-scoped: catches an honest diner double-tapping submit. Keyed on
+  # the session id, falling back to the remote IP, mirroring
   # Owner::AddressSuggestionsController's by:-keyed usage. session.id is nil
   # until the session has actually been written, which a fresh visitor's
   # first-ever request cannot guarantee — a bare session.id.to_s key would
-  # collapse every such visitor onto the same blank-string bucket. On trip
-  # we redirect with a translated flash rather than a bare 429: a diner may
-  # legitimately retry a few seconds later.
+  # collapse every such visitor onto the same blank-string bucket.
   rate_limit to: 5, within: 1.minute, only: :create,
              by: -> { session.id.to_s.presence || request.remote_ip },
              with: -> { redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.rate_limited") }
 
+  # IP-scoped: closes the bypass above. Placing an order always requires a
+  # session-backed cart (see #set_cart / Cart), so by the time #create runs
+  # session.id is *always* present — and it is a fresh random id for every
+  # fresh cookie jar, so the session-scoped limiter above never actually
+  # falls back to request.remote_ip on this action. Keying a second,
+  # higher-ceiling limiter purely on remote_ip cannot be evaded that way.
+  # On trip we redirect with a translated flash rather than a bare 429: a
+  # diner may legitimately retry a few seconds later.
+  rate_limit to: IP_RATE_LIMIT, within: 1.minute, only: :create, name: "orders_ip",
+             by: -> { request.remote_ip },
+             with: -> { redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.rate_limited") }
+
   def create
-    return honeypot_response if order_params[:website].present?
+    return honeypot_response if honeypot_tripped?
 
     result = PlaceOrder.call(
       cart: @cart, restaurant: @restaurant, table: current_table,
@@ -42,9 +64,13 @@ class OrdersController < ApplicationController
 
   # Public capability lookup: the public_token is the only key. Never falls
   # back to an id or to "the current user's most recent order" — either
-  # would let one diner read another's order.
+  # would let one diner read another's order. Restaurant.active mirrors
+  # every other customer path (menu, cart): an order that belongs to a
+  # restaurant the owner has since deactivated 404s rather than staying
+  # reachable — the token is still the capability, but consistency with the
+  # rest of the public surface wins.
   def show
-    @order = Order.find_by!(public_token: params[:public_token])
+    @order = Order.joins(:restaurant).merge(Restaurant.active).find_by!(public_token: params[:public_token])
   end
 
   private
@@ -58,7 +84,18 @@ class OrdersController < ApplicationController
   # restaurant_table_id, customer_id and public_token are all set
   # server-side in PlaceOrder and never accepted from params.
   def order_params
-    params.permit(:guest_name, :website)
+    params.permit(:guest_name)
+  end
+
+  # Read from the raw params, not the permitted order_params: Strong
+  # Parameters' #permit silently drops non-scalar values, so a submission
+  # like contact_reference[]=x would come back nil through
+  # order_params[:contact_reference] and never trip the honeypot at all.
+  # Any present value here — a string, an array, or a nested hash — means
+  # the field was touched by something that isn't a human, so all of them
+  # count as a trip.
+  def honeypot_tripped?
+    params[:contact_reference].present?
   end
 
   # A bot that fills the honeypot gets no signal that it was caught: no

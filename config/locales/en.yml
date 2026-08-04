@@ -388,7 +388,7 @@ en:
       empty_cart: "Your cart is empty."
       items_unavailable: "Some items in your cart are no longer available. Please review your cart before ordering."
       order_invalid: "Your order could not be placed. Please review your cart and try again."
-      rate_limited: "You are placing orders too quickly. Please wait a moment and try again."
+      rate_limited: "You're placing orders too quickly. Please wait a moment and try again."
     status:
       title: "Your Order"
       placed_at: "Placed %{time}"

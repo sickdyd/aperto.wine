@@ -17,8 +17,6 @@
     <div class="divider-wine mt-6"></div>
   </header>
 
-  <%= render "shared/flash" %>
-
   <% if @cart.dropped_items.any? %>
     <div role="alert" class="alert alert-warning font-body text-sm mb-6">
       <%= icon "warning", css: "size-4" %>
@@ -59,10 +57,14 @@
       <%# Honeypot: a real text input a scripted bot will happily fill, but
           genuinely inert for a human — hidden visually, out of tab order,
           and invisible to assistive technology, not merely type="hidden"
-          (which many bots already know to skip). A screen-reader or
-          keyboard user must never be asked to fill it. %>
+          (which many bots already know to skip). Named away from anything
+          browser autofill or a password manager targets (not website,
+          email, name, phone, address, url, company) — those get filled by
+          well-meaning autofill even with autocomplete="off", which is
+          advisory and routinely ignored. A screen-reader or keyboard user
+          must never be asked to fill it. %>
       <div class="hidden" aria-hidden="true">
-        <%= f.text_field :website, tabindex: -1, autocomplete: "off" %>
+        <%= f.text_field :contact_reference, tabindex: -1, autocomplete: "off" %>
       </div>
 
       <div class="form-actions">
