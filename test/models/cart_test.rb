@@ -9,7 +9,7 @@ class CartTest < ActiveSupport::TestCase
     @barolo = wines(:barolo)
     @gavi = wines(:gavi)
     @sold_out = wines(:sold_out_wine)
-    @barbera = wines(:trattoria_barbera)
+    @franciacorta = wines(:trattoria_franciacorta)
     @unlisted = wines(:unlisted_wine)
     @inactive_list_only = wines(:osteria_moscato)
   end
@@ -52,7 +52,7 @@ class CartTest < ActiveSupport::TestCase
   test "add rejects a wine belonging to another restaurant" do
     cart = cart_for(@osteria)
 
-    result = cart.add(wine_id: @barbera.id, glass_size_ml: 125, quantity: 1)
+    result = cart.add(wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1)
 
     assert_not result.success?
     assert_equal :wine_not_found, result.error
@@ -346,10 +346,10 @@ class CartTest < ActiveSupport::TestCase
     trattoria_cart = cart_for(@trattoria, session: session)
 
     osteria_cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
-    trattoria_cart.add(wine_id: @barbera.id, glass_size_ml: 125, quantity: 1)
+    trattoria_cart.add(wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1)
 
     assert_equal [ @barolo ], osteria_cart.items.map(&:wine)
-    assert_equal [ @barbera ], trattoria_cart.items.map(&:wine)
+    assert_equal [ @franciacorta ], trattoria_cart.items.map(&:wine)
   end
 
   test "clear empties only this restaurant's cart, leaving the other restaurant's cart intact" do
@@ -357,12 +357,12 @@ class CartTest < ActiveSupport::TestCase
     osteria_cart = cart_for(@osteria, session: session)
     trattoria_cart = cart_for(@trattoria, session: session)
     osteria_cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
-    trattoria_cart.add(wine_id: @barbera.id, glass_size_ml: 125, quantity: 1)
+    trattoria_cart.add(wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1)
 
     osteria_cart.clear
 
     assert_empty osteria_cart.items
-    assert_equal [ @barbera ], trattoria_cart.items.map(&:wine)
+    assert_equal [ @franciacorta ], trattoria_cart.items.map(&:wine)
   end
 
   # --- stale reads / dropped_items ---

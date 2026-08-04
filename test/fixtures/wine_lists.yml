@@ -24,12 +24,16 @@ trattoria_list:
   position: 1
   active: true
 
-# Trattoria's second active list — holds only trattoria_barbera, kept out of
-# trattoria_list so it never joins that list's red colour group (several
+# Trattoria's second active list — holds only trattoria_franciacorta, kept out
+# of trattoria_list so it never joins that list's red colour group (several
 # menus_helper/public_menu tests assert trattoria_list's red group is exactly
 # [chianti, trattoria_sold_out]). Exists purely so cart specs have a second
 # restaurant with a *published* purchasable wine (Task 6: the cart now only
-# admits wines reachable through an active list).
+# admits wines reachable through an active list). Its wine is sparkling, not
+# red or white — trattoria_list already renders Red and White nav chips, so a
+# second list holding another red or white wine would render a duplicate
+# same-coloured chip and make public_menu_test.rb's `click_link "Red"` calls
+# ambiguous.
 trattoria_reserve:
   restaurant: trattoria
   name: Reserve Selection

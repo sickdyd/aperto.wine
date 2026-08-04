@@ -6,7 +6,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
     @trattoria = restaurants(:trattoria)
     @barolo = wines(:barolo)
     @gavi = wines(:gavi)
-    @barbera = wines(:trattoria_barbera)
+    @franciacorta = wines(:trattoria_franciacorta)
     @customer = users(:customer)
     @table = restaurant_tables(:sala_t1)
   end
@@ -103,13 +103,13 @@ class PlaceOrderTest < ActiveSupport::TestCase
     osteria_cart = cart_for(@osteria, session: session)
     trattoria_cart = cart_for(@trattoria, session: session)
     osteria_cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
-    trattoria_cart.add(wine_id: @barbera.id, glass_size_ml: 125, quantity: 1)
+    trattoria_cart.add(wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: osteria_cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
 
     assert result.success?
     assert_empty osteria_cart.items
-    assert_equal [ @barbera ], trattoria_cart.items.map(&:wine)
+    assert_equal [ @franciacorta ], trattoria_cart.items.map(&:wine)
   end
 
   test "a signed-in customer's order records the customer and no guest name" do

@@ -89,11 +89,17 @@ osteria_moscato:
 # (which need a second restaurant with a purchasable wine, to prove carts
 # stay independent and cross-restaurant adds are rejected) need one that does.
 # Published on wine_lists(:trattoria_reserve) — see that fixture's comment.
-trattoria_barbera:
+#
+# Colour is sparkling (not red/white) deliberately: trattoria_list already
+# renders Red and White jump-nav sections, so a second active list holding
+# another red or white wine would render a duplicate same-coloured nav chip
+# and make `click_link "Red"`/`click_link "White"` ambiguous in
+# test/system/public_menu_test.rb.
+trattoria_franciacorta:
   restaurant: trattoria
-  name: Barbera d'Asti
-  producer: Vietti
-  color: 0
+  name: Franciacorta Brut
+  producer: Ca' del Bosco
+  color: 3
   bottle_size_ml: 750
   price_125ml_cents: 1000
   available_glasses: 8

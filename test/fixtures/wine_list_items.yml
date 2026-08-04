@@ -50,11 +50,11 @@ trattoria_white_item:
   wine: trattoria_white
   position: 3
 
-# Publishes trattoria_barbera on trattoria_reserve (see that fixture's
+# Publishes trattoria_franciacorta on trattoria_reserve (see that fixture's
 # comment) so cart specs can add it as a normal, published wine.
-trattoria_reserve_barbera:
+trattoria_reserve_franciacorta:
   wine_list: trattoria_reserve
-  wine: trattoria_barbera
+  wine: trattoria_franciacorta
   position: 1
 
 # mixed_order_list: item positions deliberately contradict colour enum order

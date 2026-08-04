@@ -249,7 +249,7 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a restaurant's sticky cart bar never reflects another restaurant's cart" do
-    post cart_items_path(restaurant_id: restaurants(:trattoria)), params: { wine_id: wines(:trattoria_barbera).id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_id: restaurants(:trattoria)), params: { wine_id: wines(:trattoria_franciacorta).id, glass_size_ml: 125, quantity: 1 }
 
     get menu_path(id: restaurants(:osteria))
     assert_response :success

@@ -7,7 +7,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     @barolo = wines(:barolo)
     @gavi = wines(:gavi)
     @sold_out = wines(:sold_out_wine)
-    @barbera = wines(:trattoria_barbera)
+    @franciacorta = wines(:trattoria_franciacorta)
     @unlisted = wines(:unlisted_wine)
   end
 
@@ -70,12 +70,12 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
 
   test "two restaurants' carts stay independent, and clearing one leaves the other intact" do
     post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
-    post cart_items_path(restaurant_id: @trattoria), params: { wine_id: @barbera.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_id: @trattoria), params: { wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1 }
 
     get cart_path(restaurant_id: @osteria)
     assert_match @barolo.name, response.body
     get cart_path(restaurant_id: @trattoria)
-    assert_match ERB::Util.html_escape(@barbera.name), response.body
+    assert_match ERB::Util.html_escape(@franciacorta.name), response.body
 
     delete cart_path(restaurant_id: @osteria)
     assert_redirected_to cart_path(restaurant_id: @osteria)
@@ -83,11 +83,11 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     get cart_path(restaurant_id: @osteria)
     assert_match I18n.t("cart.empty"), response.body
     get cart_path(restaurant_id: @trattoria)
-    assert_match ERB::Util.html_escape(@barbera.name), response.body
+    assert_match ERB::Util.html_escape(@franciacorta.name), response.body
   end
 
   test "a wine belonging to another restaurant is rejected" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barbera.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1 }
     assert_redirected_to cart_path(restaurant_id: @osteria)
     follow_redirect!
     assert_match I18n.t("cart.errors.wine_not_found"), response.body
