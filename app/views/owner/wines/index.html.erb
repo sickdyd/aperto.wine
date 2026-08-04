@@ -1,85 +1,137 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.wines.title')}" } %>
 
-<div class="mb-8">
-  <div class="flex items-center justify-between">
-    <h1 class="font-display text-3xl font-light"><%= t("owner.wines.title") %></h1>
-    <a href="<%= new_owner_restaurant_wine_path(@restaurant) %>" class="btn-wine btn-sm">
-      <%= icon "plus", css: "size-4" %>
-      <%= t("owner.wines.add") %>
-    </a>
+<div class="admin-head">
+  <div>
+    <h1 class="admin-title"><%= t("owner.wines.title") %></h1>
+    <p class="admin-subtitle"><%= @restaurant.name %> · <%= t("owner.wines.wine_count", count: @wines.size) %></p>
   </div>
+  <a href="<%= new_owner_restaurant_wine_path(@restaurant) %>" class="btn-wine">
+    <%= icon "plus", css: "size-4" %>
+    <%= t("owner.wines.add") %>
+  </a>
 </div>
 
 <% if @wines.any? %>
   <div data-controller="list-filter">
-    <div class="mb-6 max-w-sm">
-      <label for="wines_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
+    <label for="wines_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
+    <div class="search-field mb-6 max-w-sm">
+      <%= icon "magnifying-glass" %>
       <input type="search"
              id="wines_filter"
-             class="input w-full font-body text-sm"
              placeholder="<%= t("owner.shared.filter.placeholder") %>"
              data-list-filter-target="input"
              data-action="input->list-filter#filter">
     </div>
 
-    <% Wine.colors.keys.each do |color| %>
-      <% wines_by_color = @wines.select { |w| w.color == color } %>
-      <% next if wines_by_color.empty? %>
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <%# The name column absorbs the slack so the figure columns stay
+              gathered against the right edge, as in a printed ledger. %>
+          <th scope="col" class="w-full"><%= t("owner.wines.table.wine") %></th>
+          <th scope="col" class="cell-num hidden sm:table-cell"><%= t("owner.wines.table.vintage") %></th>
+          <th scope="col" class="cell-num hidden md:table-cell"><%= t("owner.wines.table.bottle") %></th>
+          <th scope="col" class="cell-num hidden lg:table-cell"><%= t("owner.wines.table.by_the_glass") %></th>
+          <th scope="col" class="cell-num"><%= t("owner.wines.table.glasses") %></th>
+          <th scope="col"><span class="sr-only"><%= t("owner.wines.table.actions") %></span></th>
+        </tr>
+      </thead>
 
-      <div class="mb-8" data-list-filter-target="group">
-        <h2 class="font-display text-lg font-medium mb-3 flex items-center gap-2">
-          <%= wine_color_dot(color, label: false) %>
-          <%= t("owner.wines.colors.#{color}") %>
-          <span class="text-xs text-base-content/40 font-body">(<%= wines_by_color.size %>)</span>
-        </h2>
+      <% Wine.colors.keys.each do |color| %>
+        <% wines_by_color = @wines.select { |w| w.color == color } %>
+        <% next if wines_by_color.empty? %>
 
-        <div class="space-y-2">
+        <tbody data-list-filter-target="group">
+          <tr>
+            <th colspan="6" scope="colgroup" class="px-3 pt-8">
+              <div class="group-head">
+                <h2 class="group-title">
+                  <%= wine_color_dot(color, label: false) %>
+                  <%= t("owner.wines.colors.#{color}") %>
+                </h2>
+                <span class="mono-micro ml-auto"><%= t("owner.wines.wine_count", count: wines_by_color.size) %></span>
+              </div>
+            </th>
+          </tr>
+
           <% wines_by_color.each do |wine| %>
-            <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all"
-                 data-list-filter-target="item"
-                 data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.region].compact_blank.join(" ").downcase %>">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="font-body font-medium text-sm truncate"><%= wine.name %></span>
+            <tr data-list-filter-target="item"
+                data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.region].compact_blank.join(" ").downcase %>">
+              <td>
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span class="wine-name"><%= wine.name %></span>
                   <% unless wine.active? %>
-                    <span class="badge badge-ghost badge-xs"><%= t("owner.restaurants.inactive") %></span>
+                    <span class="tag-out"><%= t("owner.restaurants.inactive") %></span>
                   <% end %>
                 </div>
-                <p class="text-xs text-base-content/50 truncate">
-                  <%= [wine.producer, wine.grape_variety, wine.vintage_year].compact_blank.join(" · ") %>
-                </p>
-              </div>
+                <% meta = [ wine.producer, wine.grape_variety, wine.region ].compact_blank %>
+                <% if meta.any? || wine.vintage_year.present? %>
+                  <p class="wine-meta mt-1 pl-0">
+                    <%= meta.join(" · ") %><%# the vintage has its own column from sm up %>
+                    <% if wine.vintage_year.present? %>
+                      <span class="sm:hidden"><%= " · " if meta.any? %><span class="wine-vintage"><%= wine.vintage_year %></span></span>
+                    <% end %>
+                  </p>
+                <% end %>
+              </td>
 
-              <div class="flex items-center gap-4 ml-4">
-                <span class="text-xs text-base-content/50">
-                  <%= wine.available_glasses %> <%= t("owner.wines.glasses_available") %>
-                </span>
-                <div class="flex items-center gap-1">
-                  <a href="<%= edit_owner_restaurant_wine_path(@restaurant, wine) %>" class="btn btn-ghost btn-xs">
-                    <%= icon "pencil-simple", css: "size-3.5" %>
+              <td class="cell-num hidden sm:table-cell">
+                <%= wine.vintage_year.presence || t("owner.wines.table.unset") %>
+              </td>
+
+              <td class="cell-num hidden md:table-cell">
+                <%= format_cents(wine.price_bottle_cents) || t("owner.wines.table.unset") %>
+              </td>
+
+              <td class="hidden lg:table-cell">
+                <% glass_prices = Wine::GLASS_SIZES.filter_map { |size| [ size, format_cents(wine.price_for_glass(size)) ] if format_cents(wine.price_for_glass(size)) } %>
+                <% if glass_prices.any? %>
+                  <div class="price-grid">
+                    <% glass_prices.each do |size, amount| %>
+                      <span class="price-size"><%= size %>ml</span>
+                      <span class="price-amount"><%= amount %></span>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="cell-num block"><%= t("owner.wines.table.unset") %></span>
+                <% end %>
+              </td>
+
+              <td class="cell-num"><%= wine.available_glasses %></td>
+
+              <td class="w-px">
+                <div class="flex items-center justify-end gap-2">
+                  <a href="<%= edit_owner_restaurant_wine_path(@restaurant, wine) %>"
+                     class="btn-wine-quiet min-h-11 min-w-11 px-0"
+                     aria-label="<%= t("owner.wines.edit_wine", name: wine.name) %>">
+                    <%= icon "pencil-simple", css: "size-4" %>
                   </a>
-                  <%= button_to owner_restaurant_wine_path(@restaurant, wine), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wines.confirm_delete") } do %>
-                    <%= icon "trash", css: "size-3.5" %>
+                  <%= button_to owner_restaurant_wine_path(@restaurant, wine),
+                        method: :delete,
+                        class: "btn-wine-quiet min-h-11 min-w-11 px-0 hover:text-error",
+                        aria: { label: t("owner.wines.delete_wine", name: wine.name) },
+                        data: { turbo_confirm: t("owner.wines.confirm_delete") } do %>
+                    <%= icon "trash", css: "size-4" %>
                   <% end %>
                 </div>
-              </div>
-            </div>
+              </td>
+            </tr>
           <% end %>
-        </div>
-      </div>
-    <% end %>
+        </tbody>
+      <% end %>
+    </table>
 
-    <p data-list-filter-target="empty" hidden class="text-sm text-base-content/50 text-center py-8">
+    <p data-list-filter-target="empty" hidden class="empty-state">
       <%= t("owner.shared.filter.no_results") %>
     </p>
   </div>
 <% else %>
-  <div class="text-center py-20">
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
-      <%= icon "wine", css: "size-7 text-base-content/30" %>
+  <div class="py-10 text-center">
+    <div class="flex justify-center text-ox-3">
+      <%= icon "wine", css: "size-8" %>
     </div>
-    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.wines.empty_title") %></h2>
-    <p class="text-base-content/50 mb-6"><%= t("owner.wines.empty_description") %></p>
+    <h2 class="mt-4 text-h3"><%= t("owner.wines.empty_title") %></h2>
+    <p class="empty-state"><%= t("owner.wines.empty_description") %></p>
     <a href="<%= new_owner_restaurant_wine_path(@restaurant) %>" class="btn-wine"><%= t("owner.wines.add_first") %></a>
   </div>
 <% end %>

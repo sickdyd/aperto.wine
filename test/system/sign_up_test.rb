@@ -1,12 +1,21 @@
 require "application_system_test_case"
 
 class SignUpTest < ApplicationSystemTestCase
+  # Mono small caps means the browser reports this copy uppercased; match
+  # case-insensitively rather than dropping the assertion.
+  def assert_flash_label(key)
+    assert_text(/#{Regexp.escape(I18n.t(key))}/i)
+  end
+
   test "customer registration form is shown by default" do
     visit sign_up_path
 
     assert_selector "h1", text: I18n.t("auth.sign_up")
     assert_selector "[role='tab']", text: /#{Regexp.escape(I18n.t("auth.tab_customer"))}/i
     assert_selector "[role='tab']", text: /#{Regexp.escape(I18n.t("auth.tab_owner"))}/i
+    # The selected role is exposed to assistive tech, not carried by fill alone.
+    assert_selector "[role='tab'][aria-selected='true']",
+                    text: /#{Regexp.escape(I18n.t("auth.tab_customer"))}/i
     assert_field I18n.t("auth.name")
     assert_field I18n.t("auth.email")
     assert_field I18n.t("auth.password")
@@ -34,6 +43,8 @@ class SignUpTest < ApplicationSystemTestCase
     click_link I18n.t("auth.tab_owner")
 
     assert_current_path sign_up_path(tab: "owner")
+    assert_selector "[role='tab'][aria-selected='true']",
+                    text: /#{Regexp.escape(I18n.t("auth.tab_owner"))}/i
 
     fill_in I18n.t("auth.name"), with: "New Owner"
     fill_in I18n.t("auth.email"), with: "newowner@example.com"
@@ -65,6 +76,7 @@ class SignUpTest < ApplicationSystemTestCase
     click_button I18n.t("auth.create_account")
 
     assert_selector "[role='alert']"
+    assert_flash_label "shared.flash_error"
     assert_text "#{User.human_attribute_name(:password_confirmation)} " \
                 "#{I18n.t("errors.messages.confirmation", attribute: User.human_attribute_name(:password))}"
   end
@@ -81,6 +93,7 @@ class SignUpTest < ApplicationSystemTestCase
     click_button I18n.t("auth.create_account")
 
     assert_selector "[role='alert']"
+    assert_flash_label "shared.flash_error"
     assert_text "#{User.human_attribute_name(:email)} #{I18n.t("errors.messages.taken")}"
   end
 

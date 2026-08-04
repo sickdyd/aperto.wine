@@ -15,7 +15,13 @@ aperto.wine turns a restaurant's wine cellar into a digital, QR-accessible wine 
 
 ## Brand Personality
 
-Elegant, warm, wine-inspired. Cormorant Garamond display + Outfit body, oxblood/wine primary on warm near-white. The public menu carries the brand; the owner admin area stays quiet and functional, using the same palette with restraint.
+**The Sommelier's Ledger** — a printed wine ledger rather than a web app. Print typography throughout: Instrument Serif for display, EB Garamond for body and menu copy, JetBrains Mono for labels, data and prices.
+
+Oxblood is structure, not accent: a five-step ramp carries the rules, headings, prices, masthead and primary actions, while black ink is reserved for body copy. Grounds are warm paper stocks — three of them, for tonal stacking — carrying a perceptible paper grain. Depth comes from stock and overlap, never from elevation.
+
+Rules replace boxes: hairline for row division, medium for subsection, heavy for section break. Leader dots — a dotted rule running from a label to its right-aligned value — are the signature detail. **Zero border radius, no drop shadows anywhere.**
+
+The public menu carries the brand at full expression: display type at scale, the engraved bottle-and-glass pour, generous rhythm. The owner admin area holds the same vocabulary quiet — no display type in labels or buttons, no illustration, denser rhythm, oxblood for structure and emphasis only.
 
 ## Anti-references
 

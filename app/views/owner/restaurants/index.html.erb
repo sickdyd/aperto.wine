@@ -1,39 +1,65 @@
 <% content_for(:title) { t("owner.restaurants.title") } %>
 
-<div class="flex items-center justify-between mb-8">
-  <h1 class="font-display text-3xl font-light"><%= t("owner.restaurants.title") %></h1>
-  <a href="<%= new_owner_restaurant_path %>" class="btn-wine btn-sm">
+<div class="admin-head">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h1 class="admin-title"><%= t("owner.restaurants.title") %></h1>
+    <% if @restaurants.any? %>
+      <span class="admin-subtitle num"><%= t("owner.restaurants.count", count: @restaurants.size) %></span>
+    <% end %>
+  </div>
+  <a href="<%= new_owner_restaurant_path %>" class="btn-wine">
     <%= icon "plus", css: "size-4" %>
     <%= t("owner.restaurants.add") %>
   </a>
 </div>
 
 <% if @restaurants.any? %>
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <% @restaurants.each do |restaurant| %>
-      <a href="<%= owner_restaurant_path(restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/20 hover:shadow-sm transition-all">
-        <div class="flex items-start justify-between mb-3">
-          <h2 class="font-display text-xl font-medium"><%= restaurant.name %></h2>
-          <% if restaurant.active? %>
-            <span class="badge badge-success badge-sm"><%= t("owner.restaurants.active") %></span>
-          <% else %>
-            <span class="badge badge-ghost badge-sm"><%= t("owner.restaurants.inactive") %></span>
-          <% end %>
-        </div>
-        <p class="text-sm text-base-content/50 flex items-center gap-1">
-          <%= icon "map-pin", css: "size-3.5" %>
-          <%= restaurant.address %>
-        </p>
-      </a>
-    <% end %>
-  </div>
+  <%# The list reads as a ledger page: mono caps head over a heavy rule,
+      hairlines between rows, the status annotated in the right-hand column. %>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th scope="col"><%= t("owner.restaurants.form.name") %></th>
+        <%# Below sm the address rides under the name instead of holding a
+            column of its own, so three columns never crush into a phone. %>
+        <th scope="col" class="hidden sm:table-cell"><%= t("owner.restaurants.form.address") %></th>
+        <th scope="col" class="text-right"><%= t("owner.restaurants.status") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @restaurants.each do |restaurant| %>
+        <tr>
+          <td class="align-middle">
+            <a href="<%= owner_restaurant_path(restaurant) %>"
+               class="flex min-h-11 items-center font-medium text-ox-2 no-underline hover:underline">
+              <%= restaurant.name %>
+            </a>
+            <span class="mono-micro flex items-baseline gap-1.5 sm:hidden">
+              <%= icon "map-pin", css: "size-3 shrink-0 translate-y-0.5" %>
+              <%= restaurant.address %>
+            </span>
+          </td>
+          <td class="hidden align-middle text-ink-soft sm:table-cell">
+            <span class="flex items-baseline gap-1.5">
+              <%= icon "map-pin", css: "size-3.5 shrink-0 translate-y-0.5 text-ox-4" %>
+              <%= restaurant.address %>
+            </span>
+          </td>
+          <td class="align-middle text-right">
+            <% if restaurant.active? %>
+              <span class="mono-micro text-ox-2"><%= t("owner.restaurants.active") %></span>
+            <% else %>
+              <span class="tag-out"><%= t("owner.restaurants.inactive") %></span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
 <% else %>
-  <div class="text-center py-20">
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
-      <%= icon "storefront", css: "size-7 text-base-content/30" %>
-    </div>
-    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.restaurants.empty_title") %></h2>
-    <p class="text-base-content/50 mb-6"><%= t("owner.restaurants.empty_description") %></p>
+  <div class="empty-state">
+    <h2 class="mb-2 not-italic"><%= t("owner.restaurants.empty_title") %></h2>
+    <p class="mb-6"><%= t("owner.restaurants.empty_description") %></p>
     <a href="<%= new_owner_restaurant_path %>" class="btn-wine"><%= t("owner.restaurants.add_first") %></a>
   </div>
 <% end %>

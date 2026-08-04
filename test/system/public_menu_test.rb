@@ -1,12 +1,15 @@
 require "application_system_test_case"
 
 class PublicMenuTest < ApplicationSystemTestCase
+  # The ledger sets the sheet's running text — address, tags, foot, colour
+  # headings — as mono small caps, so Selenium reports it upper-cased. These
+  # assertions match case-insensitively rather than hard-coding the transform.
   test "visitor can view public menu for a restaurant" do
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
     assert_selector "h1", text: restaurant.name
-    assert_text restaurant.address
+    assert_selector ".sheet-address", text: /#{Regexp.escape(restaurant.address)}/i
   end
 
   test "menu shows available wines" do
@@ -32,14 +35,14 @@ class PublicMenuTest < ApplicationSystemTestCase
     visit menu_path(id: restaurant.id)
 
     # barolo has price_75ml_cents: 1500
-    assert_text "75ml"
+    assert_selector ".price-size", text: /75\s*ml/i
   end
 
-  test "sold out wine shows unavailable badge" do
+  test "sold out wine shows unavailable tag" do
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    assert_text I18n.t("menu.unavailable")
+    assert_selector ".tag-out", text: /#{Regexp.escape(I18n.t("menu.unavailable"))}/i
   end
 
   test "menu marks each wine with a color dot" do
@@ -63,7 +66,7 @@ class PublicMenuTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     visit menu_path(id: restaurant.id)
 
-    assert_text I18n.t("menu.powered_by")
+    assert_selector ".sheet-foot", text: /#{Regexp.escape(I18n.t("menu.powered_by"))}/i
     assert_link "aperto.wine"
   end
 
@@ -139,6 +142,6 @@ class PublicMenuTest < ApplicationSystemTestCase
     visit menu_path(id: restaurants(:trattoria).id)
 
     assert_text "Reserve Barbaresco"
-    assert_text I18n.t("menu.unavailable")
+    assert_selector ".tag-out", text: /#{Regexp.escape(I18n.t("menu.unavailable"))}/i
   end
 end

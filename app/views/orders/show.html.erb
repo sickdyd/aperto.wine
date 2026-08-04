@@ -1,74 +1,102 @@
 <% content_for(:title) { "#{@order.restaurant.name} — #{t('orders.status.title')}" } %>
 
-<main class="min-h-screen max-w-2xl mx-auto px-4 py-8">
-  <%# Header %>
-  <header class="text-center mb-10">
-    <a href="<%= menu_path(id: @order.restaurant) %>" class="inline-flex items-center gap-1 text-xs text-base-content/50 hover:text-primary mb-4">
-      <%= icon "arrow-left", css: "size-3.5" %>
-      <%= t("orders.status.back_to_menu") %>
-    </a>
-    <h1 class="font-display text-3xl font-light"><%= t("orders.status.title") %></h1>
-    <p class="text-sm text-base-content/50 mt-1"><%= @order.restaurant.name %></p>
-    <p class="text-xs text-base-content/40 mt-1">
-      <%= order_customer_label(@order) %> · <%= t("orders.status.placed_at", time: l(@order.created_at, format: :long)) %>
-    </p>
-    <div class="divider-wine mt-6"></div>
-  </header>
+<%# The confirmation is the receipt, on the same sheet as the menu and the
+    cart: a short docket of leader rows saying where the order stands and
+    where it is going, then the itemised column the cart showed, closed off
+    by a heavy rule and the total. Quiet — nothing here is an action. %>
+<main class="band-stock flex-1">
+  <div class="sheet mx-auto w-full max-w-2xl">
+    <header>
+      <a href="<%= menu_path(id: @order.restaurant) %>" class="link-mono gap-2">
+        <%= icon "arrow-left", css: "size-3.5" %>
+        <%= t("orders.status.back_to_menu") %>
+      </a>
 
-  <%# Status %>
-  <div class="flex flex-col items-center text-center mb-8">
-    <span class="badge <%= order_status_badge_class(@order.status) %> badge-lg font-body">
-      <%= t("orders.status.statuses.#{@order.status}") %>
-    </span>
-    <p class="text-sm text-base-content/60 mt-3"><%= t("orders.status.hints.#{@order.status}") %></p>
-  </div>
+      <p class="mono-label mt-3 text-ox-3"><%= @order.restaurant.name %></p>
+      <h1 class="display-2 mt-1"><%= t("orders.status.title") %></h1>
 
-  <%# Table %>
-  <p class="text-sm text-base-content/60 flex items-center justify-center gap-1 mb-6">
-    <%= icon "picnic-table", css: "size-3.5" %>
-    <% if @order.restaurant_table %>
-      <%= t("orders.status.table_label") %>: <%= [ @order.restaurant_table.area, @order.restaurant_table.name ].compact_blank.join(" · ") %>
-    <% else %>
-      <%= t("orders.status.no_table") %>
-    <% end %>
-  </p>
+      <p class="mono-micro mt-3">
+        <span class="normal-case text-ink-soft"><%= order_customer_label(@order) %></span>
+        ·
+        <%= t("orders.status.placed_at", time: l(@order.created_at, format: :long)) %>
+      </p>
+    </header>
 
-  <%# Items %>
-  <div class="space-y-3">
-    <% @order.order_items.includes(:wine).each do |item| %>
-      <div class="p-4 rounded-lg border border-base-content/5">
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex-1 min-w-0">
-            <h3 class="font-body font-medium text-sm"><%= item.wine.name %></h3>
-            <p class="text-xs text-base-content/50 mt-0.5">
-              <%= [ item.wine.producer, item.wine.vintage_year ].compact_blank.join(" · ") %>
-            </p>
-          </div>
-        </div>
-        <div class="flex gap-4 text-xs mt-3">
-          <div>
-            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.glass_size") %></p>
-            <p class="font-medium mt-0.5"><%= item.glass_size_ml %>ml</p>
-          </div>
-          <div>
-            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.quantity") %></p>
-            <p class="font-medium mt-0.5"><%= item.quantity %></p>
-          </div>
-          <div>
-            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.price") %></p>
-            <p class="font-medium mt-0.5"><%= format_cents(item.unit_price_cents) %></p>
-          </div>
-          <div>
-            <p class="text-base-content/40 uppercase tracking-wider"><%= t("orders.status.subtotal") %></p>
-            <p class="font-medium mt-0.5"><%= format_cents(item.subtotal_cents) %></p>
-          </div>
-        </div>
-      </div>
-    <% end %>
-  </div>
+    <hr class="rule-section mt-6 mb-6">
 
-  <div class="flex items-center justify-between mt-8 pt-6 border-t border-base-content/10">
-    <span class="font-body text-xs uppercase tracking-wider text-base-content/60"><%= t("orders.status.total") %></span>
-    <span class="font-display text-2xl font-medium"><%= format_cents(@order.total_amount_cents) %></span>
+    <%# The docket. Status leads, because it is the one thing the diner came
+        back to this page to read; it is named in words, never by colour. %>
+    <%# Plain rows rather than a <dl>: the leader is an element between the
+        label and its value, which a dl's content model does not allow, and
+        the owner's board reads its leader rows the same way. %>
+    <div class="flex flex-col gap-2">
+      <p class="leader-row">
+        <span class="mono-label shrink-0 text-ox-2"><%= t("orders.status.status_label") %></span>
+        <span class="leader" aria-hidden="true"></span>
+        <span class="leader-value shrink"><%= t("orders.status.statuses.#{@order.status}") %></span>
+      </p>
+
+      <p class="leader-row">
+        <span class="mono-label flex shrink-0 items-center gap-2 text-ox-2">
+          <%= icon "picnic-table", css: "size-3.5 shrink-0" %>
+          <%= t("orders.status.table_label") %>
+        </span>
+        <span class="leader" aria-hidden="true"></span>
+        <% if @order.restaurant_table %>
+          <span class="leader-value shrink min-w-0 text-balance">
+            <%= [ @order.restaurant_table.area, @order.restaurant_table.name ].compact_blank.join(" · ") %>
+          </span>
+        <% else %>
+          <span class="note shrink min-w-0 text-right"><%= t("orders.status.no_table") %></span>
+        <% end %>
+      </p>
+    </div>
+
+    <p class="note mt-4"><%= t("orders.status.hints.#{@order.status}") %></p>
+
+    <hr class="rule-medium mt-8 mb-1">
+
+    <ul class="group-body">
+      <% @order.order_items.includes(:wine).each do |item| %>
+        <% meta = [ item.wine.producer, item.wine.vintage_year ].compact_blank.join(" · ") %>
+        <li>
+          <p class="leader-row">
+            <%= wine_color_dot(item.wine.color, label: false) %>
+            <span class="wine-name leader-label"><%= item.wine.name %></span>
+            <span class="leader" aria-hidden="true"></span>
+            <span class="leader-value">
+              <span class="sr-only"><%= t("orders.status.subtotal") %></span>
+              <%= format_cents(item.subtotal_cents) %>
+            </span>
+          </p>
+
+          <% if meta.present? %>
+            <p class="wine-meta"><%= meta %></p>
+          <% end %>
+
+          <p class="price-size mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 pl-[var(--indent)]">
+            <span>
+              <%= t("orders.status.glass_size") %>
+              <span class="num text-ox-3"><%= item.glass_size_ml %> ml</span>
+            </span>
+            <span>
+              <%= t("orders.status.quantity") %>
+              <span class="num text-ox-3"><%= item.quantity %></span>
+            </span>
+            <span>
+              <%= t("orders.status.price") %>
+              <span class="num text-ox-3"><%= format_cents(item.unit_price_cents) %></span>
+            </span>
+          </p>
+        </li>
+      <% end %>
+    </ul>
+
+    <hr class="rule-heavy">
+    <div class="leader-row pt-4">
+      <span class="mono-label text-ox-2"><%= t("orders.status.total") %></span>
+      <span class="leader leader-fine" aria-hidden="true"></span>
+      <span class="leader-value text-h3"><%= format_cents(@order.total_amount_cents) %></span>
+    </div>
   </div>
 </main>

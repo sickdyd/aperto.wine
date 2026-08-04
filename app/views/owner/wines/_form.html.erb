@@ -1,7 +1,7 @@
-<%= form_with model: [:owner, @restaurant, wine], class: "space-y-10 max-w-2xl",
+<%= form_with model: [:owner, @restaurant, wine], class: "space-y-8 max-w-2xl",
       data: { controller: "wine-autofill", wine_autofill_url_value: owner_wine_lookups_path } do |f| %>
   <% if wine.errors.any? %>
-    <div role="alert" class="alert alert-error text-sm">
+    <div role="alert" class="alert alert-error">
       <%= icon "warning", css: "size-4" %>
       <div>
         <% wine.errors.full_messages.each do |msg| %>
@@ -22,16 +22,20 @@
             placeholder: t("owner.wines.form.name_placeholder"),
             role: "combobox", "aria-expanded": "false", "aria-autocomplete": "list",
             "aria-label": t("owner.wines.autofill.aria_label"),
+            "aria-invalid": wine.errors[:name].any?.to_s,
             "aria-controls": "wine-suggestions-listbox",
             data: {
               wine_autofill_target: "input",
               action: "input->wine-autofill#search keydown->wine-autofill#navigate blur->wine-autofill#close"
             } %>
       <ul id="wine-suggestions-listbox"
-          class="hidden absolute top-full left-0 right-0 z-20 mt-1 menu p-0 bg-base-100 border border-base-content/10 rounded-box shadow-sm max-h-64 overflow-y-auto"
+          class="hidden address-suggestions"
           role="listbox"
           data-wine-autofill-target="results"
           data-action="mousedown->wine-autofill#keepOpen"></ul>
+      <% wine.errors[:name].each do |message| %>
+        <p class="field-error"><%= message %></p>
+      <% end %>
     </div>
 
     <div class="grid sm:grid-cols-2 gap-4">
@@ -54,7 +58,7 @@
 
       <div class="field">
         <%= f.label :vintage_year, t("owner.wines.form.vintage_year"), class: "field-label" %>
-        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input w-full font-body", data: { wine_autofill_target: "vintage" } %>
+        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input w-full font-mono num", data: { wine_autofill_target: "vintage" } %>
       </div>
 
       <div class="field">
@@ -76,17 +80,22 @@
     <div class="grid sm:grid-cols-2 gap-4">
       <div class="field">
         <%= f.label :bottle_size_ml, t("owner.wines.form.bottle_size"), class: "field-label" %>
-        <div class="flex items-center gap-2">
-          <%= f.number_field :bottle_size_ml, min: 187, max: 3000, step: 1, class: "input w-28 font-body" %>
-          <span class="field-hint">ml</span>
+        <div class="flex items-baseline gap-2">
+          <%= f.number_field :bottle_size_ml, min: 187, max: 3000, step: 1,
+                class: "input w-28 font-mono num",
+                "aria-invalid": wine.errors[:bottle_size_ml].any?.to_s %>
+          <span class="mono-micro">ml</span>
         </div>
+        <% wine.errors[:bottle_size_ml].each do |message| %>
+          <p class="field-error"><%= message %></p>
+        <% end %>
       </div>
 
       <div class="field">
         <%= f.label :price_bottle_cents, t("owner.wines.form.price_bottle"), class: "field-label" %>
-        <div class="flex items-center gap-2">
-          <span class="field-hint">&euro;</span>
-          <%= f.number_field :price_bottle_cents, min: 0, step: 1, class: "input w-28 font-body", placeholder: t("owner.wines.form.cents_hint") %>
+        <div class="flex items-baseline gap-2">
+          <span class="mono-micro">&euro;</span>
+          <%= f.number_field :price_bottle_cents, min: 0, step: 1, class: "input w-28 font-mono num", placeholder: t("owner.wines.form.cents_hint") %>
         </div>
       </div>
     </div>
@@ -97,9 +106,9 @@
       <% Wine::GLASS_SIZES.each do |size| %>
         <div class="field">
           <%= f.label :"price_#{size}ml_cents", "#{size}ml", class: "field-label" %>
-          <div class="flex items-center gap-1">
-            <span class="field-hint">&euro;</span>
-            <%= f.number_field :"price_#{size}ml_cents", min: 0, step: 1, class: "input input-sm w-full font-body", placeholder: "cents" %>
+          <div class="flex items-baseline gap-1.5">
+            <span class="mono-micro">&euro;</span>
+            <%= f.number_field :"price_#{size}ml_cents", min: 0, step: 1, class: "input input-sm w-full font-mono num", placeholder: t("owner.wines.form.cents_hint") %>
           </div>
         </div>
       <% end %>
@@ -113,18 +122,22 @@
     <div class="grid sm:grid-cols-2 gap-4">
       <div class="field">
         <%= f.label :available_glasses, t("owner.wines.form.available_glasses"), class: "field-label" %>
-        <%= f.number_field :available_glasses, min: 0, class: "input w-28 font-body" %>
+        <%= f.number_field :available_glasses, min: 0, class: "input w-28 font-mono num",
+              "aria-invalid": wine.errors[:available_glasses].any?.to_s %>
+        <% wine.errors[:available_glasses].each do |message| %>
+          <p class="field-error"><%= message %></p>
+        <% end %>
         <p class="field-hint">
           <%= t("owner.wines.form.suggested") %>:
           <% Wine::GLASS_SIZES.each do |size| %>
-            <span class="font-medium"><%= (wine.bottle_size_ml || 750) / size %></span> &times; <%= size %>ml<%= size == Wine::GLASS_SIZES.last ? "" : "," %>
+            <span class="num font-medium"><%= (wine.bottle_size_ml || 750) / size %></span> &times; <%= size %>ml<%= size == Wine::GLASS_SIZES.last ? "" : "," %>
           <% end %>
         </p>
       </div>
 
       <div class="field">
         <%= f.label :position, t("owner.wines.form.position"), class: "field-label" %>
-        <%= f.number_field :position, min: 0, class: "input w-28 font-body" %>
+        <%= f.number_field :position, min: 0, class: "input w-28 font-mono num" %>
       </div>
     </div>
 
@@ -136,6 +149,6 @@
 
   <div class="form-actions">
     <%= f.submit class: "btn-wine" %>
-    <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+    <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn-wine-quiet"><%= t("shared.cancel") %></a>
   </div>
 <% end %>

@@ -1,20 +1,24 @@
 <%#
   Sticky bar shown across the bottom of the menu once this restaurant's cart
-  holds at least one item. Fixed position, so it floats above the page
-  rather than taking part in its flow — menus/show.html.erb reserves
-  matching bottom padding on the page itself so the bar never covers the
-  last wine row.
+  holds at least one item. A running total struck across the foot of the
+  sheet: the count, leader dots, the amount, and the way on. Fixed position,
+  so it floats above the page rather than taking part in its flow —
+  menus/show.html.erb reserves matching bottom padding on the page itself so
+  the bar never covers the last wine row.
   Locals:
     cart       - the restaurant's Cart, already known non-empty (required)
     restaurant - the owning Restaurant, for the cart link (required)
 %>
-<div id="cart-bar" class="fixed inset-x-0 bottom-0 z-30 border-t border-base-content/10 bg-base-100/95 backdrop-blur">
-  <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-    <p class="font-body text-sm">
-      <span class="font-medium"><%= t("menu.cart_bar.item_count", count: cart.item_count) %></span>
-      <span class="text-base-content/50 ml-1"><%= format_cents(cart.total_cents) %></span>
+<div id="cart-bar" class="fixed inset-x-0 bottom-0 z-30 border-t-[3px] border-rule-heavy bg-sheet px-[var(--gutter)]">
+  <%# sheet-narrow + px-5 line the bar's contents up with the sheet's own
+      content column, so the total sits directly under the last price. %>
+  <div class="sheet-narrow flex items-center justify-between gap-4 px-5 py-3">
+    <p class="leader-row min-w-0 flex-1">
+      <span class="mono-label leader-label text-ox-2"><%= t("menu.cart_bar.item_count", count: cart.item_count) %></span>
+      <span class="leader" aria-hidden="true"></span>
+      <span class="leader-value"><%= format_cents(cart.total_cents) %></span>
     </p>
-    <a href="<%= cart_path(restaurant_id: restaurant) %>" class="btn-wine btn-sm min-h-11">
+    <a href="<%= cart_path(restaurant_id: restaurant) %>" class="btn-wine min-h-11 shrink-0 px-4">
       <%= t("menu.cart_bar.view_cart") %>
     </a>
   </div>

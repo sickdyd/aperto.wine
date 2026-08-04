@@ -1,94 +1,74 @@
 <% content_for(:title) { @restaurant.name } %>
 
-<div class="mb-8">
-  <div class="flex items-start justify-between">
-    <div>
-      <h1 class="font-display text-3xl font-light"><%= @restaurant.name %></h1>
-      <p class="text-base-content/50 mt-1 flex items-center gap-1">
-        <%= icon "map-pin", css: "size-3.5" %>
-        <%= @restaurant.address %>
-      </p>
-    </div>
+<div class="admin-head">
+  <div class="min-w-0">
+    <h1 class="admin-title"><%= @restaurant.name %></h1>
+    <p class="admin-subtitle mt-1.5 flex items-baseline gap-1.5">
+      <%= icon "map-pin", css: "size-3.5 shrink-0 translate-y-0.5 text-ox-4" %>
+      <%= @restaurant.address %>
+    </p>
+  </div>
 
-    <div class="flex items-center gap-2">
-      <a href="<%= edit_owner_restaurant_path(@restaurant) %>" class="btn btn-ghost btn-sm text-xs uppercase tracking-wider">
-        <%= icon "pencil-simple", css: "size-4" %>
-        <%= t("shared.edit") %>
-      </a>
-      <%= button_to owner_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm text-error text-xs uppercase tracking-wider", data: { turbo_confirm: t("owner.restaurants.confirm_delete") } do %>
-        <%= icon "trash", css: "size-4" %>
-        <%= t("shared.delete") %>
-      <% end %>
-    </div>
+  <div class="flex items-center gap-2">
+    <a href="<%= edit_owner_restaurant_path(@restaurant) %>" class="btn-wine-outline">
+      <%= icon "pencil-simple", css: "size-4" %>
+      <%= t("shared.edit") %>
+    </a>
+    <%= button_to owner_restaurant_path(@restaurant), method: :delete, class: "btn-wine-quiet text-error", data: { turbo_confirm: t("owner.restaurants.confirm_delete") } do %>
+      <%= icon "trash", css: "size-4" %>
+      <%= t("shared.delete") %>
+    <% end %>
   </div>
 </div>
 
-<%# Restaurant dashboard cards %>
-<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-8">
-  <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
-    <div class="flex items-center gap-3 mb-2">
-      <%= icon "wine", css: "size-5 text-primary/70" %>
-      <span class="font-body text-sm font-medium"><%= t("owner.nav.wines") %></span>
-    </div>
-    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.manage_wines") %></p>
-  </a>
+<%# The restaurant's sections, set as an index: a mono label, a leader running
+    across the gap, and the section's note where the value would sit. %>
+<% sections = [
+     { path: owner_restaurant_wines_path(@restaurant), icon: "wine", label: t("owner.nav.wines"), hint: t("owner.restaurants.manage_wines") },
+     { path: owner_restaurant_wine_lists_path(@restaurant), icon: "scroll", label: t("owner.restaurants.wine_lists"), hint: t("owner.restaurants.manage_wine_lists") },
+     { path: owner_restaurant_orders_path(@restaurant), icon: "receipt", label: t("owner.restaurants.orders"), hint: t("owner.restaurants.manage_orders") },
+     { path: owner_restaurant_tables_path(@restaurant), icon: "picnic-table", label: t("owner.restaurants.tables"), hint: t("owner.restaurants.tables_description") },
+     { path: owner_restaurant_qr_code_path(@restaurant), icon: "qr-code", label: t("owner.restaurants.qr_code"), hint: t("owner.restaurants.qr_description") }
+   ] %>
+<%# The public menu only serves active restaurants, so an inactive one gets a
+    hint instead of a link that would 404. %>
+<% sections << { path: menu_path(id: @restaurant.id), icon: "eye", label: t("owner.restaurants.preview_menu"), hint: t("owner.restaurants.preview_description"), external: true } if @restaurant.active? %>
 
-  <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
-    <div class="flex items-center gap-3 mb-2">
-      <%= icon "scroll", css: "size-5 text-primary/70" %>
-      <span class="font-body text-sm font-medium"><%= t("owner.restaurants.wine_lists") %></span>
-    </div>
-    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.manage_wine_lists") %></p>
-  </a>
+<%# The sidebar landmark is already labelled "Dashboard", so this one takes the
+    restaurant's own name to stay distinguishable. %>
+<nav aria-label="<%= @restaurant.name %>">
+  <% sections.each do |section| %>
+    <%= link_to section[:path],
+          target: (section[:external] ? "_blank" : nil),
+          rel: (section[:external] ? "noopener" : nil),
+          class: "group flex min-h-11 flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-rule-hair py-2 no-underline" do %>
+      <span class="flex shrink-0 items-baseline gap-2 text-ox-2">
+        <%= icon section[:icon], css: "size-4 shrink-0 translate-y-0.5 text-ox-3" %>
+        <span class="mono-label group-hover:underline"><%= section[:label] %></span>
+        <% if section[:external] %>
+          <%= icon "arrow-up-right", css: "size-3 shrink-0 text-ox-4" %>
+        <% end %>
+      </span>
+      <span class="leader hidden sm:block" aria-hidden="true"></span>
+      <span class="field-hint w-full sm:w-auto sm:max-w-md sm:text-right"><%= section[:hint] %></span>
+    <% end %>
+  <% end %>
 
-  <a href="<%= owner_restaurant_orders_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
-    <div class="flex items-center gap-3 mb-2">
-      <%= icon "receipt", css: "size-5 text-primary/70" %>
-      <span class="font-body text-sm font-medium"><%= t("owner.restaurants.orders") %></span>
-    </div>
-    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.manage_orders") %></p>
-  </a>
-
-  <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
-    <div class="flex items-center gap-3 mb-2">
-      <%= icon "picnic-table", css: "size-5 text-primary/70" %>
-      <span class="font-body text-sm font-medium"><%= t("owner.restaurants.tables") %></span>
-    </div>
-    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.tables_description") %></p>
-  </a>
-
-  <a href="<%= owner_restaurant_qr_code_path(@restaurant) %>" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
-    <div class="flex items-center gap-3 mb-2">
-      <%= icon "qr-code", css: "size-5 text-primary/70" %>
-      <span class="font-body text-sm font-medium"><%= t("owner.restaurants.qr_code") %></span>
-    </div>
-    <p class="text-xs text-base-content/50"><%= t("owner.restaurants.qr_description") %></p>
-  </a>
-
-  <%# The public menu only serves active restaurants, so an inactive one gets a
-      hint instead of a link that would 404. %>
-  <% if @restaurant.active? %>
-    <a href="<%= menu_path(id: @restaurant.id) %>" target="_blank" rel="noopener" class="block p-6 rounded-lg border border-base-content/5 hover:border-primary/20 transition-all">
-      <div class="flex items-center gap-3 mb-2">
-        <%= icon "eye", css: "size-5 text-primary/70" %>
-        <span class="font-body text-sm font-medium"><%= t("owner.restaurants.preview_menu") %></span>
-      </div>
-      <p class="text-xs text-base-content/50"><%= t("owner.restaurants.preview_description") %></p>
-    </a>
-  <% else %>
-    <div class="block p-6 rounded-lg border border-base-content/5 opacity-50">
-      <div class="flex items-center gap-3 mb-2">
-        <%= icon "eye-slash", css: "size-5 text-base-content/40" %>
-        <span class="font-body text-sm font-medium"><%= t("owner.restaurants.preview_menu") %></span>
-      </div>
-      <p class="text-xs text-base-content/50"><%= t("owner.restaurants.preview_inactive_hint") %></p>
+  <% unless @restaurant.active? %>
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-rule-hair py-2">
+      <span class="flex shrink-0 items-baseline gap-2 text-ink-soft">
+        <%= icon "eye-slash", css: "size-4 shrink-0 translate-y-0.5" %>
+        <span class="mono-label"><%= t("owner.restaurants.preview_menu") %></span>
+      </span>
+      <span class="leader hidden sm:block" aria-hidden="true"></span>
+      <span class="field-hint w-full sm:w-auto sm:max-w-md sm:text-right"><%= t("owner.restaurants.preview_inactive_hint") %></span>
     </div>
   <% end %>
-</div>
+</nav>
 
 <% if @restaurant.description.present? %>
-  <div class="mt-8 p-6 rounded-lg bg-base-200/50">
-    <h3 class="font-body text-xs uppercase tracking-wider text-base-content/50 mb-2"><%= t("owner.restaurants.form.description") %></h3>
-    <p class="text-sm text-base-content/70"><%= @restaurant.description %></p>
+  <div class="panel mt-8">
+    <h2 class="panel-title"><%= t("owner.restaurants.form.description") %></h2>
+    <p class="text-ink-soft"><%= @restaurant.description %></p>
   </div>
 <% end %>

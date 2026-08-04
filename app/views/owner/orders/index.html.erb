@@ -1,69 +1,145 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.orders.title')}" } %>
 
-<div class="mb-8">
-  <div class="flex items-center justify-between">
-    <h1 class="font-display text-3xl font-light"><%= t("owner.orders.title") %></h1>
-  </div>
+<%# The service board. Staff read this mid-service, at a glance, often on a
+    phone: the table number leads every row, status carries an icon and a word
+    as well as a colour, and every figure is mono and tabular so a column can be
+    compared straight down the page. %>
+<% orders = @orders.to_a %>
+<% status_icons = { "pending" => "hourglass", "approved" => "check-circle", "cancelled" => "x-circle", "completed" => "checks" } %>
+
+<div class="admin-head">
+  <h1 class="admin-title"><%= t("owner.orders.title") %></h1>
+  <p class="admin-subtitle"><%= t("owner.orders.order_count", count: orders.size) %></p>
 </div>
 
-<%# Status filter tabs %>
-<div role="tablist" class="tabs tabs-border mb-6">
-  <a role="tab" href="<%= owner_restaurant_orders_path(@restaurant) %>"
-     class="tab font-body text-xs uppercase tracking-wider <%= params[:status].blank? ? 'tab-active' : '' %>">
-    <%= t("owner.orders.all") %>
-  </a>
+<%# Status filter. These navigate, so they are links marked with aria-current —
+    not tabs. %>
+<nav class="mb-6 flex flex-wrap gap-2" aria-label="<%= t("owner.orders.filter_label") %>">
+  <%= link_to t("owner.orders.all"),
+        owner_restaurant_orders_path(@restaurant),
+        class: "chip min-w-11 justify-center",
+        aria: { current: params[:status].blank? ? "page" : nil } %>
   <% %w[pending approved cancelled].each do |status| %>
-    <a role="tab" href="<%= owner_restaurant_orders_path(@restaurant, status: status) %>"
-       class="tab font-body text-xs uppercase tracking-wider <%= params[:status] == status ? 'tab-active' : '' %>">
+    <%= link_to owner_restaurant_orders_path(@restaurant, status: status),
+          class: "chip min-w-11 justify-center",
+          aria: { current: params[:status] == status ? "page" : nil } do %>
+      <%= icon status_icons[status], class: "size-3.5 shrink-0" %>
       <%= t("owner.orders.statuses.#{status}") %>
-    </a>
+    <% end %>
   <% end %>
-</div>
+</nav>
 
-<% if @orders.any? %>
-  <div class="space-y-3">
-    <% @orders.each do |order| %>
-      <div class="p-4 rounded-lg border border-base-content/5 bg-base-100">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-3">
-              <span class="font-body font-medium text-sm">#<%= order.id %></span>
-              <span class="badge badge-sm <%= order_status_badge_class(order.status) %>"><%= t("owner.orders.statuses.#{order.status}") %></span>
-              <% if order.restaurant_table %>
-                <span class="badge badge-outline badge-sm">
-                  <%= [ order.restaurant_table.area, order.restaurant_table.name ].compact_blank.join(" · ") %>
+<% if orders.any? %>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th scope="col" class="px-2 md:px-3"><%= t("owner.orders.table") %></th>
+        <th scope="col" class="px-2 md:px-3"><%= t("owner.orders.order") %></th>
+        <th scope="col" class="hidden md:table-cell"><%= t("owner.orders.items") %></th>
+        <th scope="col" class="hidden text-right md:table-cell"><%= t("owner.orders.quantity") %></th>
+        <th scope="col" class="hidden text-right md:table-cell"><%= t("owner.orders.total") %></th>
+        <th scope="col" class="hidden md:table-cell"><%= t("owner.orders.placed") %></th>
+        <th scope="col" class="hidden md:table-cell"><%= t("owner.orders.status") %></th>
+        <th scope="col" class="hidden md:table-cell"><span class="sr-only"><%= t("owner.orders.actions") %></span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% orders.each do |order| %>
+        <% quantity = order.order_items.sum(&:quantity) %>
+        <% total = format_cents(order.total_amount_cents) || "—" %>
+        <tr>
+          <%# The one thing staff scan for. %>
+          <td class="px-2 md:px-3">
+            <% if order.restaurant_table %>
+              <span class="block font-mono text-base font-medium text-ox-1 num"><%= order.restaurant_table.name %></span>
+              <% if order.restaurant_table.area.present? %>
+                <span class="mono-micro"><%= order.restaurant_table.area %></span>
+              <% end %>
+            <% else %>
+              <span class="mono-micro"><%= t("owner.orders.no_table") %></span>
+            <% end %>
+          </td>
+
+          <td class="px-2 md:px-3">
+            <%# Negative margins keep the 44px tap target without letting it
+                push the row out of a dense, scannable rhythm. %>
+            <%= link_to owner_restaurant_order_path(@restaurant, order),
+                  class: "link-mono -mt-3 -mb-2.5 justify-start",
+                  aria: { label: t("owner.orders.view_order", id: order.id) } do %>
+              #<%= order.id %>
+            <% end %>
+            <p class="text-meta text-ink-soft"><%= order_customer_label(order) %></p>
+
+            <%# Narrow screens fold the rest of the row in here, as leader rows. %>
+            <div class="mt-2 space-y-1 md:hidden">
+              <p>
+                <span class="badge badge-sm gap-1 <%= "badge-outline" unless order.pending? %> <%= order_status_badge_class(order.status) %>">
+                  <%= icon status_icons[order.status], class: "size-3 shrink-0" %>
+                  <%= t("owner.orders.statuses.#{order.status}") %>
                 </span>
+              </p>
+              <div class="leader-row">
+                <span class="leader-label mono-micro"><%= t("owner.orders.quantity") %></span>
+                <span class="leader" aria-hidden="true"></span>
+                <span class="leader-value"><%= quantity %></span>
+              </div>
+              <div class="leader-row">
+                <span class="leader-label mono-micro"><%= t("owner.orders.total") %></span>
+                <span class="leader" aria-hidden="true"></span>
+                <span class="leader-value"><%= total %></span>
+              </div>
+              <p class="mono-micro">
+                <%= t("owner.orders.time_ago", time: time_ago_in_words(order.created_at)) %>
+              </p>
+              <%= render "owner/orders/lines", order: order %>
+              <% if order.pending? %>
+                <%= render "owner/orders/row_actions", restaurant: @restaurant, order: order %>
               <% end %>
             </div>
-            <p class="text-xs text-base-content/50 mt-1">
-              <%= order_customer_label(order) %> · <%= l(order.created_at, format: :short) %> · <%= format_cents(order.total_amount_cents) %>
-            </p>
-            <p class="text-xs text-base-content/40 mt-1">
-              <%= order.order_items.map { |i| "#{i.quantity}× #{i.wine.name} (#{i.glass_size_ml}ml)" }.join(", ") %>
-            </p>
-          </div>
+          </td>
 
-          <div class="flex items-center gap-2">
+          <td class="hidden md:table-cell">
+            <%= render "owner/orders/lines", order: order %>
+          </td>
+
+          <td class="hidden cell-num md:table-cell"><%= quantity %></td>
+          <td class="hidden cell-num md:table-cell"><%= total %></td>
+
+          <td class="hidden md:table-cell">
+            <time datetime="<%= order.created_at.iso8601 %>"
+                  title="<%= l(order.created_at, format: :long) %>"
+                  class="font-mono text-label text-ink-soft num">
+              <%= t("owner.orders.time_ago", time: time_ago_in_words(order.created_at)) %>
+            </time>
+          </td>
+
+          <%# Never colour alone: an icon and the word carry the state too. %>
+          <td class="hidden md:table-cell">
+            <span class="badge badge-sm gap-1 <%= "badge-outline" unless order.pending? %> <%= order_status_badge_class(order.status) %>">
+              <%= icon status_icons[order.status], class: "size-3 shrink-0" %>
+              <%= t("owner.orders.statuses.#{order.status}") %>
+            </span>
+          </td>
+
+          <td class="hidden md:table-cell">
             <% if order.pending? %>
-              <%= button_to approve_owner_restaurant_order_path(@restaurant, order), method: :patch, class: "btn btn-success btn-sm btn-outline" do %>
-                <%= icon "check", css: "size-4" %>
-                <%= t("owner.orders.approve") %>
-              <% end %>
-              <%= button_to cancel_owner_restaurant_order_path(@restaurant, order), method: :patch, class: "btn btn-error btn-sm btn-outline", data: { turbo_confirm: t("owner.orders.confirm_cancel") } do %>
-                <%= icon "x", css: "size-4" %>
-              <% end %>
+              <%= render "owner/orders/row_actions", restaurant: @restaurant, order: order %>
             <% end %>
-          </div>
-        </div>
-      </div>
-    <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% elsif params[:status].present? %>
+  <div class="empty-state">
+    <%= icon "funnel", class: "mx-auto mb-3 block size-8 text-ox-4" %>
+    <p class="font-body text-ink"><%= t("owner.orders.empty_filtered_title") %></p>
+    <p class="mt-1"><%= t("owner.orders.empty_filtered_description") %></p>
   </div>
 <% else %>
-  <div class="text-center py-16">
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
-      <%= icon "receipt", css: "size-7 text-base-content/30" %>
-    </div>
-    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.orders.empty_title") %></h2>
-    <p class="text-base-content/50"><%= t("owner.orders.empty_description") %></p>
+  <div class="empty-state">
+    <%= icon "receipt", class: "mx-auto mb-3 block size-8 text-ox-4" %>
+    <p class="font-body text-ink"><%= t("owner.orders.empty_title") %></p>
+    <p class="mt-1"><%= t("owner.orders.empty_description") %></p>
   </div>
 <% end %>

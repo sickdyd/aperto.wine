@@ -10,6 +10,18 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     assert_text I18n.t("owner.restaurants.title"), wait: 5
   end
 
+  # Typing an address fires a debounced XHR at the suggestions endpoint, which
+  # calls out to Photon. test_helper stubs Photon for every test, but the stub is
+  # torn down when the test ends — so a request still in flight at that moment
+  # lands against a reset WebMock, raises NetConnectNotAllowedError inside the
+  # Capybara server, and Capybara re-raises it as a server error. Waiting for the
+  # suggestion list proves the request completed while the stub was still live.
+  def fill_in_address(value)
+    stub_photon([ photon_feature ])
+    fill_in I18n.t("owner.restaurants.form.address"), with: value
+    assert_selector "li[role='option']", wait: 5
+  end
+
   # ── Index ─────────────────────────────────────────────────────────────────
 
   test "owner can see their restaurants list" do
@@ -25,6 +37,21 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     assert_link I18n.t("owner.restaurants.add")
   end
 
+  # The status is set in small caps by the stylesheet, so compare case-insensitively
+  # and exactly — "Inactive" contains "active", and a substring check would pass
+  # for either state.
+  test "restaurant list carries each restaurant's address and status" do
+    sign_in_as_owner
+
+    { osteria: "active", inactive_restaurant: "inactive" }.each do |fixture, state|
+      restaurant = restaurants(fixture)
+      row = find("tr", text: restaurant.name)
+
+      assert_includes row.text, restaurant.address
+      assert_equal I18n.t("owner.restaurants.#{state}").downcase, row.all("td").last.text.downcase
+    end
+  end
+
   # ── Create ────────────────────────────────────────────────────────────────
 
   test "owner can create a new restaurant" do
@@ -34,7 +61,7 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     assert_text I18n.t("owner.restaurants.new_title"), wait: 5
 
     fill_in I18n.t("owner.restaurants.form.name"), with: "La Trattoria"
-    fill_in I18n.t("owner.restaurants.form.address"), with: "Via Verdi 10, Torino"
+    fill_in_address "Via Verdi 10, Torino"
     find("input[type='submit']").click
 
     assert_text I18n.t("owner.restaurants.created"), wait: 5
@@ -89,7 +116,7 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     # Create a new restaurant to safely delete without fixture side-effects
     click_link I18n.t("owner.restaurants.add")
     fill_in I18n.t("owner.restaurants.form.name"), with: "To Delete"
-    fill_in I18n.t("owner.restaurants.form.address"), with: "Via Elimina 1, Roma"
+    fill_in_address "Via Elimina 1, Roma"
     click_button I18n.t("helpers.submit.create", model: Restaurant.model_name.human)
     assert_text I18n.t("owner.restaurants.created")
 

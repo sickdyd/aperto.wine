@@ -1,18 +1,28 @@
+<%# The owner flash band. #flash-messages must exist on every render, empty or
+    not — owner/wine_list_items replaces it by id from a Turbo Stream, and a
+    missing target is a silently dropped message.
+
+    Success and error are told apart three ways, so the message still reads
+    when the ground does not: a different icon, a mono caps label, and only
+    then the colour. `role="alert"` is kept on both — it is a live region, and
+    it takes no focus. %>
 <div id="flash-messages">
-  <% if notice %>
-    <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-      <div role="alert" class="alert alert-success text-sm">
-        <%= icon "check-circle", css: "size-4" %>
-        <span><%= notice %></span>
-      </div>
-    </div>
-  <% end %>
-  <% if alert %>
-    <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-      <div role="alert" class="alert alert-error text-sm">
-        <%= icon "warning", css: "size-4" %>
-        <span><%= alert %></span>
-      </div>
+  <% if notice || alert %>
+    <div class="mx-auto mt-4 flex w-full max-w-6xl flex-col gap-2 px-4 sm:px-6 lg:px-8">
+      <% if notice %>
+        <div role="alert" class="alert alert-success flex items-center gap-3">
+          <%= icon "check-circle", css: "size-4 shrink-0" %>
+          <span class="mono-label shrink-0"><%= t("shared.flash_notice") %></span>
+          <span class="min-w-0"><%= notice %></span>
+        </div>
+      <% end %>
+      <% if alert %>
+        <div role="alert" class="alert alert-error flex items-center gap-3">
+          <%= icon "warning", css: "size-4 shrink-0" %>
+          <span class="mono-label shrink-0"><%= t("shared.flash_error") %></span>
+          <span class="min-w-0"><%= alert %></span>
+        </div>
+      <% end %>
     </div>
   <% end %>
 </div>

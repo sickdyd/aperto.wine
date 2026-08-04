@@ -1,50 +1,53 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.tables.qr_title', table: @table.name)}" } %>
 
-<div class="mb-8">
-  <h1 class="font-display text-3xl font-light"><%= t("owner.tables.qr_title", table: @table.name) %></h1>
-  <p class="text-base-content/50 mt-2"><%= t("owner.tables.qr_description") %></p>
-</div>
-
-<div class="grid md:grid-cols-2 gap-12">
-  <%# QR Code display %>
-  <div class="flex flex-col items-center">
-    <div id="qr-code" class="bg-white p-8 rounded-xl border border-base-content/10 shadow-sm text-base-content">
-      <div class="w-64 h-64 flex items-center justify-center">
-        <%= @qr_svg %>
-      </div>
-      <p class="text-center mt-4 font-display text-lg font-medium"><%= @restaurant.name %></p>
-      <p class="text-center text-sm text-base-content/60"><%= [ @table.area, @table.name ].compact_blank.join(" · ") %></p>
-      <p class="text-center text-xs text-base-content/40 mt-1">aperto.wine</p>
-    </div>
-
-    <button onclick="window.print()" class="btn-wine btn-sm mt-6">
-      <%= icon "printer", css: "size-4" %>
-      <%= t("owner.tables.print") %>
-    </button>
+<div class="admin-head print:hidden">
+  <div>
+    <h1 class="admin-title"><%= t("owner.tables.qr_title", table: @table.name) %></h1>
+    <p class="admin-subtitle mt-1"><%= @table.area.presence || t("owner.tables.no_area") %></p>
   </div>
 
-  <%# Link %>
-  <div class="space-y-6">
-    <div>
-      <h3 class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-2"><%= t("owner.qr_code.menu_link") %></h3>
-      <div class="flex items-center gap-2">
-        <input type="text" value="<%= @menu_url %>" readonly class="input w-full font-body text-sm" id="menu-url">
-        <button onclick="navigator.clipboard.writeText(document.getElementById('menu-url').value)" class="btn btn-ghost btn-sm">
+  <button type="button" onclick="window.print()" class="btn-wine">
+    <%= icon "printer", css: "size-4" %>
+    <%= t("owner.tables.print") %>
+  </button>
+</div>
+
+<div class="grid gap-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] print:block">
+  <%# The card as it will be printed and stood on the table. %>
+  <div>
+    <%= render "qr_card",
+               restaurant: @restaurant,
+               qr_svg: @qr_svg,
+               id: "qr-code",
+               stamp_label: @table.name,
+               sub_label: @table.area.presence,
+               extra_class: "sheet-narrow qr-card-single" %>
+  </div>
+
+  <div class="space-y-8 print:hidden">
+    <p class="note measure"><%= t("owner.tables.qr_description") %></p>
+
+    <div class="field">
+      <label class="field-label" for="menu-url"><%= t("owner.qr_code.menu_link") %></label>
+      <div class="flex items-end gap-2">
+        <input type="text" value="<%= @menu_url %>" readonly class="input w-full font-body" id="menu-url">
+        <button type="button"
+                onclick="navigator.clipboard.writeText(document.getElementById('menu-url').value)"
+                class="btn-wine-quiet"
+                aria-label="<%= t("owner.qr_code.copy_link") %>">
           <%= icon "copy", css: "size-4" %>
         </button>
       </div>
-      <p class="text-xs text-base-content/50 mt-3"><%= t("owner.tables.qr_hint") %></p>
+      <p class="field-hint"><%= t("owner.tables.qr_hint") %></p>
     </div>
 
-    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost btn-sm text-xs uppercase tracking-wider">
-      <%= icon "arrow-left", css: "size-4" %>
+    <hr class="rule-hair">
+
+    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="link-mono">
+      <%= icon "arrow-left", css: "size-4 me-1.5" %>
       <%= t("owner.tables.back_to_tables") %>
     </a>
   </div>
 </div>
 
-<%# Print styles %>
-<style media="print">
-  nav, .btn, button, input, h3 { display: none !important; }
-  #qr-code { border: none !important; box-shadow: none !important; margin: auto; }
-</style>
+<%= render "print_styles" %>

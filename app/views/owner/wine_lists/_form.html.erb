@@ -24,7 +24,7 @@
 
       <div class="field">
         <%= f.label :position, t("owner.wine_lists.form.position"), class: "field-label" %>
-        <%= f.number_field :position, min: 0, class: "input w-28 font-body" %>
+        <%= f.number_field :position, min: 0, class: "input num w-28 font-mono" %>
       </div>
     </div>
 
@@ -36,6 +36,6 @@
 
   <div class="form-actions">
     <%= f.submit class: "btn-wine" %>
-    <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+    <a href="<%= owner_restaurant_wine_lists_path(@restaurant) %>" class="btn-wine-quiet"><%= t("shared.cancel") %></a>
   </div>
 <% end %>

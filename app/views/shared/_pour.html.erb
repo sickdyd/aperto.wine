@@ -1,0 +1,134 @@
+<%#
+  The pour — the ledger's hero engraving: a bottle tipping over a glass, drawn
+  as original inline SVG line art (contour + hatching) in the oxblood ramp.
+
+  Entirely decorative: the element is aria-hidden, so whatever sits around it
+  must carry the meaning on its own. Self-contained — no image asset, no
+  external request. The ink and the animation live in
+  app/assets/tailwind/application.css (section 12, ".pour-*").
+
+  Under prefers-reduced-motion the CSS animations never start, so the plate
+  renders in its finished state: everything drawn, the glass poured, no stream
+  and no movement.
+
+  Optional locals:
+    css - extra classes for the wrapper (e.g. "mt-12" or a width override)
+%>
+<% css = local_assigns.fetch(:css, nil) %>
+<div class="pour <%= css %>" aria-hidden="true">
+  <svg class="pour-plate" viewBox="1 52 283 284" focusable="false">
+    <defs>
+      <clipPath id="pour-bowl-clip">
+        <path d="M183.4 150C181.6 180 186.4 210 201.2 224C208.2 230.4 217 233.4 220.6 234L225.4 234C229 233.4 237.8 230.4 244.8 224C259.6 210 264.4 180 262.6 150Z"/>
+      </clipPath>
+    </defs>
+
+    <%# the table they stand on, and the cork already drawn %>
+    <g class="pour-detail pour-ln">
+      <path class="pour-draw" stroke-width="1.1" pathLength="1" d="M-8 325.2C70 321.4 244 321.2 300 323.8"/>
+      <path class="pour-draw" stroke-width="1.2" pathLength="1" d="M138.4 306C148 305.6 158 305.8 163.6 306.4C167 307.4 168.2 310 168.2 313C168.2 316.2 167 318.6 163.6 319.6C158 320.2 148 320.4 138.4 320"/>
+      <ellipse class="pour-draw" stroke-width="1.2" pathLength="1" cx="138.4" cy="313" rx="5" ry="7"/>
+    </g>
+    <path class="pour-hatch pour-hatch-3" d="M143 310.4C150 310 158 310 163 310.4"/>
+    <path class="pour-hatch pour-hatch-4" d="M144 316C151 316.4 158 316.4 162 316"/>
+    <path class="pour-hatch pour-hatch-4" d="M136.8 309.6C135.6 311 135.6 315 136.8 316.4"/>
+    <path class="pour-hatch pour-hatch-4" d="M108 318.6C114 318.3 122 318.3 126 318.6"/>
+    <path class="pour-hatch pour-hatch-3" d="M269 318.6C273 318.3 278 318.3 281 318.6"/>
+
+    <%# the pour, laid in before the wine so the stream sinks into it %>
+    <g class="pour-stream-g">
+      <path class="pour-stream" pathLength="1" d="M229 113.3C233.4 125 234.6 139 232.8 161C231.2 181 230 191 229.6 203"/>
+    </g>
+
+    <%# the wine, clipped to the bowl %>
+    <g clip-path="url(#pour-bowl-clip)">
+      <g class="pour-rise"><g class="pour-slosh">
+        <rect class="pour-wine" x="179" y="190" width="88" height="110"/>
+        <ellipse class="pour-wine-top" cx="223" cy="190" rx="37.9" ry="5.4"/>
+        <ellipse class="pour-wine-edge" cx="223" cy="190" rx="37.9" ry="5.4"/>
+      </g></g>
+    </g>
+
+    <%# the bottle %>
+    <g class="pour-bottle">
+      <path class="pour-tint" d="M66.5 86.4C66.6 89 67.4 92 68.4 96C67.9 112 67.8 122 68 128C72 130.8 84 130.8 88.2 128C88.4 122 88.3 112 87.8 96C88.8 92 89.6 89 89.7 86.4C87 89.4 69 89.4 66.5 86.4Z"/>
+      <g class="pour-ln">
+        <path class="pour-draw" stroke-width="2.1" pathLength="1" d="M68.4 96C67.8 118 67.6 138 68.2 150C60.4 158 52.4 172 49.2 186C47.4 194 47 200 47 208C46.6 244 46.8 296 48 316C58.4 321.4 98 321.6 108.2 316C109.4 296 109.6 244 109.2 208C109.2 200 108.8 194 107 186C103.8 172 95.8 158 88 150C88.6 138 88.4 118 87.8 96"/>
+        <path class="pour-draw" stroke-width="1.6" pathLength="1" d="M68.4 96C67.4 92 66.6 89 66.5 86.4"/>
+        <path class="pour-draw" stroke-width="1.6" pathLength="1" d="M87.8 96C88.8 92 89.6 89 89.7 86.4"/>
+        <ellipse class="pour-draw" stroke-width="1.5" pathLength="1" cx="78.1" cy="86.2" rx="11.6" ry="2.9"/>
+        <path class="pour-draw" stroke-width="1.3" pathLength="1" d="M68 128C72 130.8 84 130.8 88.2 128"/>
+        <path class="pour-draw" stroke-width="1.1" pathLength="1" d="M49.4 236C62 234.4 94 234.4 106.8 236L106.6 294C94 295.8 62 295.8 49.3 294Z"/>
+      </g>
+      <g class="pour-detail pour-ln">
+        <path class="pour-draw" stroke-width="1.6" pathLength="1" d="M58 248C68 247 88 247 98.4 248.2"/>
+        <path class="pour-draw" stroke-width="0.7" pathLength="1" d="M52 260C63 259.2 93 259.2 104 260"/>
+        <path class="pour-draw" stroke-width="0.7" pathLength="1" d="M56 268C65 267.4 91 267.4 100 268"/>
+        <path class="pour-draw" stroke-width="1.3" pathLength="1" d="M66 278C71 277.6 85 277.6 90.4 278"/>
+        <path class="pour-draw" stroke-width="0.6" pathLength="1" d="M60 287C69 286.5 87 286.5 96 287"/>
+        <path class="pour-draw" stroke-width="0.7" pathLength="1" d="M48.6 317C58 321.8 98 321.8 107.6 317"/>
+      </g>
+      <%# capsule: dense hatching over a wash, so the foil reads dark %>
+      <g class="pour-hatch pour-hatch-foil">
+        <path d="M70 90.6C69.6 106 69.8 120 70.4 126.8"/>
+        <path d="M73.4 91.2C73.1 106 73.2 120 73.6 127.4"/>
+        <path d="M76.8 91.5C76.6 106 76.7 120 76.9 127.8"/>
+        <path d="M80.2 91.5C80.1 106 80.1 120 80.2 127.8"/>
+        <path d="M83.6 91.2C83.7 106 83.6 120 83.4 127.4"/>
+        <path d="M86.6 90.6C86.9 106 86.8 120 86.4 126.8"/>
+      </g>
+      <%# the light falls from the left; the shadow is banked on the right %>
+      <path class="pour-hatch" d="M106 190C104 178 99 166 91.6 157"/>
+      <path class="pour-hatch pour-hatch-2" d="M101.8 192C100 182 96 172 89.4 163"/>
+      <path class="pour-hatch pour-hatch-3" d="M97.6 194C96 186 93 178 87.4 169"/>
+      <path class="pour-hatch pour-hatch-4" d="M93.6 196C92.4 190 90.4 184 85.6 176"/>
+      <path class="pour-hatch pour-hatch-3" d="M51.4 190C53 180 57 170 63.6 160"/>
+      <path class="pour-hatch" d="M104.6 196C105.6 208 105.8 220 105.4 232"/>
+      <path class="pour-hatch pour-hatch-2" d="M100.8 198C101.8 210 102 220 101.6 232"/>
+      <path class="pour-hatch pour-hatch-3" d="M97.2 202C98 212 98.2 222 97.8 232"/>
+      <path class="pour-hatch pour-hatch-4" d="M93.8 208C94.4 216 94.6 224 94.3 232"/>
+      <path class="pour-hatch pour-hatch-3" d="M49.4 200C48.8 212 48.8 222 49 232"/>
+      <g class="pour-hatch pour-hatch-4">
+        <path d="M102.4 206L107.6 212"/>
+        <path d="M101.6 216L106.8 222"/>
+        <path d="M101.8 226L106.4 231"/>
+        <path d="M99 172L103.4 177"/>
+        <path d="M97 180L101.6 185"/>
+        <path d="M96.2 188L101 193"/>
+      </g>
+      <path class="pour-hatch" d="M105.2 298C105.6 306 105.4 312 104.8 316.6"/>
+      <path class="pour-hatch pour-hatch-2" d="M101.4 300C101.8 307 101.6 312 101 317"/>
+      <path class="pour-hatch pour-hatch-3" d="M97.6 302C97.8 308 97.8 313 97.4 317.4"/>
+      <path class="pour-hatch pour-hatch-3" d="M49.6 298C49.4 306 49.6 312 50.2 316.6"/>
+    </g>
+
+    <%# the glass %>
+    <g class="pour-glass">
+      <g class="pour-ln">
+        <ellipse class="pour-draw" stroke-width="1.4" pathLength="1" cx="223" cy="150" rx="40" ry="6.6"/>
+        <path class="pour-draw" stroke-width="1.7" pathLength="1" d="M183 150C181.2 180 186 210 201 224C208 230.4 217 233.4 220.6 234"/>
+        <path class="pour-draw" stroke-width="1.7" pathLength="1" d="M263 150C264.8 180 260 210 245 224C238 230.4 229 233.4 225.4 234"/>
+        <path class="pour-draw" stroke-width="1.3" pathLength="1" d="M220.6 234C219.4 256 219.2 280 219.6 302"/>
+        <path class="pour-draw" stroke-width="1.3" pathLength="1" d="M225.4 234C226.6 256 226.8 280 226.4 302"/>
+        <path class="pour-draw" stroke-width="1.2" pathLength="1" d="M219.6 302C213 306 197 310.4 181.4 313"/>
+        <path class="pour-draw" stroke-width="1.2" pathLength="1" d="M226.4 302C233 306 249 310.4 264.6 313"/>
+        <ellipse class="pour-draw" stroke-width="1.5" pathLength="1" cx="223" cy="313" rx="42" ry="8"/>
+        <path class="pour-draw" stroke-width="1" pathLength="1" d="M181.4 314.2C188 320.8 258 320.8 264.6 314.2"/>
+      </g>
+      <%# the thickness of the rim, and the button under the bowl %>
+      <ellipse class="pour-hatch pour-hatch-3" cx="223" cy="152" rx="37.4" ry="6.1"/>
+      <path class="pour-hatch pour-hatch-3" d="M219.4 236.6C221 237.4 224.8 237.4 226.6 236.6"/>
+      <path class="pour-hatch pour-hatch-2" d="M256.4 162C257.2 172 256.6 180 254.6 188"/>
+      <path class="pour-hatch pour-hatch-3" d="M252 164C252.6 173 252.2 180 250.6 187"/>
+      <path class="pour-hatch pour-hatch-4" d="M189.8 164C189 174 189.2 182 190.4 188"/>
+      <path class="pour-hatch pour-hatch-3" d="M225 244C225.6 262 225.6 282 225.2 298"/>
+      <path class="pour-hatch pour-hatch-3" d="M193 318.4C203 322.4 247 322.4 255 318.4"/>
+      <g class="pour-stipple">
+        <circle cx="256" cy="164" r="0.8"/>
+        <circle cx="253" cy="170" r="0.8"/>
+        <circle cx="255" cy="178" r="0.8"/>
+        <circle cx="252" cy="184" r="0.8"/>
+      </g>
+    </g>
+  </svg>
+</div>

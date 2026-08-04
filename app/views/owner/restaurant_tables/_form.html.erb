@@ -1,12 +1,12 @@
 <%# The route is `resources :tables` while the model is RestaurantTable, so the
     polymorphic helper doesn't resolve — pass url + scope explicitly. %>
-<%= form_with model: table, url: table.persisted? ? owner_restaurant_table_path(@restaurant, table) : owner_restaurant_tables_path(@restaurant), scope: :restaurant_table, class: "space-y-8 max-w-xl" do |f| %>
+<%= form_with model: table, url: table.persisted? ? owner_restaurant_table_path(@restaurant, table) : owner_restaurant_tables_path(@restaurant), scope: :restaurant_table, class: "max-w-xl space-y-8" do |f| %>
   <% if table.errors.any? %>
-    <div role="alert" class="alert alert-error text-sm">
-      <%= icon "warning", css: "size-4" %>
+    <div role="alert" class="alert alert-error">
+      <%= icon "warning", css: "size-4 shrink-0" %>
       <div>
         <% table.errors.full_messages.each do |msg| %>
-          <p><%= msg %></p>
+          <p class="field-error"><%= msg %></p>
         <% end %>
       </div>
     </div>
@@ -18,7 +18,7 @@
       <%= f.text_field :name, required: true, class: "input w-full font-body", placeholder: t("owner.tables.form.name_placeholder") %>
     </div>
 
-    <div class="grid sm:grid-cols-[1fr_auto] gap-4">
+    <div class="grid gap-4 sm:grid-cols-[1fr_auto]">
       <div class="field">
         <%= f.label :area, t("owner.tables.form.area"), class: "field-label" %>
         <%= f.text_field :area, class: "input w-full font-body", placeholder: t("owner.tables.form.area_placeholder"), list: "table-areas" %>
@@ -31,11 +31,11 @@
 
       <div class="field">
         <%= f.label :position, t("owner.tables.form.position"), class: "field-label" %>
-        <%= f.number_field :position, min: 0, class: "input w-28 font-body" %>
+        <%= f.number_field :position, min: 0, class: "input w-28 font-body num" %>
       </div>
     </div>
 
-    <label class="field-toggle">
+    <label class="field-toggle min-h-11">
       <%= f.check_box :active, class: "toggle toggle-primary" %>
       <span><%= t("owner.tables.form.active_label") %></span>
     </label>
@@ -43,6 +43,6 @@
 
   <div class="form-actions">
     <%= f.submit class: "btn-wine" %>
-    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn-wine-quiet"><%= t("shared.cancel") %></a>
   </div>
 <% end %>
