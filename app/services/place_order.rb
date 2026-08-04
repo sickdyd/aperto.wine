@@ -18,7 +18,12 @@ class PlaceOrder
   #   :order_invalid      - the order or one of its lines failed to save for
   #                         a reason not caught above (defensive: nothing
   #                         in the current model surface should reach this).
-  Result = Struct.new(:success, :order, :error, keyword_init: true) do
+  #
+  # `dropped_items` is only ever populated alongside :items_unavailable —
+  # the Cart::DroppedItem list that caused the abort, so the caller can tell
+  # the diner exactly which lines are blocking them rather than a bare
+  # symbol (empty otherwise, including on success).
+  Result = Struct.new(:success, :order, :error, :dropped_items, keyword_init: true) do
     def success?
       success
     end
@@ -44,7 +49,7 @@ class PlaceOrder
     # items — silently ordering the survivors would serve the diner a
     # different order than the one they built, so a non-empty dropped_items
     # aborts the whole placement rather than being ignored.
-    return failure(:items_unavailable) if cart.dropped_items.any?
+    return failure(:items_unavailable, dropped_items: cart.dropped_items) if cart.dropped_items.any?
     return failure(:empty_cart) if cart.items.empty?
 
     order = build_order!
@@ -82,10 +87,10 @@ class PlaceOrder
   end
 
   def success(order)
-    Result.new(success: true, order: order, error: nil)
+    Result.new(success: true, order: order, error: nil, dropped_items: [])
   end
 
-  def failure(error)
-    Result.new(success: false, order: nil, error: error)
+  def failure(error, dropped_items: [])
+    Result.new(success: false, order: nil, error: error, dropped_items: dropped_items)
   end
 end

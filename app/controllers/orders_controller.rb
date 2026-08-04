@@ -9,9 +9,10 @@ class OrdersController < ApplicationController
   # #show looks a customer's order up solely by public_token and never by
   # restaurant — the token itself is the capability, so CustomerScoped's
   # restaurant resolution (which needs a restaurant_id/id/table_token this
-  # route never carries) does not apply here.
-  skip_before_action :set_restaurant, only: :show
-
+  # route never carries) does not apply here. set_restaurant is opt-in per
+  # action (see CustomerScoped), so #show simply never declares it rather
+  # than declaring it for every action and skipping it back off.
+  before_action :set_restaurant, only: :create
   before_action :set_cart, only: :create
 
   # IP-scoped ceiling: comfortably clears a large table of diners (roughly
@@ -75,10 +76,6 @@ class OrdersController < ApplicationController
 
   private
 
-  def set_cart
-    @cart = Cart.new(session: session, restaurant: @restaurant)
-  end
-
   # guest_name is the only diner-supplied string that is persisted (already
   # length-capped on the model). status, total_amount_cents, restaurant_id,
   # restaurant_table_id, customer_id and public_token are all set
@@ -98,10 +95,13 @@ class OrdersController < ApplicationController
     params[:contact_reference].present?
   end
 
-  # A bot that fills the honeypot gets no signal that it was caught: no
-  # order is created, but the response looks as much like the success a
-  # human diner would see as is practical without fabricating an order.
+  # A bot that fills the honeypot creates no order and is redirected to the
+  # menu with no flash — a real success lands on the order's own status
+  # page instead, so the two responses are trivially distinguishable to
+  # anything that inspects them. There is no attempt to hide that; the
+  # honeypot only withholds anything actionable (an order, a token, a
+  # success message) from an automated submission.
   def honeypot_response
-    redirect_to menu_path(id: @restaurant), notice: t("orders.placed")
+    redirect_to menu_path(id: @restaurant)
   end
 end

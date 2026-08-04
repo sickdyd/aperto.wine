@@ -1,0 +1,33 @@
+<%#
+  Renders a single dropped (no-longer-orderable) cart line, with the diner's
+  only way to unstick a cart around it — the wine went unavailable, its
+  list was un-published, its price for this size fell to zero, or it was
+  deleted outright. See Cart::DroppedItem for the shape and why #items
+  alone can never recover from this on its own.
+  Locals:
+    dropped    - the Cart::DroppedItem to render (required)
+    restaurant - the owning Restaurant, for building the remove route (required)
+%>
+<% wine_name = dropped.wine&.name %>
+<div class="p-4 rounded-lg border border-warning/30 bg-warning/5">
+  <div class="flex items-start justify-between gap-3">
+    <div class="flex-1 min-w-0">
+      <h3 class="font-body font-medium text-sm text-base-content/70">
+        <%= wine_name || t("cart.dropped_item.unknown_wine") %>
+      </h3>
+      <p class="text-xs text-warning mt-0.5"><%= t("cart.dropped_item.reasons.#{dropped.reason}") %></p>
+    </div>
+
+    <%# The accessible name must identify which line this removes — with
+        two or more dropped lines sharing a size, and possibly no wine name
+        at all once a wine is deleted, "Remove" alone would leave every
+        control indistinguishable to a screen-reader user. %>
+    <%= button_to cart_items_path(restaurant_id: restaurant), method: :delete,
+          params: { wine_id: dropped.wine_id, glass_size_ml: dropped.glass_size_ml },
+          class: "btn btn-ghost btn-xs shrink-0",
+          "aria-label": wine_name ? t("cart.remove_item", wine: wine_name) :
+            t("cart.dropped_item.remove_unknown", wine_id: dropped.wine_id, size: dropped.glass_size_ml) do %>
+      <%= icon "trash", css: "size-3.5" %>
+    <% end %>
+  </div>
+</div>

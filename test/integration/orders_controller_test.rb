@@ -91,17 +91,21 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   # --- honeypot ---
 
-  test "the honeypot creates no order and redirects to the menu with the success flash" do
+  test "the honeypot creates no order and redirects to the menu, distinguishable from a real success" do
     add_barolo_to_cart
+    follow_redirect! # render the menu so the add's own flash doesn't leak into the assertion below
 
     assert_no_difference "Order.count" do
       post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane", contact_reference: "http://spam.example" }
     end
+    # A real success redirects to the order's own status page — the
+    # honeypot response is trivially distinguishable, not a fabricated
+    # success (final review finding 4). It sets no flash of its own either.
     assert_redirected_to menu_path(id: @osteria)
 
     follow_redirect!
     assert_response :success
-    assert_match ERB::Util.html_escape(I18n.t("orders.placed")), response.body
+    assert_nil flash[:notice]
   end
 
   test "an array-valued honeypot still trips, closing the strong-params bypass" do

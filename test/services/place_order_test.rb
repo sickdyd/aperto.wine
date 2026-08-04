@@ -72,6 +72,32 @@ class PlaceOrderTest < ActiveSupport::TestCase
     end
   end
 
+  # --- final review finding 1: the diner must be told which items are offending ---
+
+  test "an aborted order reports which items dropped, not just a bare symbol" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+    @gavi.update!(available_glasses: 0)
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: nil)
+
+    assert_not result.success?
+    assert_equal 1, result.dropped_items.size
+    assert_equal @gavi.id, result.dropped_items.first.wine_id
+    assert_equal :wine_unavailable, result.dropped_items.first.reason
+  end
+
+  test "a successful order reports no dropped items" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    assert_empty result.dropped_items
+  end
+
   test "only the ordering restaurant's cart is cleared" do
     session = {}
     osteria_cart = cart_for(@osteria, session: session)
@@ -118,18 +144,22 @@ class PlaceOrderTest < ActiveSupport::TestCase
   end
 
   test "nothing is created when the transaction fails" do
-    cart = cart_for(@osteria)
-    # barolo's 150ml price is fixtured at 0 cents (not offered), which Cart#add
-    # accepts (0 is not nil) but OrderItem's unit_price_cents > 0 validation
-    # rejects — a real invalid-write scenario to prove the transaction rolls
-    # back cleanly rather than leaving a partial order behind.
-    add_result = cart.add(wine_id: @barolo.id, glass_size_ml: 150, quantity: 1)
-    assert add_result.success?
+    # Cart itself now refuses a zero (or nil) price before it ever reaches
+    # PlaceOrder (final review finding 2), so the only way left to reach
+    # OrderItem's own validation is a fake cart exposing an already-invalid
+    # CartItem — quantity 0, which Cart's own clamping never produces but
+    # OrderItem's numericality validation rejects. This exercises the
+    # defensive :order_invalid branch documented on Result: proof the
+    # transaction rolls back cleanly rather than leaving a partial order
+    # behind.
+    invalid_item = CartItem.new(wine: @barolo, glass_size_ml: 125, quantity: 0)
+    fake_cart = Struct.new(:items, :dropped_items).new([ invalid_item ], [])
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
-      result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: nil)
+      result = PlaceOrder.call(cart: fake_cart, restaurant: @osteria, table: nil, customer: nil, guest_name: nil)
 
       assert_not result.success?
+      assert_equal :order_invalid, result.error
     end
   end
 

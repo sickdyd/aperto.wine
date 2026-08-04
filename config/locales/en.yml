@@ -12,6 +12,7 @@ en:
     delete: "Delete"
     loading: "Loading..."
     sold_out: "Sold out"
+    guest: "Guest"
   auth:
     sign_in: "Sign In"
     sign_up: "Create Account"
@@ -327,7 +328,6 @@ en:
       empty_title: "No orders yet"
       empty_description: "Orders will appear here when customers place them."
       no_table: "No table"
-      guest: "Guest"
       wine: "Wine"
       glass_size: "Size"
       quantity: "Qty"
@@ -364,11 +364,12 @@ en:
   cart:
     title: "Your Cart"
     back_to_menu: "Back to menu"
+    item_added: "Added to your cart."
     table_context: "Ordering for %{table}"
     no_table_context: "No table selected — your order will reach the staff without table info."
     empty: "Your cart is empty."
     browse_menu: "Browse the wine list"
-    dropped_items_notice: "Some items in your cart are no longer available and have been removed."
+    dropped_items_notice: "Some items in your cart are no longer available and must be removed before you can order."
     glass_size_label: "Size"
     unit_price_label: "Price"
     subtotal_label: "Subtotal"
@@ -378,6 +379,13 @@ en:
     clear_cart: "Empty cart"
     confirm_clear: "Empty your cart?"
     total: "Total"
+    dropped_item:
+      unknown_wine: "Unavailable wine"
+      remove_unknown: "Remove unavailable item #%{wine_id} (%{size} ml)"
+      reasons:
+        wine_not_found: "This wine is no longer on the menu."
+        wine_unavailable: "This wine is currently unavailable."
+        price_unavailable: "This size is no longer offered."
     errors:
       wine_not_found: "That wine could not be found."
       wine_unavailable: "That wine is no longer available."
@@ -385,7 +393,6 @@ en:
       price_unavailable: "That wine has no price set for that glass size."
       cart_full: "Your cart is full — remove an item before adding another."
   orders:
-    placed: "Your order has been placed!"
     form:
       guest_name: "Your name (optional)"
       guest_name_placeholder: "e.g. Jane"

@@ -11,9 +11,12 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal "Jane Diner", order_customer_label(order)
   end
 
+  # The "Guest" fallback lives under the shared namespace, not owner.orders
+  # (final review finding 6) — orders/show.html.erb is a customer-facing
+  # page and must not reach into an owner-only locale key.
   test "order_customer_label falls back to a translated Guest label when both are absent" do
     order = orders(:guest_order)
     order.guest_name = nil
-    assert_equal I18n.t("owner.orders.guest"), order_customer_label(order)
+    assert_equal I18n.t("shared.guest"), order_customer_label(order)
   end
 end

@@ -9,6 +9,23 @@ class WineOrderingTest < ApplicationSystemTestCase
     find("button[aria-label='#{I18n.t("menu.add_to_cart", wine: wine.name, size: size)}']").click
   end
 
+  # Every remove control's accessible name comes entirely from aria-label
+  # (see carts/_cart_item and _dropped_cart_item) — Capybara's click_button
+  # does not match on aria-label by default, so this locates by the
+  # attribute directly, mirroring #add_to_cart above.
+  def remove_from_cart(label)
+    find("button[aria-label='#{label}']").click
+  end
+
+  # A successful add redirects back to the menu (final review finding 3),
+  # so getting to the cart page from there is always a deliberate extra
+  # step via the sticky bar's link.
+  def go_to_cart
+    within "#cart-bar" do
+      click_link I18n.t("menu.cart_bar.view_cart")
+    end
+  end
+
   def format_price(cents)
     ApplicationController.helpers.format_cents(cents)
   end
@@ -30,23 +47,20 @@ class WineOrderingTest < ApplicationSystemTestCase
     visit table_menu_path(table_token: table.token)
     assert_text barolo.name, wait: 5
 
-    # Adding always lands on the cart page (CartsController#add_item's
-    # redirect, unchanged from Task 3) — return to the menu between adds so
-    # both wines end up in the same cart before checking the sticky bar.
+    # Adding lands back on the menu (CartsController#add_item's redirect),
+    # so both wines can be added one after another with no navigation in
+    # between.
     add_to_cart(barolo, 125) # a non-default glass size
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
-    click_link I18n.t("cart.back_to_menu")
-
+    assert_current_path menu_path(id: restaurant), wait: 5
     add_to_cart(gavi, 100)
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
-    click_link I18n.t("cart.back_to_menu")
+    assert_current_path menu_path(id: restaurant), wait: 5
 
     assert_selector "#cart-bar", wait: 5
     within "#cart-bar" do
       assert_text I18n.t("menu.cart_bar.item_count", count: 2)
       assert_text format_price(barolo.price_for_glass(125) + gavi.price_for_glass(100))
-      click_link I18n.t("menu.cart_bar.view_cart")
     end
+    go_to_cart
 
     assert_current_path cart_path(restaurant_id: restaurant), wait: 5
 
@@ -76,8 +90,7 @@ class WineOrderingTest < ApplicationSystemTestCase
 
     visit menu_path(id: osteria)
     add_to_cart(barolo, 125)
-    assert_current_path cart_path(restaurant_id: osteria), wait: 5
-    click_link I18n.t("cart.back_to_menu")
+    assert_current_path menu_path(id: osteria), wait: 5
     assert_selector "#cart-bar", wait: 5
 
     visit menu_path(id: trattoria)
@@ -98,6 +111,9 @@ class WineOrderingTest < ApplicationSystemTestCase
 
     visit menu_path(id: restaurant)
     add_to_cart(barolo, 75)
+    assert_current_path menu_path(id: restaurant), wait: 5
+
+    go_to_cart
     assert_current_path cart_path(restaurant_id: restaurant), wait: 5
 
     click_button I18n.t("orders.form.submit")
@@ -113,6 +129,9 @@ class WineOrderingTest < ApplicationSystemTestCase
 
     visit menu_path(id: restaurant)
     add_to_cart(barolo, 100)
+    assert_current_path menu_path(id: restaurant), wait: 5
+
+    go_to_cart
     assert_current_path cart_path(restaurant_id: restaurant), wait: 5
 
     fill_in I18n.t("orders.form.guest_name"), with: "System Test Diner"
@@ -131,5 +150,34 @@ class WineOrderingTest < ApplicationSystemTestCase
     within(find("div.p-4", text: "System Test Diner")) do
       assert_text I18n.t("owner.orders.statuses.approved")
     end
+  end
+
+  # --- recovering from a dropped line (final review finding 1) ---
+
+  test "a diner can remove a dropped line and place the rest of the order" do
+    restaurant = restaurants(:osteria)
+    barolo = wines(:barolo)
+    gavi = wines(:gavi)
+
+    visit menu_path(id: restaurant)
+    add_to_cart(barolo, 125)
+    add_to_cart(gavi, 100)
+    go_to_cart
+    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+
+    barolo.update!(active: false)
+    visit cart_path(restaurant_id: restaurant)
+    assert_text I18n.t("cart.dropped_items_notice"), wait: 5
+    assert_text barolo.name
+
+    remove_from_cart(I18n.t("cart.remove_item", wine: barolo.name))
+
+    assert_no_text I18n.t("cart.dropped_items_notice"), wait: 5
+    assert_no_text barolo.name
+    assert_text gavi.name
+
+    click_button I18n.t("orders.form.submit")
+    assert_text I18n.t("orders.status.statuses.pending"), wait: 5
+    assert_text gavi.name
   end
 end

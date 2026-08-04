@@ -9,12 +9,16 @@
 # table is still active, we also remember it in the session so that later
 # requests for the same restaurant — even ones that only carry a restaurant
 # id, like the cart — can still be attributed to that table.
+#
+# set_restaurant is opt-in per action, not applied automatically to every
+# action of an including controller — most controllers want it everywhere
+# (`before_action :set_restaurant`), but OrdersController#show looks a
+# customer's order up solely by public_token and never needs a restaurant,
+# so it simply never declares the before_action for that action rather than
+# declaring it for everything and then un-declaring it with
+# skip_before_action.
 module CustomerScoped
   extend ActiveSupport::Concern
-
-  included do
-    before_action :set_restaurant
-  end
 
   private
 
@@ -38,6 +42,13 @@ module CustomerScoped
     else
       @restaurant = Restaurant.active.find(params[:restaurant_id] || params[:id])
     end
+  end
+
+  # One Cart per request (it memoizes its reads — see Cart#items) shared by
+  # every controller that needs it, so two instances for the same
+  # restaurant in one request never see each other's writes.
+  def set_cart
+    @cart = Cart.new(session: session, restaurant: @restaurant)
   end
 
   # The table this session has attached to @restaurant, if any — used by the

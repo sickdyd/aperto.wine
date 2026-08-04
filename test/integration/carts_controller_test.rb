@@ -15,7 +15,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
 
   test "adding an item shows it on the cart page" do
     post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    assert_redirected_to menu_path(id: @osteria)
 
     get cart_path(restaurant_id: @osteria)
     assert_response :success
@@ -23,9 +23,37 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_match @barolo.producer, response.body
   end
 
+  # --- adding from the menu (final review finding 3) ---
+
+  test "a successful add redirects back to the menu, not the cart, with a confirmation flash" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to menu_path(id: @osteria)
+
+    follow_redirect!
+    assert_response :success
+    assert_match I18n.t("cart.item_added"), response.body
+  end
+
+  test "adding a second wine from the menu never requires visiting the cart in between" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to menu_path(id: @osteria)
+
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
+    assert_redirected_to menu_path(id: @osteria)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_match @barolo.name, response.body
+    assert_match ERB::Util.html_escape(@gavi.name), response.body
+  end
+
+  test "a failed add still redirects to the cart page, where the error has full context" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @sold_out.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_id: @osteria)
+  end
+
   test "the session survives a real cookie round trip and never stores a price" do
     post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    assert_redirected_to menu_path(id: @osteria)
 
     get cart_path(restaurant_id: @osteria)
     assert_response :success
@@ -218,7 +246,68 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_match I18n.t("cart.dropped_items_notice"), response.body
   end
 
+  # --- recovering from a dropped line (final review finding 1) ---
+
+  test "the dropped-items notice never claims items have already been removed" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    @barolo.update!(active: false)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_no_match "have been removed", response.body
+  end
+
+  test "a dropped line renders its own name and a remove control" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    @barolo.update!(active: false)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    assert_match @barolo.name, response.body
+    assert_select "form[action=?][method=post] button[aria-label=?]",
+      cart_items_path(restaurant_id: @osteria), I18n.t("cart.remove_item", wine: @barolo.name)
+  end
+
+  test "a cart whose only line has been dropped still offers the Empty cart control" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    @barolo.update!(active: false)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    # Reproduces the bricked-cart bug: items 0, dropped_items 1, empty? true —
+    # the "Empty cart" button must still render even though the old `unless
+    # @cart.empty?` branch would have hidden it.
+    assert cart_for(@osteria).empty?
+    assert_select "button", text: I18n.t("cart.clear_cart"), count: 1
+  end
+
+  test "a diner can remove a dropped line, recovering a cart that would otherwise be stuck forever" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    @barolo.update!(active: false)
+
+    delete cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125 }
+    assert_redirected_to cart_path(restaurant_id: @osteria)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    assert_match I18n.t("cart.empty"), response.body
+    assert_no_match I18n.t("cart.dropped_items_notice"), response.body
+  end
+
+  test "a wine whose price falls to zero after being added is treated as dropped, not silently blanked out" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
+    @gavi.update!(price_100ml_cents: 0)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    assert_match I18n.t("cart.dropped_items_notice"), response.body
+    assert_match ERB::Util.html_escape(@gavi.name), response.body
+  end
+
   private
+
+  def cart_for(restaurant)
+    Cart.new(session: session, restaurant: restaurant)
+  end
 
   def format_price(cents)
     ApplicationController.helpers.format_cents(cents)

@@ -35,7 +35,10 @@ class Cart
   #                          wines the owner has chosen not to show)
   #   :wine_unavailable    - the wine exists but Wine#available? is false
   #   :invalid_glass_size  - glass_size_ml is not one of Wine::GLASS_SIZES
-  #   :price_unavailable   - the wine has no price for that glass size
+  #   :price_unavailable   - the wine has no positive price for that glass
+  #                          size — nil and zero mean the same thing, "not
+  #                          offered" (the same gesture the wine row already
+  #                          reads that way; see Wine#price_for_glass)
   #   :cart_full           - adding a new distinct line would exceed
   #                          MAX_DISTINCT_ITEMS (incrementing an existing
   #                          line is still allowed at the cap)
@@ -46,8 +49,13 @@ class Cart
   end
 
   # One line skipped while reading a stale cart (see #items). `reason` is
-  # drawn from the same symbol set as Result#error.
-  DroppedItem = Struct.new(:wine_id, :glass_size_ml, :quantity, :reason, keyword_init: true)
+  # drawn from the same symbol set as Result#error. `wine` is the live Wine
+  # when it could still be resolved (dropped for :wine_unavailable or
+  # :price_unavailable) and nil when it could not (:wine_not_found — the
+  # wine was deleted, un-published, or never belonged to this restaurant) —
+  # a view rendering a dropped line must handle the nil case with a neutral
+  # fallback rather than crash.
+  DroppedItem = Struct.new(:wine_id, :glass_size_ml, :quantity, :reason, :wine, keyword_init: true)
 
   def initialize(session:, restaurant:)
     @session = session
@@ -78,17 +86,21 @@ class Cart
     wine = published_wines.find_by(id: wine_id)
     return failure(:wine_not_found) if wine.nil?
     return failure(:wine_unavailable) unless wine.available?
-    return failure(:price_unavailable) if wine.price_for_glass(glass_size).nil?
+    return failure(:price_unavailable) unless positive_price?(wine, glass_size)
 
     lines = stored_lines
     index = line_index(lines, wine.id, glass_size)
+    # Clamp the raw input itself, not just the resulting sum — otherwise a
+    # negative quantity (however it reached here) reads as a silent
+    # decrement of an existing line instead of "add at least one".
+    requested_quantity = clamp_quantity(quantity.to_i)
 
     if index
-      new_lines = replace_line(lines, index, quantity: clamp_quantity(lines[index]["quantity"] + quantity.to_i))
+      new_lines = replace_line(lines, index, quantity: clamp_quantity(lines[index]["quantity"] + requested_quantity))
     else
       return failure(:cart_full) if lines.size >= MAX_DISTINCT_ITEMS
 
-      new_lines = lines + [ new_line(wine.id, glass_size, clamp_quantity(quantity.to_i)) ]
+      new_lines = lines + [ new_line(wine.id, glass_size, requested_quantity) ]
     end
 
     persist(new_lines)
@@ -133,6 +145,17 @@ class Cart
 
   def empty?
     items.empty?
+  end
+
+  # True whenever the session holds any line for this restaurant at all,
+  # dropped or not — distinct from #empty?, which only counts orderable
+  # lines. A cart can be #empty? while still holding a dropped line (e.g.
+  # its only wine went unavailable); the view needs this predicate, not
+  # #empty?, to decide whether the "Empty cart" control has anything to do.
+  # A pure read of the raw session, so it never triggers the wines query
+  # #items/#dropped_items do.
+  def any_lines?
+    stored_lines.any?
   end
 
   private
@@ -208,14 +231,15 @@ class Cart
     kept = []
     dropped = []
     lines.each do |line|
-      cart_item, reason = build_cart_item_or_reason(line, wines_by_id)
-      if cart_item
-        kept << cart_item
-      else
+      wine = wines_by_id[line["wine_id"]]
+      reason = drop_reason(wine, line["glass_size_ml"])
+      if reason
         dropped << DroppedItem.new(
           wine_id: line["wine_id"], glass_size_ml: line["glass_size_ml"],
-          quantity: line["quantity"], reason: reason
+          quantity: line["quantity"], reason: reason, wine: wine
         )
+      else
+        kept << CartItem.new(wine: wine, glass_size_ml: line["glass_size_ml"], quantity: line["quantity"])
       end
     end
 
@@ -224,12 +248,22 @@ class Cart
     @cart_data_loaded = true
   end
 
-  def build_cart_item_or_reason(line, wines_by_id)
-    wine = wines_by_id[line["wine_id"]]
-    return [ nil, :wine_not_found ] if wine.nil?
-    return [ nil, :wine_unavailable ] unless wine.available?
-    return [ nil, :price_unavailable ] if wine.price_for_glass(line["glass_size_ml"]).nil?
+  # nil means the line still qualifies; otherwise the symbol is the reason
+  # it was dropped (see DroppedItem).
+  def drop_reason(wine, glass_size_ml)
+    return :wine_not_found if wine.nil?
+    return :wine_unavailable unless wine.available?
+    return :price_unavailable unless positive_price?(wine, glass_size_ml)
 
-    [ CartItem.new(wine: wine, glass_size_ml: line["glass_size_ml"], quantity: line["quantity"]), nil ]
+    nil
+  end
+
+  # A zero price means exactly the same thing as no price at all: this size
+  # is not offered. Treating them differently is what let a stale line with
+  # a zeroed-out price render blank and silently drop out of the total
+  # instead of being reported to the diner.
+  def positive_price?(wine, glass_size_ml)
+    price = wine.price_for_glass(glass_size_ml)
+    price.present? && price.positive?
   end
 end

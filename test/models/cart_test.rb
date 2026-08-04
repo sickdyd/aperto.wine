@@ -104,6 +104,33 @@ class CartTest < ActiveSupport::TestCase
     assert_equal [ @barolo ], cart.items.map(&:wine)
   end
 
+  # --- zero price means "not offered", same as no price at all (final review finding 2) ---
+
+  test "add rejects a zero price the same as no price at all" do
+    cart = cart_for(@osteria)
+
+    # barolo's 150ml price is fixtured at 0 cents, the same gesture an owner
+    # uses to stop offering a size.
+    result = cart.add(wine_id: @barolo.id, glass_size_ml: 150, quantity: 1)
+
+    assert_not result.success?
+    assert_equal :price_unavailable, result.error
+    assert_empty cart.items
+  end
+
+  test "a line whose price falls to zero after being added is dropped as price_unavailable, same as losing its price entirely" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+
+    @gavi.update!(price_100ml_cents: 0)
+
+    assert_empty cart.items
+    assert_equal 1, cart.dropped_items.size
+    dropped = cart.dropped_items.first
+    assert_equal @gavi.id, dropped.wine_id
+    assert_equal :price_unavailable, dropped.reason
+  end
+
   test "a wine added while published is dropped on read once its list is un-published" do
     cart = cart_for(@osteria)
     cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
@@ -380,6 +407,72 @@ class CartTest < ActiveSupport::TestCase
     dropped = cart.dropped_items.first
     assert_equal @gavi.id, dropped.wine_id
     assert_equal :price_unavailable, dropped.reason
+  end
+
+  # --- recovering from a dropped line (final review finding 1) ---
+
+  test "a dropped item carries the wine when it is still resolvable, so the view can render it" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+    @gavi.update!(available_glasses: 0)
+
+    dropped = cart.dropped_items.first
+    assert_equal @gavi, dropped.wine
+  end
+
+  test "a dropped item has no wine when it can no longer be resolved at all" do
+    session = {}
+    cart = cart_for(@osteria, session: session)
+    doomed_wine = create_published_wine(
+      name: "Doomed Wine Two", color: :red, bottle_size_ml: 750,
+      price_125ml_cents: 1000, available_glasses: 5, active: true, position: 997
+    )
+    cart.add(wine_id: doomed_wine.id, glass_size_ml: 125, quantity: 1)
+    doomed_wine.destroy!
+
+    dropped = cart.dropped_items.first
+    assert_nil dropped.wine
+  end
+
+  test "any_lines? is true even once every line in the cart has been dropped" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+    @gavi.update!(available_glasses: 0)
+
+    assert cart.empty?
+    assert cart.any_lines?
+  end
+
+  test "any_lines? is false when the session holds no line for this restaurant at all" do
+    cart = cart_for(@osteria)
+
+    assert_not cart.any_lines?
+  end
+
+  test "remove clears a dropped line, recovering a cart that would otherwise be stuck" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+    @gavi.update!(available_glasses: 0)
+    assert cart.any_lines?
+
+    result = cart.remove(wine_id: @gavi.id, glass_size_ml: 100)
+
+    assert result.success?
+    assert_not cart.any_lines?
+    assert_empty cart.dropped_items
+  end
+
+  # --- add clamps its own input, not just the resulting sum (final review finding 7) ---
+
+  test "add clamps a negative quantity input rather than silently decrementing an existing line" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 5)
+
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: -4)
+
+    # The negative input is clamped to 1 before being added to the existing
+    # line (5 + 1 = 6), not treated as a decrement (5 + -4 = 1).
+    assert_equal 6, cart.items.first.quantity
   end
 
   test "items does not rewrite the session" do

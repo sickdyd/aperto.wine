@@ -12,6 +12,7 @@ it:
     delete: "Elimina"
     loading: "Caricamento..."
     sold_out: "Esaurito"
+    guest: "Ospite"
   auth:
     sign_in: "Accedi"
     sign_up: "Crea Account"
@@ -327,7 +328,6 @@ it:
       empty_title: "Nessun ordine"
       empty_description: "Gli ordini appariranno qui quando i clienti li effettueranno."
       no_table: "Nessun tavolo"
-      guest: "Ospite"
       wine: "Vino"
       glass_size: "Misura"
       quantity: "Qtà"
@@ -364,11 +364,12 @@ it:
   cart:
     title: "Il tuo carrello"
     back_to_menu: "Torna al menu"
+    item_added: "Aggiunto al carrello."
     table_context: "Ordinazione per %{table}"
     no_table_context: "Nessun tavolo selezionato — l'ordine arriverà allo staff senza indicazione del tavolo."
     empty: "Il tuo carrello è vuoto."
     browse_menu: "Sfoglia la carta dei vini"
-    dropped_items_notice: "Alcuni vini nel carrello non sono più disponibili e sono stati rimossi."
+    dropped_items_notice: "Alcuni vini nel carrello non sono più disponibili e devono essere rimossi prima di poter ordinare."
     glass_size_label: "Formato"
     unit_price_label: "Prezzo"
     subtotal_label: "Totale parziale"
@@ -378,6 +379,13 @@ it:
     clear_cart: "Svuota carrello"
     confirm_clear: "Svuotare il carrello?"
     total: "Totale"
+    dropped_item:
+      unknown_wine: "Vino non disponibile"
+      remove_unknown: "Rimuovi articolo non disponibile #%{wine_id} (%{size} ml)"
+      reasons:
+        wine_not_found: "Questo vino non è più nel menu."
+        wine_unavailable: "Questo vino non è al momento disponibile."
+        price_unavailable: "Questo formato non è più offerto."
     errors:
       wine_not_found: "Vino non trovato."
       wine_unavailable: "Questo vino non è più disponibile."
@@ -385,7 +393,6 @@ it:
       price_unavailable: "Questo vino non ha un prezzo per questo formato."
       cart_full: "Il carrello è pieno — rimuovi un vino prima di aggiungerne un altro."
   orders:
-    placed: "Il tuo ordine è stato inviato!"
     form:
       guest_name: "Il tuo nome (facoltativo)"
       guest_name_placeholder: "es. Jane"
