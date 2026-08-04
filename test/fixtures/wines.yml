@@ -84,3 +84,17 @@ osteria_moscato:
   available_glasses: 6
   position: 1
   active: true
+
+# None of the other trattoria wines have any glass price set, so cart specs
+# (which need a second restaurant with a purchasable wine, to prove carts
+# stay independent and cross-restaurant adds are rejected) need one that does.
+trattoria_barbera:
+  restaurant: trattoria
+  name: Barbera d'Asti
+  producer: Vietti
+  color: 0
+  bottle_size_ml: 750
+  price_125ml_cents: 1000
+  available_glasses: 8
+  position: 4
+  active: true
