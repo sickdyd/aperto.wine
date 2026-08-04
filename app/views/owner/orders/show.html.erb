@@ -5,7 +5,7 @@
     <div>
       <h1 class="font-display text-3xl font-light"><%= t("owner.orders.order") %> #<%= @order.id %></h1>
       <p class="text-base-content/50 mt-1">
-        <%= @order.customer.name %> · <%= l(@order.created_at, format: :long) %>
+        <%= order_customer_label(@order) %> · <%= l(@order.created_at, format: :long) %>
       </p>
       <p class="text-sm text-base-content/60 mt-1 flex items-center gap-1">
         <%= icon "picnic-table", css: "size-3.5" %>

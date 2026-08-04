@@ -327,6 +327,7 @@ it:
       empty_title: "Nessun ordine"
       empty_description: "Gli ordini appariranno qui quando i clienti li effettueranno."
       no_table: "Nessun tavolo"
+      guest: "Ospite"
       wine: "Vino"
       glass_size: "Misura"
       quantity: "Qtà"

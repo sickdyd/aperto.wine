@@ -22,9 +22,9 @@ class OrderTest < ActiveSupport::TestCase
     assert_not order.valid?
   end
 
-  test "requires customer" do
+  test "allows a nil customer (guest order)" do
     order = Order.new(valid_attributes.merge(customer: nil))
-    assert_not order.valid?
+    assert order.valid?
   end
 
   test "requires total_amount_cents >= 0" do
@@ -35,6 +35,22 @@ class OrderTest < ActiveSupport::TestCase
 
   test "allows total_amount_cents of zero" do
     order = Order.new(valid_attributes.merge(total_amount_cents: 0))
+    assert order.valid?
+  end
+
+  test "guest_name is optional" do
+    order = Order.new(valid_attributes.merge(customer: nil, guest_name: nil))
+    assert order.valid?
+  end
+
+  test "guest_name is capped at 64 characters" do
+    order = Order.new(valid_attributes.merge(guest_name: "a" * 65))
+    assert_not order.valid?
+    assert order.errors.of_kind?(:guest_name, :too_long)
+  end
+
+  test "guest_name of exactly 64 characters is valid" do
+    order = Order.new(valid_attributes.merge(guest_name: "a" * 64))
     assert order.valid?
   end
 
@@ -60,6 +76,12 @@ class OrderTest < ActiveSupport::TestCase
 
   test "belongs to customer" do
     assert_equal users(:customer), orders(:pending_order).customer
+  end
+
+  test "customer is optional for guest orders" do
+    order = orders(:guest_order)
+    assert_nil order.customer
+    assert_equal "Jane Diner", order.guest_name
   end
 
   test "has many order_items" do
@@ -172,5 +194,18 @@ class OrderTest < ActiveSupport::TestCase
     order.cancel!
     # approved_gavi_glass: quantity 2
     assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
+  # --- public_token ---
+
+  test "generates a public_token automatically on create" do
+    order = Order.create!(valid_attributes)
+    assert order.public_token.present?
+  end
+
+  test "generates distinct public_tokens for different orders" do
+    first = Order.create!(valid_attributes)
+    second = Order.create!(valid_attributes)
+    assert_not_equal first.public_token, second.public_token
   end
 end

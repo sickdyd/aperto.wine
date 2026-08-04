@@ -327,6 +327,7 @@ en:
       empty_title: "No orders yet"
       empty_description: "Orders will appear here when customers place them."
       no_table: "No table"
+      guest: "Guest"
       wine: "Wine"
       glass_size: "Size"
       quantity: "Qty"
