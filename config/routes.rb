@@ -25,6 +25,13 @@ Rails.application.routes.draw do
     delete "menu/:restaurant_id/cart/items", to: "carts#remove_item"
     delete "menu/:restaurant_id/cart",       to: "carts#destroy"
 
+    # Order placement and status (customer-facing, no auth required). The
+    # only public write endpoint in the feature — see OrdersController for
+    # its abuse controls. public_token is a 24-char base58 has_secure_token,
+    # so :public_token gets no digits-only constraint the way an :id would.
+    post "menu/:restaurant_id/orders", to: "orders#create", as: :orders
+    get  "orders/:public_token",       to: "orders#show",   as: :order_status
+
     # Owner namespace
     namespace :owner do
       # Wine data autofill proxy — not nested under restaurants: wine reference

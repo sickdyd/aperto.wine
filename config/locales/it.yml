@@ -378,3 +378,35 @@ it:
       invalid_glass_size: "Formato di bicchiere non valido."
       price_unavailable: "Questo vino non ha un prezzo per questo formato."
       cart_full: "Il carrello è pieno — rimuovi un vino prima di aggiungerne un altro."
+  orders:
+    placed: "Il tuo ordine è stato inviato!"
+    form:
+      guest_name: "Il tuo nome (facoltativo)"
+      guest_name_placeholder: "es. Jane"
+      submit: "Invia Ordine"
+    errors:
+      empty_cart: "Il tuo carrello è vuoto."
+      items_unavailable: "Alcuni vini nel carrello non sono più disponibili. Controlla il carrello prima di ordinare."
+      order_invalid: "Non è stato possibile inviare l'ordine. Controlla il carrello e riprova."
+      rate_limited: "Stai inviando ordini troppo velocemente. Attendi un momento e riprova."
+    status:
+      title: "Il tuo ordine"
+      placed_at: "Inviato %{time}"
+      table_label: "Tavolo"
+      no_table: "Nessun tavolo selezionato"
+      glass_size: "Formato"
+      quantity: "Qtà"
+      price: "Prezzo"
+      subtotal: "Totale parziale"
+      total: "Totale"
+      back_to_menu: "Torna al menu"
+      statuses:
+        pending: "In attesa"
+        approved: "Approvato"
+        cancelled: "Annullato"
+        completed: "Completato"
+      hints:
+        pending: "In attesa della conferma dello staff."
+        approved: "Approvato — il tuo vino sta arrivando."
+        cancelled: "Questo ordine è stato annullato."
+        completed: "Questo ordine è stato completato."

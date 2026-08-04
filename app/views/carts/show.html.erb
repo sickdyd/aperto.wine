@@ -49,6 +49,25 @@
             data: { turbo_confirm: t("cart.confirm_clear") } %>
     </div>
 
-    <%# Task 4 adds the order-placement form here. %>
+    <%= form_with url: orders_path(restaurant_id: @restaurant), method: :post, class: "form-section mt-8 pt-6 border-t border-base-content/10" do |f| %>
+      <div class="field">
+        <%= f.label :guest_name, t("orders.form.guest_name"), class: "field-label" %>
+        <%= f.text_field :guest_name, maxlength: 64, placeholder: t("orders.form.guest_name_placeholder"),
+              class: "input w-full font-body" %>
+      </div>
+
+      <%# Honeypot: a real text input a scripted bot will happily fill, but
+          genuinely inert for a human — hidden visually, out of tab order,
+          and invisible to assistive technology, not merely type="hidden"
+          (which many bots already know to skip). A screen-reader or
+          keyboard user must never be asked to fill it. %>
+      <div class="hidden" aria-hidden="true">
+        <%= f.text_field :website, tabindex: -1, autocomplete: "off" %>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-wine w-full"><%= t("orders.form.submit") %></button>
+      </div>
+    <% end %>
   <% end %>
 </div>

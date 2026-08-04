@@ -378,3 +378,35 @@ en:
       invalid_glass_size: "That is not a valid glass size."
       price_unavailable: "That wine has no price set for that glass size."
       cart_full: "Your cart is full — remove an item before adding another."
+  orders:
+    placed: "Your order has been placed!"
+    form:
+      guest_name: "Your name (optional)"
+      guest_name_placeholder: "e.g. Jane"
+      submit: "Place Order"
+    errors:
+      empty_cart: "Your cart is empty."
+      items_unavailable: "Some items in your cart are no longer available. Please review your cart before ordering."
+      order_invalid: "Your order could not be placed. Please review your cart and try again."
+      rate_limited: "You are placing orders too quickly. Please wait a moment and try again."
+    status:
+      title: "Your Order"
+      placed_at: "Placed %{time}"
+      table_label: "Table"
+      no_table: "No table selected"
+      glass_size: "Size"
+      quantity: "Qty"
+      price: "Price"
+      subtotal: "Subtotal"
+      total: "Total"
+      back_to_menu: "Back to menu"
+      statuses:
+        pending: "Pending"
+        approved: "Approved"
+        cancelled: "Cancelled"
+        completed: "Completed"
+      hints:
+        pending: "Waiting for the staff to confirm your order."
+        approved: "Approved — your wine is on its way."
+        cancelled: "This order was cancelled."
+        completed: "This order has been completed."
