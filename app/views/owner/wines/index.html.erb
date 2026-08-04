@@ -6,7 +6,7 @@
     <p class="admin-subtitle"><%= @restaurant.name %> · <%= t("owner.wines.wine_count", count: @wines.size) %></p>
   </div>
   <a href="<%= new_owner_restaurant_wine_path(@restaurant) %>" class="btn-wine">
-    <%= icon "plus", css: "size-4" %>
+    <%= icon "plus", class: "size-4" %>
     <%= t("owner.wines.add") %>
   </a>
 </div>
@@ -104,14 +104,14 @@
                   <a href="<%= edit_owner_restaurant_wine_path(@restaurant, wine) %>"
                      class="btn-wine-quiet min-h-11 min-w-11 px-0"
                      aria-label="<%= t("owner.wines.edit_wine", name: wine.name) %>">
-                    <%= icon "pencil-simple", css: "size-4" %>
+                    <%= icon "pencil-simple", class: "size-4" %>
                   </a>
                   <%= button_to owner_restaurant_wine_path(@restaurant, wine),
                         method: :delete,
                         class: "btn-wine-quiet min-h-11 min-w-11 px-0 hover:text-error",
                         aria: { label: t("owner.wines.delete_wine", name: wine.name) },
                         data: { turbo_confirm: t("owner.wines.confirm_delete") } do %>
-                    <%= icon "trash", css: "size-4" %>
+                    <%= icon "trash", class: "size-4" %>
                   <% end %>
                 </div>
               </td>
@@ -128,7 +128,7 @@
 <% else %>
   <div class="py-10 text-center">
     <div class="flex justify-center text-ox-3">
-      <%= icon "wine", css: "size-8" %>
+      <%= icon "wine", class: "size-8" %>
     </div>
     <h2 class="mt-4 text-h3"><%= t("owner.wines.empty_title") %></h2>
     <p class="empty-state"><%= t("owner.wines.empty_description") %></p>

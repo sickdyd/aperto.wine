@@ -11,14 +11,14 @@
     <div class="mx-auto mt-4 flex w-full max-w-6xl flex-col gap-2 px-4 sm:px-6 lg:px-8">
       <% if notice %>
         <div role="alert" class="alert alert-success flex items-center gap-3">
-          <%= icon "check-circle", css: "size-4 shrink-0" %>
+          <%= icon "check-circle", class: "size-4 shrink-0" %>
           <span class="mono-label shrink-0"><%= t("shared.flash_notice") %></span>
           <span class="min-w-0"><%= notice %></span>
         </div>
       <% end %>
       <% if alert %>
         <div role="alert" class="alert alert-error flex items-center gap-3">
-          <%= icon "warning", css: "size-4 shrink-0" %>
+          <%= icon "warning", class: "size-4 shrink-0" %>
           <span class="mono-label shrink-0"><%= t("shared.flash_error") %></span>
           <span class="min-w-0"><%= alert %></span>
         </div>

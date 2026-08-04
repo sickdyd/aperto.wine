@@ -4,18 +4,18 @@
   <div class="min-w-0">
     <h1 class="admin-title"><%= @restaurant.name %></h1>
     <p class="admin-subtitle mt-1.5 flex items-baseline gap-1.5">
-      <%= icon "map-pin", css: "size-3.5 shrink-0 translate-y-0.5 text-ox-4" %>
+      <%= icon "map-pin", class: "size-3.5 shrink-0 translate-y-0.5 text-ox-4" %>
       <%= @restaurant.address %>
     </p>
   </div>
 
   <div class="flex items-center gap-2">
     <a href="<%= edit_owner_restaurant_path(@restaurant) %>" class="btn-wine-outline">
-      <%= icon "pencil-simple", css: "size-4" %>
+      <%= icon "pencil-simple", class: "size-4" %>
       <%= t("shared.edit") %>
     </a>
     <%= button_to owner_restaurant_path(@restaurant), method: :delete, class: "btn-wine-quiet text-error", data: { turbo_confirm: t("owner.restaurants.confirm_delete") } do %>
-      <%= icon "trash", css: "size-4" %>
+      <%= icon "trash", class: "size-4" %>
       <%= t("shared.delete") %>
     <% end %>
   </div>
@@ -43,10 +43,10 @@
           rel: (section[:external] ? "noopener" : nil),
           class: "group flex min-h-11 flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-rule-hair py-2 no-underline" do %>
       <span class="flex shrink-0 items-baseline gap-2 text-ox-2">
-        <%= icon section[:icon], css: "size-4 shrink-0 translate-y-0.5 text-ox-3" %>
+        <%= icon section[:icon], class: "size-4 shrink-0 translate-y-0.5 text-ox-3" %>
         <span class="mono-label group-hover:underline"><%= section[:label] %></span>
         <% if section[:external] %>
-          <%= icon "arrow-up-right", css: "size-3 shrink-0 text-ox-4" %>
+          <%= icon "arrow-up-right", class: "size-3 shrink-0 text-ox-4" %>
         <% end %>
       </span>
       <span class="leader hidden sm:block" aria-hidden="true"></span>
@@ -57,7 +57,7 @@
   <% unless @restaurant.active? %>
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-rule-hair py-2">
       <span class="flex shrink-0 items-baseline gap-2 text-ink-soft">
-        <%= icon "eye-slash", css: "size-4 shrink-0 translate-y-0.5" %>
+        <%= icon "eye-slash", class: "size-4 shrink-0 translate-y-0.5" %>
         <span class="mono-label"><%= t("owner.restaurants.preview_menu") %></span>
       </span>
       <span class="leader hidden sm:block" aria-hidden="true"></span>

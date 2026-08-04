@@ -36,7 +36,7 @@
           class: "btn-wine-outline shrink-0",
           "aria-label": wine_name ? t("cart.remove_item", wine: wine_name) :
             t("cart.dropped_item.remove_unknown", wine_id: dropped.wine_id, size: dropped.glass_size_ml) do %>
-      <%= icon "trash", css: "size-4" %>
+      <%= icon "trash", class: "size-4" %>
     <% end %>
   </div>
 </li>

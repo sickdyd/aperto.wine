@@ -3,7 +3,7 @@
 <%= form_with model: table, url: table.persisted? ? owner_restaurant_table_path(@restaurant, table) : owner_restaurant_tables_path(@restaurant), scope: :restaurant_table, class: "max-w-xl space-y-8" do |f| %>
   <% if table.errors.any? %>
     <div role="alert" class="alert alert-error">
-      <%= icon "warning", css: "size-4 shrink-0" %>
+      <%= icon "warning", class: "size-4 shrink-0" %>
       <div>
         <% table.errors.full_messages.each do |msg| %>
           <p class="field-error"><%= msg %></p>

@@ -49,9 +49,9 @@
       <div class="px-4 pt-3 pb-1">
         <details>
           <summary class="flex min-h-11 cursor-pointer list-none items-center gap-2 border-b border-rule-medium [&::-webkit-details-marker]:hidden">
-            <%= icon "storefront", css: "size-4 shrink-0 text-ox-3" %>
+            <%= icon "storefront", class: "size-4 shrink-0 text-ox-3" %>
             <span class="min-w-0 flex-1 truncate text-meta text-ink"><%= @restaurant&.persisted? ? @restaurant.name : t("owner.nav.select_restaurant") %></span>
-            <%= icon "caret-up-down", css: "size-4 shrink-0 text-ox-3" %>
+            <%= icon "caret-up-down", class: "size-4 shrink-0 text-ox-3" %>
           </summary>
 
           <ul class="-mx-4 mt-1">
@@ -67,13 +67,13 @@
             </li>
             <li>
               <%= link_to owner_restaurants_path, class: "nav-item px-4 #{focus_ring}" do %>
-                <%= icon "squares-four", css: "size-4 shrink-0" %>
+                <%= icon "squares-four", class: "size-4 shrink-0" %>
                 <%= t("owner.nav.all_restaurants") %>
               <% end %>
             </li>
             <li>
               <%= link_to new_owner_restaurant_path, class: "nav-item px-4 #{focus_ring}" do %>
-                <%= icon "plus", css: "size-4 shrink-0" %>
+                <%= icon "plus", class: "size-4 shrink-0" %>
                 <%= t("owner.nav.new_restaurant") %>
               <% end %>
             </li>
@@ -89,19 +89,19 @@
         <ul>
           <li>
             <%= link_to owner_restaurant_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("restaurants", actions: "show")) do %>
-              <%= icon "house", css: "size-4 shrink-0" %>
+              <%= icon "house", class: "size-4 shrink-0" %>
               <%= t("owner.nav.overview") %>
             <% end %>
           </li>
           <li>
             <%= link_to owner_restaurant_wines_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("wines")) do %>
-              <%= icon "wine", css: "size-4 shrink-0" %>
+              <%= icon "wine", class: "size-4 shrink-0" %>
               <%= t("owner.nav.wines") %>
             <% end %>
           </li>
           <li>
             <%= link_to owner_restaurant_wine_lists_path(@restaurant), **nav_link_attrs.call(owner_nav_active?(%w[wine_lists wine_list_items])) do %>
-              <%= icon "scroll", css: "size-4 shrink-0" %>
+              <%= icon "scroll", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.wine_lists") %>
             <% end %>
           </li>
@@ -112,19 +112,19 @@
         <ul>
           <li>
             <%= link_to owner_restaurant_orders_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("orders")) do %>
-              <%= icon "receipt", css: "size-4 shrink-0" %>
+              <%= icon "receipt", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.orders") %>
             <% end %>
           </li>
           <li>
             <%= link_to owner_restaurant_tables_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("restaurant_tables")) do %>
-              <%= icon "picnic-table", css: "size-4 shrink-0" %>
+              <%= icon "picnic-table", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.tables") %>
             <% end %>
           </li>
           <li>
             <%= link_to owner_restaurant_qr_code_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("qr_codes")) do %>
-              <%= icon "qr-code", css: "size-4 shrink-0" %>
+              <%= icon "qr-code", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.qr_code") %>
             <% end %>
           </li>
@@ -135,7 +135,7 @@
         <ul>
           <li>
             <%= link_to edit_owner_restaurant_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("restaurants", actions: %w[edit update])) do %>
-              <%= icon "gear", css: "size-4 shrink-0" %>
+              <%= icon "gear", class: "size-4 shrink-0" %>
               <%= t("owner.nav.settings") %>
             <% end %>
           </li>
@@ -144,7 +144,7 @@
         <ul>
           <li>
             <%= link_to owner_restaurants_path, **nav_link_attrs.call(owner_nav_active?("restaurants", actions: "index")) do %>
-              <%= icon "squares-four", css: "size-4 shrink-0" %>
+              <%= icon "squares-four", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.title") %>
             <% end %>
           </li>

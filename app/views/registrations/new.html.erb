@@ -27,7 +27,7 @@
 
     <% if @user.errors.any? %>
       <div role="alert" class="alert alert-error flex items-start gap-3 mb-8">
-        <%= icon "warning", css: "size-4 shrink-0 mt-1" %>
+        <%= icon "warning", class: "size-4 shrink-0 mt-1" %>
         <div class="min-w-0">
           <p class="mono-label mb-1"><%= t("shared.flash_error") %></p>
           <% @user.errors.full_messages.each do |msg| %>

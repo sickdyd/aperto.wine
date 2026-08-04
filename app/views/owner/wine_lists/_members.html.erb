@@ -92,14 +92,14 @@
         </p>
         <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="link-mono mt-2">
           <%= t("owner.wine_lists.manage_wines") %>
-          <%= icon "arrow-right", css: "ml-2 size-3.5" %>
+          <%= icon "arrow-right", class: "ml-2 size-3.5" %>
         </a>
       <% elsif items.any? %>
         <p class="empty-state"><%= t("owner.wine_lists.members.all_added") %></p>
       <% else %>
         <p class="note mt-4 mb-4"><%= t("owner.wine_lists.members.no_wines") %></p>
         <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn-wine">
-          <%= icon "wine", css: "size-4" %>
+          <%= icon "wine", class: "size-4" %>
           <%= t("owner.wine_lists.members.go_to_wines") %>
         </a>
       <% end %>

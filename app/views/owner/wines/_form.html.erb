@@ -2,7 +2,7 @@
       data: { controller: "wine-autofill", wine_autofill_url_value: owner_wine_lookups_path } do |f| %>
   <% if wine.errors.any? %>
     <div role="alert" class="alert alert-error">
-      <%= icon "warning", css: "size-4" %>
+      <%= icon "warning", class: "size-4" %>
       <div>
         <% wine.errors.full_messages.each do |msg| %>
           <p><%= msg %></p>

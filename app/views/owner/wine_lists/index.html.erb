@@ -9,17 +9,17 @@
   <div class="flex flex-wrap items-center gap-2">
     <% if @restaurant.active? %>
       <a href="<%= menu_path(id: @restaurant.id) %>" target="_blank" rel="noopener" class="btn-wine-outline">
-        <%= icon "eye", css: "size-4" %>
+        <%= icon "eye", class: "size-4" %>
         <%= t("owner.restaurants.preview_menu") %>
       </a>
     <% else %>
       <span class="btn-wine-outline btn-disabled" title="<%= t("owner.restaurants.preview_inactive_hint") %>">
-        <%= icon "eye-slash", css: "size-4" %>
+        <%= icon "eye-slash", class: "size-4" %>
         <%= t("owner.restaurants.preview_menu") %>
       </span>
     <% end %>
     <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine">
-      <%= icon "plus", css: "size-4" %>
+      <%= icon "plus", class: "size-4" %>
       <%= t("owner.wine_lists.add") %>
     </a>
   </div>
@@ -78,7 +78,7 @@
                      class="btn-wine-quiet"
                      aria-label="<%= "#{t('shared.edit')}: #{wine_list.name}" %>"
                      title="<%= t("shared.edit") %>">
-                    <%= icon "pencil-simple", css: "size-4" %>
+                    <%= icon "pencil-simple", class: "size-4" %>
                   </a>
                   <%= button_to owner_restaurant_wine_list_path(@restaurant, wine_list),
                         method: :delete,
@@ -86,7 +86,7 @@
                         title: t("shared.delete"),
                         aria: { label: "#{t('shared.delete')}: #{wine_list.name}" },
                         data: { turbo_confirm: t("owner.wine_lists.confirm_delete") } do %>
-                    <%= icon "trash", css: "size-4" %>
+                    <%= icon "trash", class: "size-4" %>
                   <% end %>
                 </div>
               </td>

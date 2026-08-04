@@ -9,7 +9,7 @@
 <%= form_with model: @generation, url: bulk_create_owner_restaurant_tables_path(@restaurant), scope: :table_bulk_generation, class: "max-w-xl space-y-8" do |f| %>
   <% if @generation.errors.any? %>
     <div role="alert" class="alert alert-error">
-      <%= icon "warning", css: "size-4 shrink-0" %>
+      <%= icon "warning", class: "size-4 shrink-0" %>
       <div>
         <% @generation.errors.full_messages.each do |msg| %>
           <p class="field-error"><%= msg %></p>
@@ -68,7 +68,7 @@
                     method: :delete,
                     class: "btn-wine-outline mt-4 border-error text-error hover:border-error hover:bg-error hover:text-base-100",
                     data: { turbo_confirm: t("owner.tables.bulk.confirm_delete_all") } do %>
-        <%= icon "trash", css: "size-4" %>
+        <%= icon "trash", class: "size-4" %>
         <%= t("owner.tables.bulk.delete_all") %>
       <% end %>
     </div>

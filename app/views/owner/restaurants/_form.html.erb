@@ -1,7 +1,7 @@
 <%= form_with model: [:owner, restaurant], class: "space-y-8 max-w-xl" do |f| %>
   <% if restaurant.errors.any? %>
     <div role="alert" class="alert alert-error items-start">
-      <%= icon "warning", css: "size-4 shrink-0 translate-y-0.5" %>
+      <%= icon "warning", class: "size-4 shrink-0 translate-y-0.5" %>
       <div>
         <% restaurant.errors.full_messages.each do |msg| %>
           <p><%= msg %></p>

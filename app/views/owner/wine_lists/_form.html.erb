@@ -1,7 +1,7 @@
 <%= form_with model: [:owner, @restaurant, wine_list], class: "space-y-8 max-w-xl" do |f| %>
   <% if wine_list.errors.any? %>
     <div role="alert" class="alert alert-error text-sm">
-      <%= icon "warning", css: "size-4" %>
+      <%= icon "warning", class: "size-4" %>
       <div>
         <% wine_list.errors.full_messages.each do |msg| %>
           <p><%= msg %></p>

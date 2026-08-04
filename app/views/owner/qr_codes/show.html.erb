@@ -7,7 +7,7 @@
   </div>
 
   <button type="button" onclick="window.print()" class="btn-wine">
-    <%= icon "printer", css: "size-4" %>
+    <%= icon "printer", class: "size-4" %>
     <%= t("owner.qr_code.print") %>
   </button>
 </div>
@@ -33,7 +33,7 @@
                 onclick="navigator.clipboard.writeText(document.getElementById('menu-url').value)"
                 class="btn-wine-quiet"
                 aria-label="<%= t("owner.qr_code.copy_link") %>">
-          <%= icon "copy", css: "size-4" %>
+          <%= icon "copy", class: "size-4" %>
         </button>
       </div>
     </div>

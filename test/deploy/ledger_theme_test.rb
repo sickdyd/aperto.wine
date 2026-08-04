@@ -19,7 +19,7 @@ class LedgerThemeTest < ActiveSupport::TestCase
   # Class names already spread across the views and the test suite. The ledger
   # restyles them; renaming any of them is a breaking change.
   PRESERVED_CLASSES = %w[
-    btn-wine btn-wine-outline divider-wine landing-section
+    btn-wine btn-wine-outline
     wine-dot wine-dot-red wine-dot-white wine-dot-rose wine-dot-sparkling wine-dot-dessert
     field field-label field-hint field-toggle
     form-section form-section-title form-actions
@@ -244,6 +244,25 @@ class LedgerThemeTest < ActiveSupport::TestCase
       "daisyUI sizes controls to 40px, under the WCAG 2.5.5 44px floor")
     assert_match(/padding-inline:\s*0/, block,
       "a ruled field starts flush with its label, not inset by daisyUI's 12px")
+  end
+
+
+  # rails_icons only recognises `class:`. Anything else — notably `css:`, which
+  # this app used everywhere — falls through to string_attributes and is emitted
+  # as a literal, meaningless css="..." attribute while the icon keeps the
+  # library default size. It renders, so nothing fails; the size and tint are
+  # just silently dropped. Verified: icon("clock", css: "size-3") produced
+  # <svg class="size-5" css="size-3">.
+  test "icon calls pass class:, never css:" do
+    offenders = Dir[Rails.root.join("app/views/**/*.erb")].filter_map do |view|
+      lines = File.readlines(view).each_with_index.select do |line, _|
+        line.match?(/\bicon[( ]/) && line.include?("css:") && !line.include?("render")
+      end
+      "#{view}:#{lines.map { |_, i| i + 1 }.join(',')}" if lines.any?
+    end
+    assert_empty offenders,
+      "icon(..., css:) is a silent no-op — the icon renders at the library " \
+      "default and the requested size/tint is discarded. Use class:."
   end
 
   test "the pour is decorative, self-contained and animation lives in the stylesheet" do

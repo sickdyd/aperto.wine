@@ -63,7 +63,7 @@
           params: { wine_id: item.wine.id, glass_size_ml: item.glass_size_ml },
           class: "btn-wine-quiet shrink-0 px-4",
           "aria-label": t("cart.remove_item", wine: item.wine.name) do %>
-      <%= icon "trash", css: "size-4" %>
+      <%= icon "trash", class: "size-4" %>
     <% end %>
   </div>
 </li>

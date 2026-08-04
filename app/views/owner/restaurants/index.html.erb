@@ -8,7 +8,7 @@
     <% end %>
   </div>
   <a href="<%= new_owner_restaurant_path %>" class="btn-wine">
-    <%= icon "plus", css: "size-4" %>
+    <%= icon "plus", class: "size-4" %>
     <%= t("owner.restaurants.add") %>
   </a>
 </div>
@@ -35,13 +35,13 @@
               <%= restaurant.name %>
             </a>
             <span class="mono-micro flex items-baseline gap-1.5 sm:hidden">
-              <%= icon "map-pin", css: "size-3 shrink-0 translate-y-0.5" %>
+              <%= icon "map-pin", class: "size-3 shrink-0 translate-y-0.5" %>
               <%= restaurant.address %>
             </span>
           </td>
           <td class="hidden align-middle text-ink-soft sm:table-cell">
             <span class="flex items-baseline gap-1.5">
-              <%= icon "map-pin", css: "size-3.5 shrink-0 translate-y-0.5 text-ox-4" %>
+              <%= icon "map-pin", class: "size-3.5 shrink-0 translate-y-0.5 text-ox-4" %>
               <%= restaurant.address %>
             </span>
           </td>

@@ -24,14 +24,14 @@
   <div class="w-full <%= content_for(:flash_class).presence || "max-w-2xl mx-auto px-4" %> pt-6">
     <% if notice %>
       <div role="alert" class="alert alert-success flex items-start gap-3 mb-6">
-        <%= icon "check-circle", css: "size-4 shrink-0 mt-1" %>
+        <%= icon "check-circle", class: "size-4 shrink-0 mt-1" %>
         <span class="mono-label shrink-0"><%= t("shared.flash_notice") %></span>
         <span class="min-w-0"><%= notice %></span>
       </div>
     <% end %>
     <% if alert %>
       <div role="alert" class="alert alert-error flex items-start gap-3 mb-6">
-        <%= icon "warning", css: "size-4 shrink-0 mt-1" %>
+        <%= icon "warning", class: "size-4 shrink-0 mt-1" %>
         <span class="mono-label shrink-0"><%= t("shared.flash_error") %></span>
         <span class="min-w-0"><%= alert %></span>
       </div>
