@@ -111,9 +111,14 @@ page. Derived, not downloaded ready-made, so the steps are recorded here:
 4. **Optimise** with `svgo` at `floatPrecision: 0`, then strip `width`/`height`
    so the viewBox alone sizes it, and set `fill="currentColor"`.
 
-Result is a single path, ~22 KB raw / ~10 KB gzipped, inlined so the hero costs
-no extra request. Re-derive rather than hand-edit if it ever needs redoing —
-tracing is cheap and the source is stable.
+Result is 55 paths — one carrying the bottle, glass and table, the other 54
+being ink specks the trace found, since potrace emits one path per disconnected
+blob. The `<svg>` payload is ~25 KB raw, ~10 KB gzipped, inlined so the hero
+costs no extra request. Note the app sets up no `Rack::Deflater`, so that
+gzip figure depends on compression at the edge.
+
+Re-derive rather than hand-edit if it ever needs redoing — tracing is cheap and
+the source is stable.
 
 ## 4. Avoid (attribution required on free tier)
 

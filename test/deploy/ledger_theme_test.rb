@@ -377,6 +377,11 @@ class LedgerThemeTest < ActiveSupport::TestCase
   # what lets it skip the reduced-motion branch every other moving thing here
   # has to carry — so "still" is the thing worth pinning.
   test "the engraving is still" do
+    # `[^{]*` cannot cross a `{`, so the match is pinned inside the block that
+    # opens right after the selector — it cannot wander into a later rule that
+    # merely happens to mention animation. Catches the property wherever it is
+    # declared on the plate: directly, under a pseudo-class, or inside a media
+    # query. Both `.engraving` and `.engraving-plate` are covered.
     refute_match(/\.engraving[\w-]*[^{]*\{[^}]*animation/m, @css,
       "the hero plate does not move")
     refute_match(/@keyframes\s+pour-/, @css,
