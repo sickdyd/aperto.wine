@@ -18,6 +18,8 @@ it:
     guest: "Ospite"
     flash_notice: "Avviso"
     flash_error: "Errore"
+    # Nome accessibile del pulsante di chiusura di ogni messaggio flash.
+    flash_dismiss: "Chiudi messaggio"
   auth:
     sign_in: "Accedi"
     sign_up: "Crea Account"

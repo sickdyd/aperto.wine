@@ -1,0 +1,34 @@
+<%# One floating flash band, shared by the public and the owner stack so the
+    two surfaces cannot drift apart. `variant` is the daisyUI colour class,
+    which supplies the ground; the mono caps label and the state's own icon
+    say the same thing in words and in shape, so neither success nor error
+    rests on colour alone.
+
+    `variant` arrives as the WHOLE class name — "alert-success", never a
+    "success" that this template completes into one. Tailwind builds its
+    stylesheet from the class strings it can find by scanning these files, so
+    a name stitched together at render time is a name it never sees: the rule
+    is silently never emitted and the band loses its ground, with nothing
+    failing to say so. That is not hypothetical — it is what this partial did
+    first, and the success flash rendered on plain paper because of it.
+
+    role="alert" is a live region: it announces the band without moving focus
+    into it, which matters because the band is dismissible and a focus trap on
+    something that disappears on a timer would be worse than no announcement.
+
+    The local is `icon_name`, not `icon` — a local of that name would shadow
+    the rails_icons helper called on the next line. %>
+<div role="alert"
+     class="alert <%= variant %> toast-band flex items-start gap-3"
+     data-controller="flash"
+     data-flash-timeout-value="<%= flash_toast_timeout_ms %>">
+  <%= icon icon_name, class: "size-4 shrink-0 mt-1" %>
+  <span class="mono-label shrink-0 mt-1"><%= label %></span>
+  <span class="min-w-0 flex-1"><%= message %></span>
+  <button type="button"
+          class="toast-dismiss"
+          aria-label="<%= t("shared.flash_dismiss") %>"
+          data-action="flash#dismiss">
+    <%= icon "x", class: "size-4" %>
+  </button>
+</div>

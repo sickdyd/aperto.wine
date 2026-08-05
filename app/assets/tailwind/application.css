@@ -916,6 +916,111 @@
   /* daisyUI alerts, rethemed: a ruled band, not a card. The `alert-*` colour
      variants supply the ground; the type stays readable serif. */
 
+  /* ═════════════════════════════════════════════════════════════════════════
+     FLASH TOASTS — a slip of paper laid on the page, not bound into it.
+
+     The flash arrives unannounced on a page that was already laid out, so it
+     is taken out of flow entirely: it costs the page no space, on any surface,
+     whether or not there is anything to say. Pinned top-centre rather than
+     bottom because the public menu already parks a cart bar along the bottom
+     edge (menus/_cart_bar, fixed bottom-0 z-30).
+
+     The container spans the top of the viewport on every page, so it must be
+     click-through — pointer-events go back on for the band itself, which
+     carries the dismiss button. The bands are `.alert` too, so the colour
+     ground, the serif type and the 4px oxblood left rule all come from the
+     unlayered `.alert.alert` reskin; what is added here is only what floating
+     costs — the closed edge, further down, and this stack.
+     ═════════════════════════════════════════════════════════════════════════ */
+  .toast-stack {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Clears the owner drawer (z-50), the owner mobile navbar (z-40) and the
+       public cart bar (z-30) — a flash under any of them is unreadable. */
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 42rem;
+    margin-inline: auto;
+    /* Doubles as the small-screen gutter: a band flush to both phone edges
+       reads as a system bar rather than as a message about this page. */
+    padding: 1rem;
+    pointer-events: none;
+  }
+
+  /* The owner shell keeps a sticky navbar along the top edge below `lg`, and
+     the drawer button is the only way to reach the menu on a phone. A toast
+     pinned to y=0 sits squarely on top of it — for six seconds the button is
+     there, looks pressable, and does nothing. Clear the navbar's 4rem instead.
+     Above `lg` the navbar is `lg:hidden` and the drawer is always open, so the
+     stack goes back to the top edge. Only the owner shell needs this: no
+     public surface pins anything to the top. */
+  .ledger-admin .toast-stack {
+    top: 4rem;
+  }
+
+  @media (min-width: 64rem) {
+    .ledger-admin .toast-stack {
+      top: 0;
+    }
+  }
+
+  .toast-band {
+    pointer-events: auto;
+  }
+
+  /* Icon-only, so its whole reason to be this size is the 44px target floor;
+     the negative margins keep it from stretching the band around it. */
+  .toast-dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+    margin: -0.75rem -0.75rem -0.75rem 0;
+    border: 0;
+    background-color: transparent;
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  .toast-dismiss:hover {
+    opacity: 1;
+  }
+
+  /* The band is removed from the DOM one fade later — see flash_controller. */
+  .toast-band.toast-leaving {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* `backwards`, never `forwards`/`both`: a filled-forwards animation keeps
+       its last keyframe applied at the animation tier of the cascade, which
+       outranks every normal author declaration — including `.toast-leaving`'s
+       `opacity: 0` below. The band would then cut out instead of fading. With
+       the entrance unfilled, the element falls back to its own declarations
+       the moment it lands, and the leave transition has something to run. */
+    .toast-band {
+      animation: toast-in 180ms ease-out backwards;
+    }
+
+    .toast-band.toast-leaving {
+      transition: opacity 180ms ease-in;
+    }
+  }
+
+  /* The QR card sheets are cut out and stood on tables. A fixed overlay
+     stamped across one is a wasted print run. */
+  @media print {
+    .toast-stack {
+      display: none;
+    }
+  }
+
   /* An owner sidebar / drawer entry: mono caps, a rule for the current page. */
   .nav-item {
     @apply flex items-center gap-3 px-3 no-underline;
@@ -1437,6 +1542,14 @@
   35.6%, 100% { transform: rotate(0deg); }
 }
 
+/* A flash slides down out of the top edge — a short move, because it is a
+   notification and not an entrance. Guarded by prefers-reduced-motion where
+   it is applied. */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-0.5rem); }
+  to   { opacity: 1; transform: none; }
+}
+
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
@@ -1578,6 +1691,22 @@
      nested. Every .alert in this app is a flash band or a form error summary
      and wants the full measure. */
   width: 100%;
+}
+
+/* A floating band has the page scrolling underneath it, so unlike an in-flow
+   alert it needs a closed edge to read as its own object. The ledger's answer
+   is a rule, never a blur: the 4px oxblood left rule above, plus a hairline in
+   the section-break ink on the other three, which holds against both the paper
+   ground of the page and the band's own darker fill.
+
+   Doubled class, and here rather than in @layer components, for the same
+   reason the block above is: `.alert.alert` zeroes border-width, and a single
+   class — layered or not — loses to it. Same specificity, later source order.
+   Layout for these bands is `.toast-stack`, which is layered normally. */
+.toast-band.toast-band {
+  border-top: 1px solid var(--color-rule-heavy);
+  border-right: 1px solid var(--color-rule-heavy);
+  border-bottom: 1px solid var(--color-rule-heavy);
 }
 
 .wine-group {
