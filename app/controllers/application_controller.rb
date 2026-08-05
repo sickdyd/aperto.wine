@@ -25,17 +25,59 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # Resolution priority, highest first: an explicit :locale param, an override
+  # remembered from an earlier switcher click, then whatever the request
+  # negotiates on its own — Accept-Language, falling back to
+  # I18n.default_locale (:it). Every source is filtered through
+  # #supported_locale, so nothing user-controlled reaches I18n.with_locale,
+  # which raises I18n::InvalidLocale — a 500 — on anything it does not know.
   def switch_locale(&action)
-    locale = params[:locale] || extract_locale_from_header || I18n.default_locale
-    I18n.with_locale(locale, &action)
+    negotiated = locale_from_header || I18n.default_locale
+    chosen = supported_locale(params[:locale])
+    remember_locale_override(chosen, negotiated) if chosen
+
+    I18n.with_locale(chosen || supported_locale(session[:locale]) || negotiated, &action)
   end
 
-  def extract_locale_from_header
-    accept_language = request.env["HTTP_ACCEPT_LANGUAGE"]
-    return nil unless accept_language
+  # Only a locale that departs from what the request negotiates on its own is
+  # worth remembering. default_url_options prefixes every internal link with
+  # the locale whenever it is not the default, so persisting on the mere
+  # presence of the param would turn any ordinary click into a durable
+  # preference — and on a shared browser, silently impose it on the next
+  # visitor. Picking the negotiated locale is how a visitor drops the override
+  # and goes back to being led by their browser.
+  def remember_locale_override(chosen, negotiated)
+    if chosen == negotiated
+      session.delete(:locale)
+    else
+      session[:locale] = chosen.to_s
+    end
+  end
 
-    parsed = accept_language.scan(/([a-z]{2})(?:-[A-Z]{2})?/).flatten
-    parsed.find { |lang| I18n.available_locales.include?(lang.to_sym) }
+  # Accept-Language is ordered by the q-value, not by position (RFC 9110
+  # §12.5.4) — a proxy or hand-built request may well list its preferences out
+  # of order, and "q=0" means "not acceptable" rather than "least preferred".
+  def locale_from_header
+    accept_language = request.env["HTTP_ACCEPT_LANGUAGE"]
+    return nil if accept_language.blank?
+
+    ranked = accept_language.split(",").each_with_index.filter_map do |range, position|
+      tag, *parameters = range.split(";").map(&:strip)
+      locale = supported_locale(tag.to_s[/\A[A-Za-z]{2}/])
+      next unless locale
+
+      quality = parameters.find { |p| p.start_with?("q=") }&.delete_prefix("q=")&.to_f || 1.0
+      [ locale, quality, position ] if quality.positive?
+    end
+
+    # Highest q wins; ties go to whichever the client listed first.
+    ranked.min_by { |_locale, quality, position| [ -quality, position ] }&.first
+  end
+
+  def supported_locale(locale)
+    return nil if locale.blank?
+
+    locale.to_s.to_sym if I18n.available_locales.include?(locale.to_s.to_sym)
   end
 
   def default_url_options
