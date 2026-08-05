@@ -94,6 +94,68 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
     end
   end
 
+  # Password and Email are grammatically feminine in Italian. rails-i18n itself
+  # already treats password as feminine (it ships `password_too_long: "è troppo
+  # lunga"`), and Email (< posta elettronica) is feminine per the Accademia della
+  # Crusca. The gem's generic halves are masculine ("lasciato", "corto",
+  # "valido"), so each feminine attribute whose validation can fire carries an
+  # override that agrees in gender. The English side mirrors the gem and is
+  # drift-guarded below.
+  test "password too_short error agrees in gender under :it" do
+    user = User.new(valid_attributes_for_user.merge(password: "short", password_confirmation: "short"))
+    I18n.with_locale(:it) do
+      user.valid?
+      message = user.errors.where(:password, :too_short).first&.message
+      assert message, "expected a password too_short error, got: #{user.errors.details.inspect}"
+      assert_match(/è troppo corta/, message, "feminine 'password' should read 'corta'")
+      assert_no_match(/è troppo corto\b/, message, "masculine 'corto' leaked for feminine 'password'")
+    end
+  end
+
+  test "password blank error agrees in gender under :it" do
+    user = User.new(valid_attributes_for_user.merge(password: "", password_confirmation: ""))
+    I18n.with_locale(:it) do
+      user.valid?
+      message = user.errors.where(:password, :blank).first&.message
+      assert message, "expected a password blank error, got: #{user.errors.details.inspect}"
+      assert_equal "non può essere lasciata in bianco", message
+    end
+  end
+
+  test "email blank error agrees in gender under :it" do
+    user = User.new(valid_attributes_for_user.merge(email: ""))
+    I18n.with_locale(:it) do
+      user.valid?
+      message = user.errors.where(:email, :blank).first&.message
+      assert message, "expected an email blank error, got: #{user.errors.details.inspect}"
+      assert_equal "non può essere lasciata in bianco", message
+    end
+  end
+
+  test "email invalid error agrees in gender under :it" do
+    user = User.new(valid_attributes_for_user.merge(email: "not-an-email"))
+    I18n.with_locale(:it) do
+      user.valid?
+      message = user.errors.where(:email, :invalid).first&.message
+      assert message, "expected an email invalid error, got: #{user.errors.details.inspect}"
+      assert_equal "non è valida", message
+    end
+  end
+
+  test "password_confirmation mismatch names the field in Italian under :it" do
+    user = User.new(valid_attributes_for_user.merge(password: "password123", password_confirmation: "different123"))
+    I18n.with_locale(:it) do
+      user.valid?
+      assert_includes user.errors.full_messages, "Conferma password non coincide con Password"
+    end
+  end
+
+  test "password_confirmation mismatch names the field in English under :en" do
+    user = User.new(valid_attributes_for_user.merge(password: "password123", password_confirmation: "different123"))
+    user.valid?
+    assert_includes user.errors.full_messages, "Password confirmation doesn't match Password"
+  end
+
   # Drift guard for the English side of the too_long/in overrides above.
   #
   # We keep en.yml and it.yml at literal key parity because the user asked for
@@ -114,7 +176,11 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
     "activerecord.errors.models.wine_list.attributes.season.too_long" => "errors.messages.too_long",
     "activerecord.errors.models.restaurant_table.attributes.area.too_long" => "errors.messages.too_long",
     "activerecord.errors.models.wine.attributes.acidity.in" => "errors.messages.in",
-    "activerecord.errors.models.wine.attributes.sweetness.in" => "errors.messages.in"
+    "activerecord.errors.models.wine.attributes.sweetness.in" => "errors.messages.in",
+    "activerecord.errors.models.user.attributes.password.too_short" => "errors.messages.too_short",
+    "activerecord.errors.models.user.attributes.password.blank" => "errors.messages.blank",
+    "activerecord.errors.models.user.attributes.email.blank" => "errors.messages.blank",
+    "activerecord.errors.models.user.attributes.email.invalid" => "errors.messages.invalid"
   }.freeze
 
   ENGLISH_GEM_MIRRORED_OVERRIDES.each do |override_key, gem_key|
@@ -133,5 +199,10 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
   def valid_attributes_for_wine
     { restaurant: restaurants(:osteria), name: "Chianti Classico", color: :red,
       bottle_size_ml: 750, available_glasses: 5 }
+  end
+
+  def valid_attributes_for_user
+    { email: "taster-#{SecureRandom.hex(4)}@example.com", name: "Taster",
+      role: :customer, password: "password123", password_confirmation: "password123" }
   end
 end

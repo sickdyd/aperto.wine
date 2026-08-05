@@ -438,6 +438,7 @@ it:
         email: "Email"
         name: "Nome"
         password: "Password"
+        password_confirmation: "Conferma password"
         role: "Ruolo"
       order:
         total_amount_cents: "Totale"
@@ -488,6 +489,19 @@ it:
           attributes:
             wine:
               wrong_restaurant: "deve appartenere allo stesso ristorante della lista"
+        # Password and Email are feminine (rails-i18n itself ships
+        # password_too_long: "è troppo lunga"; Email < posta elettronica), so
+        # their blank/too_short/invalid halves agree in gender.
+        user:
+          attributes:
+            password:
+              too_short:
+                one: "è troppo corta (il minimo è %{count} carattere)"
+                other: "è troppo corta (il minimo è %{count} caratteri)"
+              blank: "non può essere lasciata in bianco"
+            email:
+              blank: "non può essere lasciata in bianco"
+              invalid: "non è valida"
   menu:
     title: "Carta dei Vini"
     search_label: "Cerca nella carta"

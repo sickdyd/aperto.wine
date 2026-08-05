@@ -433,6 +433,7 @@ en:
         email: "Email"
         name: "Name"
         password: "Password"
+        password_confirmation: "Password confirmation"
         role: "Role"
       order:
         total_amount_cents: "Total"
@@ -450,8 +451,10 @@ en:
       # invalid_url and wrong_restaurant are custom messages with no rails-i18n
       # fallback, so every locale must define them.
       #
-      # The too_long/in keys below mirror rails-i18n's generic English defaults
-      # (errors.messages.*). They are NOT required for English to render right:
+      # The gender/parity keys below (too_long, in, too_short, blank, invalid)
+      # mirror rails-i18n's generic English defaults (errors.messages.*). Their
+      # only reason to exist in English is parity with the Italian overrides,
+      # which agree in gender. They are NOT required for English to render right:
       # for validation errors ActiveModel passes the whole error-key chain as
       # symbol defaults, which I18n exhausts within :en — reaching the gem's
       # English errors.messages.too_long — before the :it fallback is consulted,
@@ -491,6 +494,16 @@ en:
           attributes:
             wine:
               wrong_restaurant: "must belong to the same restaurant as the list"
+        user:
+          attributes:
+            password:
+              too_short:
+                one: "is too short (minimum is %{count} character)"
+                other: "is too short (minimum is %{count} characters)"
+              blank: "can't be blank"
+            email:
+              blank: "can't be blank"
+              invalid: "is invalid"
   menu:
     title: "Wine List"
     search_label: "Search the list"
