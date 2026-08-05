@@ -4,8 +4,8 @@
     separate owner layout; both float the same `.toast-stack` and render the
     same `shared/_flash_band`.
 
-    The stack is fixed to the top-centre of the viewport and is only in the
-    document when there is something to say — a flash costs this page no
+    The stack is fixed to the bottom-right corner of the viewport and is only
+    in the document when there is something to say — a flash costs this page no
     space and no reflow either way. Width and gutters belong to `.toast-stack`
     now; there is no per-page narrowing hook any more, because a floating band
     is not sitting above a form column to begin with.

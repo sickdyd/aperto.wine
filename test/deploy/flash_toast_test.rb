@@ -56,15 +56,26 @@ class FlashToastTest < ActiveSupport::TestCase
 
   test "the stack is click-through but its bands are not" do
     assert_match(/pointer-events:\s*none/, stack_block,
-      "the stack spans the top of the viewport whether or not it holds a " \
-      "band; without this it eats clicks on the page beneath it")
+      "the stack is a fixed box over the corner of every page whether or not " \
+      "it holds a band; without this it eats clicks on the page beneath it")
     assert_match(/pointer-events:\s*auto/, band_blocks,
       "the band itself carries a dismiss button and must stay clickable")
   end
 
-  test "the stack is centred and bounded rather than edge to edge" do
-    assert_match(/max-width:\s*42rem/, stack_block)
-    assert_match(/margin-inline:\s*auto/, stack_block)
+  test "the stack is anchored to the bottom-right corner" do
+    assert_match(/bottom:\s*0/, stack_block,
+      "the toast sits in the corner, clear of the masthead and of the page's " \
+      "own first line, which is where the eye starts")
+    assert_match(/margin-left:\s*auto/, stack_block,
+      "left and right are both pinned so a phone gets the full width; the " \
+      "auto margin is what pulls the stack into the corner once there is room")
+    refute_match(/^\s*top:/, stack_block,
+      "a `top` alongside `bottom` stretches the stack down the whole viewport")
+  end
+
+  test "the stack is bounded rather than edge to edge" do
+    assert_match(/max-width:\s*28rem/, stack_block,
+      "a corner toast is an aside; at the old 42rem it read as a second masthead")
     assert_match(/padding:\s*[^;]+/, stack_block,
       "the padding is the small-screen gutter — a band flush to both edges " \
       "of a phone reads as a system bar, not as a message")
@@ -119,16 +130,13 @@ class FlashToastTest < ActiveSupport::TestCase
     end
   end
 
-  # The owner shell pins a navbar to the top edge below `lg`, and the drawer
-  # button in it is the only route to the menu on a phone.
-  test "the stack clears the owner's sticky navbar on small screens" do
-    assert_match(/\.ledger-admin\s+\.toast-stack\s*\{[^}]*top:\s*4rem/m, @css,
-      "a toast at y=0 covers the owner drawer button, which then looks " \
-      "pressable and does nothing for as long as the toast is up")
-    assert_match(
-      /@media \(min-width: 64rem\)\s*\{\s*\.ledger-admin\s+\.toast-stack\s*\{[^}]*top:\s*0/m,
-      @css,
-      "above lg the navbar is hidden, so the offset must be given back")
+  # The menu's cart bar is the one thing already pinned to the bottom edge.
+  # This is not a rare overlap: adding to the cart redirects back to the menu
+  # with a notice, so the toast and the bar are drawn on the same render every
+  # single time, and the bar carries the way on to the cart.
+  test "the stack sits above the menu's cart bar rather than across it" do
+    assert_match(/body:has\(#cart-bar\)\s+\.toast-stack\s*\{[^}]*bottom:\s*5rem/m, @css,
+      "a corner toast lands on the cart bar, which is where the cart link is")
   end
 
   test "the entrance animation is behind a reduced-motion guard" do
