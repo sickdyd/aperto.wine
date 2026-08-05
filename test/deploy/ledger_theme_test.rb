@@ -9,7 +9,7 @@ class LedgerThemeTest < ActiveSupport::TestCase
   STYLESHEET = Rails.root.join("app/assets/tailwind/application.css")
   PUBLIC_LAYOUT = Rails.root.join("app/views/layouts/application.html.erb")
   OWNER_LAYOUT = Rails.root.join("app/views/layouts/owner.html.erb")
-  POUR_PARTIAL = Rails.root.join("app/views/shared/_pour.html.erb")
+  ENGRAVING_PARTIAL = Rails.root.join("app/views/shared/_engraving.html.erb")
 
   # Everything after this comment banner in the stylesheet is deliberately
   # unlayered. See the banner itself for why.
@@ -360,15 +360,31 @@ class LedgerThemeTest < ActiveSupport::TestCase
     assert_match(/font-family:\s*var\(--font-mono\)/, base)
   end
 
-  test "the pour is decorative, self-contained and animation lives in the stylesheet" do
-    partial = POUR_PARTIAL.read
+  test "the engraving is decorative, self-contained and inked from the stylesheet" do
+    partial = ENGRAVING_PARTIAL.read
 
     assert_match(/aria-hidden="true"/, partial,
       "surrounding content carries the meaning; the plate itself says nothing")
     refute_match(/<img|src=|https?:/, partial,
       "the engraving is inline SVG — no asset, no external request")
     refute_match(/\sstyle="/, partial, "styling belongs in the stylesheet, not on the element")
-    assert_match(/@media \(prefers-reduced-motion: no-preference\)/, @css)
-    assert_match(/\.pour-plate\s*\{\s*@apply/, @css)
+    assert_match(/fill="currentColor"/, partial,
+      "the trace carries no ink of its own — .engraving-plate colours it")
+    assert_match(/\.engraving-plate\s*\{\s*@apply/, @css)
+  end
+
+  # The hero used to run a 24s pouring loop. It is a still plate now, which is
+  # what lets it skip the reduced-motion branch every other moving thing here
+  # has to carry — so "still" is the thing worth pinning.
+  test "the engraving is still" do
+    # `[^{]*` cannot cross a `{`, so the match is pinned inside the block that
+    # opens right after the selector — it cannot wander into a later rule that
+    # merely happens to mention animation. Catches the property wherever it is
+    # declared on the plate: directly, under a pseudo-class, or inside a media
+    # query. Both `.engraving` and `.engraving-plate` are covered.
+    refute_match(/\.engraving[\w-]*[^{]*\{[^}]*animation/m, @css,
+      "the hero plate does not move")
+    refute_match(/@keyframes\s+pour-/, @css,
+      "the pouring sequence is gone; no orphan keyframes left behind")
   end
 end

@@ -182,9 +182,6 @@
     --grain-fine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.42' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='0.2' intercept='0.8'/%3E%3CfeFuncG type='linear' slope='0.2' intercept='0.8'/%3E%3CfeFuncB type='linear' slope='0.2' intercept='0.8'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23f)'/%3E%3C/svg%3E");
     --grain-blot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='680' height='680'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='0.09' intercept='0.91'/%3E%3CfeFuncG type='linear' slope='0.09' intercept='0.91'/%3E%3CfeFuncB type='linear' slope='0.09' intercept='0.91'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='680' height='680' filter='url(%23b)'/%3E%3C/svg%3E");
     --grain-opacity: 1;
-
-    /* the pour's full cycle: one pour, then a long stillness */
-    --pour-cycle: 24s;
   }
 
   body {
@@ -1367,179 +1364,25 @@
   }
 
   /* ═════════════════════════════════════════════════════════════════════════
-     12. THE POUR — the hero engraving. Markup lives in
-         app/views/shared/_pour.html.erb; this is the ink and the sequence.
+     12. THE ENGRAVING — the hero plate. Markup lives in
+         app/views/shared/_engraving.html.erb; this is the ink and the measure.
      ═════════════════════════════════════════════════════════════════════════ */
 
-  .pour {
-    width: min(100%, 24rem);
+  /* Narrower than the hero's 24rem column: the plate is a tall portrait, and
+     at the column's full width it out-measures the headline standing beside
+     it. Centred, so it holds the column on its own once the grid collapses. */
+  .engraving {
+    width: min(100%, 17rem);
     margin-inline: auto;
   }
 
-  .pour-plate {
+  /* The trace is one filled path set to `fill="currentColor"`, so the whole
+     plate inks from here — the deepest step of the ramp, as the heavy rules
+     use. Static: nothing on this plate moves. */
+  .engraving-plate {
     @apply block h-auto w-full;
+    color: var(--color-ox-1);
   }
-
-  /* Contour: the drawn line, in the deepest step of the ramp. */
-  .pour-ln {
-    fill: none;
-    stroke: var(--color-ox-1);
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  /* pathLength="1" normalises every contour, so one dash spans the whole path
-     and the gap is wide enough that an over-shot offset never wraps into view. */
-  .pour-draw {
-    stroke-dasharray: 1 2;
-    stroke-dashoffset: 0;
-  }
-
-  /* Hatching and stipple: the same ink, laid thinner. */
-  .pour-hatch {
-    fill: none;
-    stroke: var(--color-ox-1);
-    stroke-linecap: round;
-    stroke-width: 0.9;
-    --pour-o: 0.56;
-    opacity: var(--pour-o);
-  }
-
-  .pour-hatch-2 { stroke-width: 0.7; --pour-o: 0.42; }
-  .pour-hatch-3 { stroke-width: 0.55; --pour-o: 0.3; }
-  .pour-hatch-4 { stroke-width: 0.45; --pour-o: 0.2; }
-  .pour-hatch-foil { stroke-width: 1.05; --pour-o: 0.62; }
-
-  .pour-stipple {
-    fill: var(--color-ox-1);
-    stroke: none;
-    --pour-o: 0.32;
-    opacity: var(--pour-o);
-  }
-
-  .pour-tint {
-    fill: var(--color-ox-1);
-    stroke: none;
-    --pour-o: 0.22;
-    opacity: var(--pour-o);
-  }
-
-  /* The wine itself, in the core step of the ramp. */
-  .pour-wine { fill: var(--color-ox-2); }
-  .pour-wine-top { fill: color-mix(in srgb, var(--color-ox-3) 82%, var(--color-ox-5)); }
-
-  .pour-wine-edge {
-    fill: none;
-    stroke: var(--color-ox-1);
-    stroke-width: 0.9;
-    opacity: 0.45;
-  }
-
-  .pour-stream-g { opacity: 0; }
-
-  .pour-stream {
-    fill: none;
-    stroke: var(--color-ox-2);
-    stroke-width: 3.1;
-    stroke-linecap: round;
-    stroke-dasharray: 1 2;
-    stroke-dashoffset: 0;
-  }
-
-  .pour-bottle,
-  .pour-rise,
-  .pour-slosh {
-    transform-box: view-box;
-  }
-
-  /* Origins are plain user units — the base of the bottle, the belly of the wine. */
-  .pour-bottle { transform-origin: 78px 318px; }
-  .pour-rise,
-  .pour-slosh { transform-origin: 223px 208px; }
-
-  /* The sequence. Reduced motion gets the finished state declared above,
-     untouched: everything drawn, the glass poured, no stream, no movement. */
-  @media (prefers-reduced-motion: no-preference) {
-    .pour-plate { animation: pour-cycle var(--pour-cycle) cubic-bezier(.4, 0, .6, 1) infinite; }
-    .pour-draw { animation: pour-draw-a var(--pour-cycle) cubic-bezier(.62, .02, .35, 1) infinite; }
-    .pour-glass .pour-draw { animation-name: pour-draw-b; }
-    .pour-detail .pour-draw { animation-name: pour-draw-c; }
-    .pour-hatch,
-    .pour-stipple,
-    .pour-tint { animation: pour-hatch-in var(--pour-cycle) ease-out infinite; }
-    .pour-bottle { animation: pour-tip var(--pour-cycle) cubic-bezier(.45, .02, .3, 1) infinite; }
-    .pour-stream-g { animation: pour-stream-show var(--pour-cycle) linear infinite; }
-    .pour-stream { animation: pour-stream-run var(--pour-cycle) cubic-bezier(.4, 0, .35, 1) infinite; }
-    .pour-rise { animation: pour-fill var(--pour-cycle) cubic-bezier(.42, 0, .35, 1) infinite; }
-    .pour-slosh { animation: pour-settle var(--pour-cycle) cubic-bezier(.37, 0, .63, 1) infinite; }
-  }
-}
-
-/* The plate fades out before the reset, so the rewind is never seen. */
-@keyframes pour-cycle {
-  0%, 91% { opacity: 1; }
-  95.5%, 99.9% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-/* Trim paths: the contour draws itself on, staggered in three passes. */
-@keyframes pour-draw-a {
-  0%, 1.5% { stroke-dashoffset: 1.05; }
-  10.5%, 96% { stroke-dashoffset: 0; }
-  99.9%, 100% { stroke-dashoffset: 1.05; }
-}
-
-@keyframes pour-draw-b {
-  0%, 3.8% { stroke-dashoffset: 1.05; }
-  12.5%, 96% { stroke-dashoffset: 0; }
-  99.9%, 100% { stroke-dashoffset: 1.05; }
-}
-
-@keyframes pour-draw-c {
-  0%, 7.5% { stroke-dashoffset: 1.05; }
-  15%, 96% { stroke-dashoffset: 0; }
-  99.9%, 100% { stroke-dashoffset: 1.05; }
-}
-
-@keyframes pour-hatch-in {
-  0%, 8.3% { opacity: 0; }
-  14.2%, 96% { opacity: var(--pour-o); }
-  99.9%, 100% { opacity: 0; }
-}
-
-@keyframes pour-tip {
-  0%, 14.2% { transform: translate(0, 0) rotate(0deg); }
-  19.2%, 25% { transform: translate(-59px, -106px) rotate(62deg); }
-  30%, 100% { transform: translate(0, 0) rotate(0deg); }
-}
-
-@keyframes pour-stream-show {
-  0%, 19% { opacity: 0; }
-  19.2%, 28.3% { opacity: 1; }
-  28.5%, 100% { opacity: 0; }
-}
-
-@keyframes pour-stream-run {
-  0%, 19.2% { stroke-dashoffset: 1.05; }
-  22.1%, 25.4% { stroke-dashoffset: 0; }
-  28.4%, 100% { stroke-dashoffset: -1.05; }
-}
-
-@keyframes pour-fill {
-  0%, 19.6% { transform: translateY(60px); }
-  27.1%, 96% { transform: translateY(0); }
-  99.9%, 100% { transform: translateY(60px); }
-}
-
-/* The surface comes to rest: a wobble that damps out. */
-@keyframes pour-settle {
-  0%, 26.7% { transform: rotate(0deg); }
-  28.4% { transform: rotate(2.4deg); }
-  30.2% { transform: rotate(-1.5deg); }
-  31.9% { transform: rotate(0.85deg); }
-  33.4% { transform: rotate(-0.4deg); }
-  34.6% { transform: rotate(0.15deg); }
-  35.6%, 100% { transform: rotate(0deg); }
 }
 
 /* A flash slides down out of the top edge — a short move, because it is a
