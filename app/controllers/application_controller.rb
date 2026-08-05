@@ -25,17 +25,36 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # Resolution priority, highest first: an explicit :locale param, the choice
+  # remembered from an earlier explicit pick, the browser's Accept-Language,
+  # then I18n.default_locale (:it). Every source is filtered through
+  # #supported_locale, so nothing user-controlled reaches I18n.with_locale,
+  # which raises I18n::InvalidLocale — a 500 — on anything unrecognised.
   def switch_locale(&action)
-    locale = params[:locale] || extract_locale_from_header || I18n.default_locale
+    chosen = supported_locale(params[:locale])
+    # Remember explicit picks only. Without this the visitor loses the choice
+    # on the next click: default_url_options drops the prefix once the locale
+    # matches the default, and Accept-Language then wins the unprefixed request.
+    # Only write on an actual change, so repeat visits to a prefixed URL do not
+    # ship a fresh Set-Cookie on every response.
+    session[:locale] = chosen.to_s if chosen && session[:locale] != chosen.to_s
+
+    locale = chosen || supported_locale(session[:locale]) || locale_from_header || I18n.default_locale
     I18n.with_locale(locale, &action)
   end
 
-  def extract_locale_from_header
+  def locale_from_header
     accept_language = request.env["HTTP_ACCEPT_LANGUAGE"]
     return nil unless accept_language
 
-    parsed = accept_language.scan(/([a-z]{2})(?:-[A-Z]{2})?/).flatten
-    parsed.find { |lang| I18n.available_locales.include?(lang.to_sym) }
+    parsed = accept_language.scan(/([a-z]{2})(?:-[A-Za-z]{2})?/).flatten
+    parsed.filter_map { |lang| supported_locale(lang) }.first
+  end
+
+  def supported_locale(locale)
+    return nil if locale.blank?
+
+    locale.to_s.to_sym if I18n.available_locales.include?(locale.to_s.to_sym)
   end
 
   def default_url_options
