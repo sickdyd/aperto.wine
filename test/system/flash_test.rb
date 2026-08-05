@@ -83,34 +83,53 @@ class FlashTest < ApplicationSystemTestCase
       "alert-success rule was never emitted"
   end
 
-  # Below `lg` the owner shell pins a navbar to the top edge, and the drawer
-  # button in it is the only route to the menu. A toast at y=0 covers it: the
-  # button is still there and still looks pressable, and does nothing.
-  test "a toast never covers the owner drawer button" do
-    was = current_window.size
-    # Chrome will not go below ~500px wide; anything under the lg breakpoint
-    # shows the navbar, which is all this needs.
-    current_window.resize_to(430, 900)
+  # The menu's cart bar is the one piece of chrome already pinned to the bottom
+  # edge, and the corner the toast now occupies is its right-hand end — where
+  # the link to the cart is. This is the every-time case, not an edge case:
+  # adding to the cart redirects back to the menu with a notice, so both are
+  # drawn on the same render.
+  #
+  # The clearance is a measured constant in the stylesheet, so what is asserted
+  # here is the thing that actually matters — that the two boxes do not
+  # overlap — rather than the number itself, which may legitimately change.
+  test "a toast never lands on the menu's cart bar" do
+    barolo = wines(:barolo)
+    visit menu_path(id: restaurants(:osteria))
 
-    sign_in_as @owner
+    find("button[aria-label='#{I18n.t("menu.add_to_cart", wine: barolo.name, size: 125)}']").click
 
+    assert_selector "#cart-bar"
     assert_selector ".toast-band"
-    assert_operator evaluate_script("window.innerWidth"), :<, 1024,
-      "the navbar is lg:hidden; above the breakpoint there is nothing to cover"
 
-    topmost = evaluate_script(<<~JS)
+    overlap = evaluate_script(<<~JS)
       (() => {
-        const r = document.querySelector("label[for=owner-drawer]").getBoundingClientRect()
-        const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
-        return el.closest(".toast-stack") ? "toast" : "drawer button"
+        const toast = document.querySelector(".toast-stack").getBoundingClientRect()
+        const bar = document.querySelector("#cart-bar").getBoundingClientRect()
+        return !(toast.bottom <= bar.top || toast.top >= bar.bottom ||
+                 toast.right <= bar.left || toast.left >= bar.right)
       })()
     JS
 
-    assert_equal "drawer button", topmost,
-      "the toast is on top of the drawer button — on a phone that is the " \
-      "only way to reach the owner menu"
-  ensure
-    current_window.resize_to(*was) if was
+    refute overlap,
+      "the toast overlaps the cart bar — the bar carries the link to the " \
+      "cart, and it is drawn on the very render that shows this notice"
+  end
+
+  # The bar only exists once the cart holds something; the rest of the time
+  # the toast should be using the corner it was given.
+  test "the cart-bar clearance is not paid on pages without one" do
+    sign_in_as @owner
+    assert_selector ".toast-band"
+
+    gap = evaluate_script(<<~JS)
+      (() => {
+        const r = document.querySelector(".toast-stack").getBoundingClientRect()
+        return window.innerHeight - r.bottom
+      })()
+    JS
+
+    assert_in_delta 0, gap, 1,
+      "the stack is sitting off the bottom edge on a page with no cart bar"
   end
 
   test "a band can be dismissed" do

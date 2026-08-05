@@ -918,20 +918,24 @@
 
      The flash arrives unannounced on a page that was already laid out, so it
      is taken out of flow entirely: it costs the page no space, on any surface,
-     whether or not there is anything to say. Pinned top-centre rather than
-     bottom because the public menu already parks a cart bar along the bottom
-     edge (menus/_cart_bar, fixed bottom-0 z-30).
+     whether or not there is anything to say. It sits in the bottom-right
+     corner — out of the way of the masthead and the page's own first line,
+     which is where the eye starts, and away from every piece of pinned chrome
+     but one. That one is handled below.
 
-     The container spans the top of the viewport on every page, so it must be
-     click-through — pointer-events go back on for the band itself, which
-     carries the dismiss button. The bands are `.alert` too, so the colour
-     ground, the serif type and the 4px oxblood left rule all come from the
-     unlayered `.alert.alert` reskin; what is added here is only what floating
-     costs — the closed edge, further down, and this stack.
+     The container is click-through — pointer-events go back on for the band
+     itself, which carries the dismiss button — because it is a fixed box over
+     the corner of every page and would otherwise be a dead zone. The bands are
+     `.alert` too, so the colour ground, the serif type and the 4px oxblood left
+     rule all come from the unlayered `.alert.alert` reskin; what is added here
+     is only what floating costs — the closed edge, further down, and this
+     stack.
      ═════════════════════════════════════════════════════════════════════════ */
   .toast-stack {
     position: fixed;
-    top: 0;
+    bottom: 0;
+    /* Both edges, so the stack fills the width on a phone and the max-width
+       plus `margin-left: auto` pull it into the corner once there is room. */
     left: 0;
     right: 0;
     /* Clears the owner drawer (z-50), the owner mobile navbar (z-40) and the
@@ -940,29 +944,28 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    max-width: 42rem;
-    margin-inline: auto;
+    /* Narrower than the old full-width band: a corner toast is an aside, and
+       at 42rem it read as a second masthead. */
+    max-width: 28rem;
+    margin-left: auto;
     /* Doubles as the small-screen gutter: a band flush to both phone edges
        reads as a system bar rather than as a message about this page. */
     padding: 1rem;
     pointer-events: none;
   }
 
-  /* The owner shell keeps a sticky navbar along the top edge below `lg`, and
-     the drawer button is the only way to reach the menu on a phone. A toast
-     pinned to y=0 sits squarely on top of it — for six seconds the button is
-     there, looks pressable, and does nothing. Clear the navbar's 4rem instead.
-     Above `lg` the navbar is `lg:hidden` and the drawer is always open, so the
-     stack goes back to the top edge. Only the owner shell needs this: no
-     public surface pins anything to the top. */
-  .ledger-admin .toast-stack {
-    top: 4rem;
-  }
+  /* The one thing already pinned to the bottom edge: the menu's cart bar
+     (menus/_cart_bar, `fixed inset-x-0 bottom-0 z-30`), which appears once the
+     cart holds an item. That is not a rare overlap to wave away — adding to
+     the cart redirects back to the menu with a notice, so the toast and the
+     bar are drawn on the same render, every time, and the bar carries the way
+     on to the cart. Sit above it rather than across it.
 
-  @media (min-width: 64rem) {
-    .ledger-admin .toast-stack {
-      top: 0;
-    }
+     The 5rem is measured from the bar as built (3px rule + 0.75rem padding
+     twice + a 2.75rem control) with room to spare, and a system test asserts
+     the two boxes do not overlap, so this cannot drift silently. */
+  body:has(#cart-bar) .toast-stack {
+    bottom: 5rem;
   }
 
   .toast-band {
@@ -1385,11 +1388,11 @@
   }
 }
 
-/* A flash slides down out of the top edge — a short move, because it is a
-   notification and not an entrance. Guarded by prefers-reduced-motion where
-   it is applied. */
+/* A flash rises from the bottom edge it is anchored to — a short move, because
+   it is a notification and not an entrance. Guarded by prefers-reduced-motion
+   where it is applied. */
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(-0.5rem); }
+  from { opacity: 0; transform: translateY(0.5rem); }
   to   { opacity: 1; transform: none; }
 }
 
