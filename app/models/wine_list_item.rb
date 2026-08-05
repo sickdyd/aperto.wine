@@ -13,6 +13,6 @@ class WineListItem < ApplicationRecord
     return if wine.nil? || wine_list.nil?
     return if wine.restaurant_id == wine_list.restaurant_id
 
-    errors.add(:wine, "must belong to the same restaurant as the list")
+    errors.add(:wine, :wrong_restaurant)
   end
 end

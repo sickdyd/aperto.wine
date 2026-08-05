@@ -115,6 +115,19 @@ module Owner
       assert_match "Jane Diner", response.body
     end
 
+    test "GET /owner/restaurants/:id/orders/:id labels the customer field rather than doubling the Guest word" do
+      sign_in_as @owner
+      order = orders(:guest_order)
+      # No customer and no guest_name: order_customer_label falls back to
+      # shared.guest ("Guest"). The field label must read "Customer", not "Guest"
+      # — the label key used to be "Guest" too, rendering "Guest Guest".
+      order.update_columns(customer_id: nil, guest_name: nil)
+      get owner_restaurant_order_path(restaurant_id: @restaurant, id: order)
+      assert_response :success
+      assert_equal "Customer", I18n.t("owner.orders.customer")
+      assert_select "span.mono-micro", text: I18n.t("owner.orders.customer")
+    end
+
     test "GET /owner/restaurants/:id/orders/:id reads as an itemised docket" do
       sign_in_as @owner
       get owner_restaurant_order_path(restaurant_id: @restaurant, id: @pending_order)

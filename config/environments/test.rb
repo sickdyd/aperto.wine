@@ -45,8 +45,10 @@ Rails.application.configure do
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
-  # Raises error for missing translations.
-  # config.i18n.raise_on_missing_translations = true
+  # Raises error for missing translations. Production runs in Italian, so a
+  # view that references a key missing from the active locale must fail the
+  # suite rather than silently fall back to English.
+  config.i18n.raise_on_missing_translations = true
 
   # The whole suite (fixtures, fill_in/click labels, flash assertions) is
   # written against the English UI. Production defaults to Italian; here the

@@ -1,0 +1,56 @@
+# i18n-tasks configuration — https://github.com/glebm/i18n-tasks
+#
+# Wired into the suite via test/i18n_test.rb, which fails CI when the two
+# locales drift (a key present in one but not the other), when interpolations
+# disagree, or when a key is left unused. Production runs in Italian, so this is
+# the guard that keeps en.yml and it.yml at parity.
+
+base_locale: en
+locales: [en, it]
+
+data:
+  read:
+    - config/locales/%{locale}.yml
+  yaml:
+    write:
+      line_width: -1
+
+search:
+  paths:
+    - app/
+  # Reads model names/attributes (model_name.human, human_attribute_name) via
+  # explicit calls too, so activerecord keys used that way are counted as used.
+  ast_matchers:
+    - I18n::Tasks::Scanners::AstMatchers::RailsModelMatcher
+
+# Keys the static scanner cannot see as used, so they must not be flagged unused.
+ignore_unused:
+  # Model layer: Rails resolves these inside form builders and error rendering,
+  # not through a literal t() the scanner can match.
+  - "activerecord.*"
+  - "activemodel.*"
+  # Reached only by interpolation, e.g. t("owner.wines.colors.#{wine.color}") —
+  # the scanner cannot enumerate the dynamic final segment.
+  - "owner.wines.colors.*"
+  - "owner.orders.statuses.*"
+  - "owner.tables.bulk.patterns.*"
+  - "orders.status.hints.*"
+  - "cart.errors.*"
+  # Copy kept on purpose but not currently rendered. Pre-existing dead keys the
+  # audit found; left in place for a separate cleanup PR rather than deleted
+  # here. owner.orders.{wine,price,glass_size} are additional dead keys this
+  # gem surfaced (the manual audit missed them).
+  - "nav.home"
+  - "nav.orders"
+  - "shared.confirm"
+  - "shared.loading"
+  - "owner.wines.glasses_available"
+  - "owner.wine_lists.hidden"
+  - "owner.orders.wine"
+  - "owner.orders.price"
+  - "owner.orders.glass_size"
+
+# activerecord attribute names carry no interpolation, so they can never be
+# inconsistent — keep them out of that report.
+ignore_inconsistent_interpolations:
+  - "activerecord.attributes.*"

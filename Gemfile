@@ -63,6 +63,11 @@ group :development, :test do
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false
 
+  # Static analysis of the locale files: catches keys present in one locale but
+  # missing in the other, inconsistent interpolations, and unused keys. Wired
+  # into the suite via test/i18n_test.rb so a half-translated page fails CI.
+  gem "i18n-tasks", "~> 1.1", require: false
+
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 

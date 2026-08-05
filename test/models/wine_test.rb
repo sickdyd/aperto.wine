@@ -203,7 +203,9 @@ class WineTest < ActiveSupport::TestCase
   test "rejects tasting attribute above 5" do
     wine = Wine.new(valid_attributes.merge(tannins: 6))
     assert_not wine.valid?
-    assert wine.errors.of_kind?(:tannins, :in)
+    # Bounded with less_than_or_equal_to rather than `in:` so the error message
+    # carries a plain integer instead of a raw "0..5" Ruby Range.
+    assert wine.errors.of_kind?(:tannins, :less_than_or_equal_to)
   end
 
   test "rejects tasting attribute below 0" do

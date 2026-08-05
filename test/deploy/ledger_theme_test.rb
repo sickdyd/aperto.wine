@@ -222,6 +222,59 @@ class LedgerThemeTest < ActiveSupport::TestCase
   end
 
 
+  # The admin detail type — column heads, meta lines, the masthead subtitle — is
+  # read at a glance across a room, not studied. EB Garamond's small x-height
+  # means anything under 12px shreds. These guard the legibility floor so a
+  # future scale tweak can't quietly drop the small end back under it.
+  test "no type token in the theme is below the 12px floor" do
+    theme = @css[/@theme\s*\{(.*?)\n\}/m, 1]
+    assert theme, "the @theme block is missing"
+
+    theme.scan(/(--text-[a-z0-9-]+):\s*([\d.]+)rem\b/).each do |name, value|
+      assert_operator value.to_f, :>=, 0.75,
+        "#{name} is #{value}rem — admin detail type is read at a glance and " \
+        "must not fall below the 0.75rem (12px) floor"
+    end
+  end
+
+  test "note prose is never smaller than the body it sits beside" do
+    assert_match(/--text-note:\s*1rem\b/, @css,
+      "the italic description paragraph sits next to 16px body; at 15px it " \
+      "read as an afterthought — --text-note must be at least 1rem")
+  end
+
+  test "caps tracking is loosened, not shredded" do
+    value = @css[/--tracking-wide-caps:\s*([\d.]+)em/, 1]
+    assert value, "--tracking-wide-caps is missing"
+    assert_operator value.to_f, :<=, 0.1,
+      "JetBrains Mono is already monospaced; wide-caps tracking above 0.1em " \
+      "pulls the smallest mono labels apart into loose letters"
+  end
+
+  test "the wider-caps tracking is loosened, not shredded" do
+    value = @css[/--tracking-wider-caps:\s*([\d.]+)em/, 1]
+    assert value, "--tracking-wider-caps is missing"
+    assert_operator value.to_f, :<=, 0.16,
+      "the widest mono caps still ride on already-monospaced letters; " \
+      "wider-caps tracking above 0.16em opens the smallest labels into loose " \
+      "letters, the same failure --tracking-wide-caps guards against"
+  end
+
+  test "the admin subtitle sets an explicit weight" do
+    block = @css[/^\s*\.admin-subtitle\s*\{[^}]*\}/m]
+    assert block, ".admin-subtitle is missing from the stylesheet"
+    assert_match(/font-weight:\s*(?:500|600|700)\b/, block,
+      "the masthead subtitle is 12px mono caps; only italic 400 of the body " \
+      "loads, so it needs an explicit heavier mono weight (500/600/700) to " \
+      "hold up — a lighter weight would defeat the guard's own purpose")
+  end
+
+  test "the bare search input paints its own placeholder" do
+    assert_match(/\.search-field input::placeholder\s*\{/, @css,
+      "the menu search is a bare <input type=search>, not a daisyUI .input, " \
+      "so the .input::placeholder reskin never reaches it — it needs its own")
+  end
+
   test "flash bands fill their column rather than shrink-wrapping" do
     assert_match(/^\.alert\.alert\s*\{[^}]*width:\s*100%/m, @css,
       "daisyUI sets .alert to width: fit-content, which shrink-wraps a flash " \

@@ -18,8 +18,12 @@ class TableBulkGeneration
   attr_accessor :restaurant
   attr_reader :created_count, :skipped_count
 
-  validates :floors_count, numericality: { only_integer: true, in: 1..MAX_FLOORS }
-  validates :tables_per_floor, numericality: { only_integer: true, in: 1..MAX_TABLES_PER_FLOOR }
+  # greater_than_or_equal_to/less_than_or_equal_to rather than `in: 1..MAX` so the
+  # error carries a plain integer bound, never a raw "1..10" Ruby Range.
+  validates :floors_count,
+            numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: MAX_FLOORS }
+  validates :tables_per_floor,
+            numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: MAX_TABLES_PER_FLOOR }
   validates :name_pattern, inclusion: { in: NAME_PATTERNS }
   # RestaurantTable#area max length is 100; area_for appends " #{floor}" (up to " 10" = 3 chars),
   # so floor_label must not exceed 97 to stay within the limit.

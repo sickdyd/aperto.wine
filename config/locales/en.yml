@@ -25,6 +25,7 @@ en:
     sign_up: "Create Account"
     sign_out: "Sign Out"
     email: "Email"
+    email_placeholder: "you@example.com"
     password: "Password"
     password_confirmation: "Confirm Password"
     password_hint: "Minimum 8 characters"
@@ -333,14 +334,14 @@ en:
       all: "All"
       approve: "Approve"
       cancel_order: "Cancel Order"
-      approved: "Order approved. Bottle opened if needed."
+      approved: "Order approved. Open the bottle if needed."
       cancelled: "Order cancelled."
       confirm_cancel: "Are you sure you want to cancel this order?"
       empty_title: "No orders yet"
       empty_description: "Orders will appear here when customers place them."
       no_table: "No table"
       table: "Table"
-      guest: "Guest"
+      customer: "Customer"
       items: "Items"
       placed: "Placed"
       status: "Status"
@@ -372,6 +373,134 @@ en:
         tables_per_floor: "Tables per floor"
         floor_label: "Floor name"
         name_pattern: "Table naming"
+  # Model layer — English parity for the it.yml activerecord block. The suite
+  # runs under :en, so these values are what the existing model tests assert.
+  activerecord:
+    models:
+      restaurant: "Restaurant"
+      wine: "Wine"
+      wine_list: "Wine list"
+      wine_list_item: "Wine list entry"
+      restaurant_table: "Table"
+      user: "User"
+      order: "Order"
+      order_item: "Order item"
+    attributes:
+      restaurant:
+        name: "Name"
+        address: "Address"
+        proximity_radius_meters: "Order proximity radius"
+        description: "Description"
+        user: "Owner"
+      wine:
+        name: "Name"
+        producer: "Producer"
+        grape_variety: "Grape variety"
+        color: "Color"
+        vintage_year: "Vintage"
+        region: "Region"
+        description: "Tasting notes"
+        bottle_size_ml: "Bottle size"
+        price_bottle_cents: "Bottle price"
+        available_glasses: "Available glasses"
+        position: "Sort order"
+        abv: "ABV"
+        tannins: "Tannins"
+        acidity: "Acidity"
+        sweetness: "Sweetness"
+        body: "Body"
+        style: "Style"
+        short_description: "Short description"
+        image_url: "Image URL"
+        aromas: "Aromas"
+        food_pairings: "Food pairings"
+        label_image: "Label image"
+        restaurant: "Restaurant"
+      wine_list:
+        name: "Name"
+        season: "Season"
+        position: "Sort order"
+        restaurant: "Restaurant"
+      wine_list_item:
+        wine: "Wine"
+        wine_list: "Wine list"
+        position: "Sort order"
+      restaurant_table:
+        name: "Name"
+        area: "Room"
+        position: "Sort order"
+        restaurant: "Restaurant"
+      user:
+        email: "Email"
+        name: "Name"
+        password: "Password"
+        password_confirmation: "Password confirmation"
+        role: "Role"
+      order:
+        total_amount_cents: "Total"
+        guest_name: "Guest name"
+        restaurant: "Restaurant"
+        customer: "Customer"
+        restaurant_table: "Table"
+      order_item:
+        glass_size_ml: "Glass size"
+        quantity: "Quantity"
+        unit_price_cents: "Unit price"
+        order: "Order"
+        wine: "Wine"
+    errors:
+      # invalid_url and wrong_restaurant are custom messages with no rails-i18n
+      # fallback, so every locale must define them.
+      #
+      # The gender/parity keys below (too_long, too_short, blank, invalid)
+      # mirror rails-i18n's generic English defaults (errors.messages.*). Their
+      # only reason to exist in English is parity with the Italian overrides,
+      # which agree in gender. They are NOT required for English to render right:
+      # for validation errors ActiveModel passes the whole error-key chain as
+      # symbol defaults, which I18n exhausts within :en — reaching the gem's
+      # English errors.messages.too_long — before the :it fallback is consulted,
+      # even though I18n.fallbacks[:en] == [:en, :it]. So English resolves in
+      # English without these. We carry them anyway to keep en.yml and it.yml
+      # structurally identical key-for-key (the parity the user asked for, and
+      # what the i18n-tasks gate enforces). Because they duplicate the gem's
+      # values, a guard test (test/models/italian_validation_messages_test.rb)
+      # asserts they still match the gem, so an upstream reword fails loudly here
+      # instead of drifting silently.
+      models:
+        wine:
+          attributes:
+            image_url:
+              invalid_url: "must be an http(s) URL"
+            short_description:
+              too_long:
+                one: "is too long (maximum is %{count} character)"
+                other: "is too long (maximum is %{count} characters)"
+        wine_list:
+          attributes:
+            season:
+              too_long:
+                one: "is too long (maximum is %{count} character)"
+                other: "is too long (maximum is %{count} characters)"
+        restaurant_table:
+          attributes:
+            area:
+              too_long:
+                one: "is too long (maximum is %{count} character)"
+                other: "is too long (maximum is %{count} characters)"
+        wine_list_item:
+          attributes:
+            wine:
+              wrong_restaurant: "must belong to the same restaurant as the list"
+        user:
+          attributes:
+            password:
+              too_short:
+                one: "is too short (minimum is %{count} character)"
+                other: "is too short (minimum is %{count} characters)"
+              blank: "can't be blank"
+            email:
+              blank: "can't be blank"
+              invalid: "is invalid"
   menu:
     title: "Wine List"
     search_label: "Search the list"
@@ -432,7 +561,7 @@ en:
       rate_limited: "You're placing orders too quickly. Please wait a moment and try again."
     status:
       title: "Your Order"
-      placed_at: "Placed %{time}"
+      placed_at: "Placed on %{time}"
       status_label: "Status"
       table_label: "Table"
       no_table: "No table selected"
@@ -452,3 +581,6 @@ en:
         approved: "Approved — your wine is on its way."
         cancelled: "This order was cancelled."
         completed: "This order has been completed."
+  pwa:
+    # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
+    description: "aperto.wine — wine by the glass, by choice."
