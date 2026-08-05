@@ -9,11 +9,18 @@ class LocaleSwitcherTest < ApplicationSystemTestCase
   # default here reaches the server.
   setup do
     @previous_default = I18n.default_locale
+    # with_locale snapshots the lazily-derived I18n.locale into place on the
+    # Puma thread that serves the first request, and that thread is reused. The
+    # app always re-resolves inside switch_locale so nothing reads the stale
+    # value today, but restore it anyway — same reasoning as
+    # with_italian_default in test/integration/locale_negotiation_test.rb.
+    @previous_locale = I18n.locale
     I18n.default_locale = :it
   end
 
   teardown do
     I18n.default_locale = @previous_default
+    I18n.locale = @previous_locale
   end
 
   test "an English browser lands on the English site" do
@@ -41,7 +48,10 @@ class LocaleSwitcherTest < ApplicationSystemTestCase
     assert_selector "h1", text: I18n.t("auth.sign_in", locale: :it)
   end
 
-  test "switching back to English sticks too" do
+  # Picking English here matches what this browser already asks for, so the
+  # override is dropped rather than stored — the visitor ends up back on plain
+  # Accept-Language negotiation, which lands on English all the same.
+  test "switching back to English drops the override and stays English" do
     visit "/"
 
     within "footer" do

@@ -25,30 +25,53 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  # Resolution priority, highest first: an explicit :locale param, the choice
-  # remembered from an earlier explicit pick, the browser's Accept-Language,
-  # then I18n.default_locale (:it). Every source is filtered through
+  # Resolution priority, highest first: an explicit :locale param, an override
+  # remembered from an earlier switcher click, then whatever the request
+  # negotiates on its own — Accept-Language, falling back to
+  # I18n.default_locale (:it). Every source is filtered through
   # #supported_locale, so nothing user-controlled reaches I18n.with_locale,
-  # which raises I18n::InvalidLocale — a 500 — on anything unrecognised.
+  # which raises I18n::InvalidLocale — a 500 — on anything it does not know.
   def switch_locale(&action)
+    negotiated = locale_from_header || I18n.default_locale
     chosen = supported_locale(params[:locale])
-    # Remember explicit picks only. Without this the visitor loses the choice
-    # on the next click: default_url_options drops the prefix once the locale
-    # matches the default, and Accept-Language then wins the unprefixed request.
-    # Only write on an actual change, so repeat visits to a prefixed URL do not
-    # ship a fresh Set-Cookie on every response.
-    session[:locale] = chosen.to_s if chosen && session[:locale] != chosen.to_s
+    remember_locale_override(chosen, negotiated) if chosen
 
-    locale = chosen || supported_locale(session[:locale]) || locale_from_header || I18n.default_locale
-    I18n.with_locale(locale, &action)
+    I18n.with_locale(chosen || supported_locale(session[:locale]) || negotiated, &action)
   end
 
+  # Only a locale that departs from what the request negotiates on its own is
+  # worth remembering. default_url_options prefixes every internal link with
+  # the locale whenever it is not the default, so persisting on the mere
+  # presence of the param would turn any ordinary click into a durable
+  # preference — and on a shared browser, silently impose it on the next
+  # visitor. Picking the negotiated locale is how a visitor drops the override
+  # and goes back to being led by their browser.
+  def remember_locale_override(chosen, negotiated)
+    if chosen == negotiated
+      session.delete(:locale)
+    else
+      session[:locale] = chosen.to_s
+    end
+  end
+
+  # Accept-Language is ordered by the q-value, not by position (RFC 9110
+  # §12.5.4) — a proxy or hand-built request may well list its preferences out
+  # of order, and "q=0" means "not acceptable" rather than "least preferred".
   def locale_from_header
     accept_language = request.env["HTTP_ACCEPT_LANGUAGE"]
-    return nil unless accept_language
+    return nil if accept_language.blank?
 
-    parsed = accept_language.scan(/([a-z]{2})(?:-[A-Za-z]{2})?/).flatten
-    parsed.filter_map { |lang| supported_locale(lang) }.first
+    ranked = accept_language.split(",").each_with_index.filter_map do |range, position|
+      tag, *parameters = range.split(";").map(&:strip)
+      locale = supported_locale(tag.to_s[/\A[A-Za-z]{2}/])
+      next unless locale
+
+      quality = parameters.find { |p| p.start_with?("q=") }&.delete_prefix("q=")&.to_f || 1.0
+      [ locale, quality, position ] if quality.positive?
+    end
+
+    # Highest q wins; ties go to whichever the client listed first.
+    ranked.min_by { |_locale, quality, position| [ -quality, position ] }&.first
   end
 
   def supported_locale(locale)

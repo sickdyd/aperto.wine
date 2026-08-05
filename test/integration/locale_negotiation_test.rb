@@ -2,8 +2,8 @@ require "test_helper"
 
 # Locale resolution priority, highest first:
 #   1. an explicit :locale param (the footer switcher / a shared /en URL)
-#   2. the choice remembered in the session from an earlier explicit pick
-#   3. the browser's Accept-Language header
+#   2. an override remembered from an earlier switcher click
+#   3. the browser's Accept-Language header, ranked by q-value
 #   4. I18n.default_locale (:it in every env but test)
 class LocaleNegotiationTest < ActionDispatch::IntegrationTest
   ENGLISH_BROWSER = { "HTTP_ACCEPT_LANGUAGE" => "en-US,en;q=0.9" }.freeze
@@ -107,6 +107,64 @@ class LocaleNegotiationTest < ActionDispatch::IntegrationTest
 
       get "/", headers: ITALIAN_BROWSER
       assert_page_locale :it
+    end
+  end
+
+  # --- only a real override is remembered ---
+
+  test "following ordinary prefixed links never creates a preference" do
+    with_italian_default do
+      # An English browser gets /en on every internal link, so the param is
+      # present on clicks that have nothing to do with the switcher. Recording
+      # those would hand the next visitor of a shared browser someone else's
+      # language.
+      get "/en", headers: ENGLISH_BROWSER
+      assert_page_locale :en
+      assert_nil session[:locale]
+    end
+  end
+
+  test "picking the language the browser already asks for drops an earlier override" do
+    with_italian_default do
+      get "/it", headers: ENGLISH_BROWSER
+      assert_equal "it", session[:locale]
+
+      get "/en", headers: ENGLISH_BROWSER
+      assert_nil session[:locale]
+
+      # Back to being led by the browser rather than by a stored choice.
+      get "/", headers: ENGLISH_BROWSER
+      assert_page_locale :en
+    end
+  end
+
+  # --- Accept-Language is ranked by q-value ---
+
+  test "the highest q wins even when the header is not in preference order" do
+    with_italian_default do
+      get "/", headers: { "HTTP_ACCEPT_LANGUAGE" => "it;q=0.5,en;q=0.9" }
+      assert_page_locale :en
+    end
+  end
+
+  test "q=0 means the language is not acceptable" do
+    with_italian_default do
+      get "/", headers: { "HTTP_ACCEPT_LANGUAGE" => "en;q=0,it;q=0.4" }
+      assert_page_locale :it
+    end
+  end
+
+  test "equal q values fall back to the order the client listed" do
+    with_italian_default do
+      get "/", headers: { "HTTP_ACCEPT_LANGUAGE" => "en;q=0.8,it;q=0.8" }
+      assert_page_locale :en
+    end
+  end
+
+  test "a lowercase region tag is not mistaken for a second language" do
+    with_italian_default do
+      get "/", headers: { "HTTP_ACCEPT_LANGUAGE" => "en-us" }
+      assert_page_locale :en
     end
   end
 
