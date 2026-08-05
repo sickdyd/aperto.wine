@@ -2,8 +2,10 @@
     the tables, so paper is the real medium, not the screen.
 
     Everything screen-only in the page markup carries Tailwind's `print:hidden`;
-    what is left here is the shell we do not own — the fixed grain overlay, the
-    owner drawer and the flash strip — plus the card's own paper behaviour.
+    what is left here is the shell we do not own — the fixed grain overlay and
+    the owner drawer — plus the card's own paper behaviour. The flash is not on
+    this list: `.toast-stack` hides itself in print, from the stylesheet, on
+    every surface rather than only on the one that remembered to ask.
 
     The two rules that matter most: the grain is a fixed, multiplied overlay and
     would mottle every QR it printed over, and the QR itself is drawn in
@@ -12,11 +14,10 @@
 <style media="print">
   @page { margin: 12mm; }
 
-  /* The shell: fixed grain overlay, drawer, mobile bar, flash. */
+  /* The shell: fixed grain overlay, drawer, mobile bar. */
   .grain,
   .drawer-side,
-  .navbar,
-  #flash-messages { display: none !important; }
+  .navbar { display: none !important; }
 
   html, body { background: #fff !important; }
 

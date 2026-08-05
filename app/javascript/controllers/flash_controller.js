@@ -26,7 +26,13 @@ export default class extends Controller {
     this.clearTimers()
   }
 
+  // Idempotent: the close button can be pressed twice, or pressed at the same
+  // moment the auto-dismiss timer fires. Re-entering would restart the removal
+  // timer and hold an invisible band in the document for another fade.
   dismiss() {
+    if (this.leaving) return
+
+    this.leaving = true
     this.clearTimers()
     this.element.classList.add("toast-leaving")
     this.removalTimer = setTimeout(() => this.element.remove(), FADE_MS)
