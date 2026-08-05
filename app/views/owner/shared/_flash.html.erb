@@ -5,10 +5,13 @@
     flash it is an empty div that occupies no height.
 
     The band inside it is the same one the public shell renders, floating in
-    the same `.toast-stack` — see shared/_flash_band. %>
+    the same `.toast-stack` — see shared/_flash_band, and see there too for why
+    the stack is data-turbo-temporary. The wrapper itself is not: it has to
+    survive into the cached snapshot, or the Turbo Stream that replaces it by
+    id lands on a page where the target is missing. %>
 <div id="flash-messages">
   <% if notice || alert %>
-    <div class="toast-stack">
+    <div class="toast-stack" data-turbo-temporary>
       <% if notice %>
         <%= render "shared/flash_band",
                    variant: "alert-success",

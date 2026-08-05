@@ -123,4 +123,34 @@ class FlashTest < ApplicationSystemTestCase
 
     assert_no_selector ".toast-band"
   end
+
+  # Pressing the close button twice, or pressing it at the moment the
+  # auto-dismiss timer fires, must not restart the removal timer and hold an
+  # invisible band in the document for another fade.
+  test "dismissing twice still removes the band once" do
+    sign_in_as @owner
+
+    assert_selector ".toast-band"
+    find(".toast-dismiss").double_click
+
+    assert_no_selector ".toast-band"
+  end
+
+  # Turbo paints the cached snapshot of the previous page on back/forward
+  # before the fresh response arrives. A flash left in that snapshot slides
+  # back in with a fresh timer and reads as a new notification.
+  test "going back does not replay a flash the reader already saw" do
+    sign_in_as @owner
+    assert_selector ".toast-band"
+
+    # A Turbo navigation, so leaving here is what fills the snapshot cache.
+    click_link restaurants(:osteria).name
+    assert_no_selector ".toast-band"
+
+    page.go_back
+
+    assert_current_path owner_restaurants_path
+    assert page.has_no_selector?(".toast-band"),
+      "the toast came back from Turbo's cache — it needs data-turbo-temporary"
+  end
 end

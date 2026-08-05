@@ -173,6 +173,29 @@ class FlashToastTest < ActiveSupport::TestCase
     )
   end
 
+  # Turbo caches a page as it leaves it and paints that snapshot instantly on
+  # back/forward, before the fresh response lands. A flash baked into the
+  # snapshot is a message the reader already dealt with, and it does not come
+  # back quietly — the band animates in and arms a fresh six-second timer, so
+  # it reads as something new having just happened.
+  test "the stack is dropped from Turbo's cached snapshot" do
+    [ [ @public_flash, "public" ], [ @owner_flash, "owner" ] ].each do |partial, name|
+      assert_match(/<div class="toast-stack" data-turbo-temporary>/, partial,
+        "#{name} flash: without this the toast replays on back/forward")
+    end
+  end
+
+  # The wrapper is the Turbo Stream target, so unlike the stack it has to
+  # survive into the snapshot — a stream that lands on a restored page with no
+  # #flash-messages in it drops the message silently.
+  test "the owner Turbo Stream target is not dropped from the snapshot" do
+    target = @owner_flash[/<div id="flash-messages"[^>]*>/]
+
+    refute_match(/data-turbo-temporary/, target,
+      "#flash-messages is replaced by id from a Turbo Stream; drop it from " \
+      "the cached snapshot and the stream has nothing to replace")
+  end
+
   test "both surfaces float the same stack" do
     [ [ @public_flash, "public" ], [ @owner_flash, "owner" ] ].each do |partial, name|
       assert_match(/class="toast-stack"/, partial, "#{name} flash must use the shared stack")

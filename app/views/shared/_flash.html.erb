@@ -8,9 +8,16 @@
     document when there is something to say — a flash costs this page no
     space and no reflow either way. Width and gutters belong to `.toast-stack`
     now; there is no per-page narrowing hook any more, because a floating band
-    is not sitting above a form column to begin with. %>
+    is not sitting above a form column to begin with.
+
+    data-turbo-temporary: Turbo caches the page as it leaves it and paints that
+    snapshot instantly on back/forward before the fresh fetch arrives. A flash
+    baked into the snapshot is a message the reader has already dealt with —
+    and it does not come back quietly, it slides in and arms a fresh six-second
+    timer, so it reads as something new having just happened. The attribute
+    tells Turbo to drop the element before caching. %>
 <% if notice || alert %>
-  <div class="toast-stack">
+  <div class="toast-stack" data-turbo-temporary>
     <% if notice %>
       <%= render "shared/flash_band",
                  variant: "alert-success",
