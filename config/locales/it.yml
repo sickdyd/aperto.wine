@@ -427,7 +427,6 @@ it:
         restaurant: "Ristorante"
       wine_list_item:
         wine: "Vino"
-        wine_id: "Vino"
         wine_list: "Lista"
         position: "Ordine"
       restaurant_table:
@@ -464,7 +463,7 @@ it:
               invalid_url: "deve essere un URL http(s)"
             short_description:
               too_long:
-                one: "è troppo lunga (il massimo è 1 carattere)"
+                one: "è troppo lunga (il massimo è %{count} carattere)"
                 other: "è troppo lunga (il massimo è %{count} caratteri)"
             # numericality in: composes "deve essere uno tra %{count}" (masculine).
             # These two tasting attributes are feminine, so agree ("una tra");
@@ -477,13 +476,13 @@ it:
           attributes:
             season:
               too_long:
-                one: "è troppo lunga (il massimo è 1 carattere)"
+                one: "è troppo lunga (il massimo è %{count} carattere)"
                 other: "è troppo lunga (il massimo è %{count} caratteri)"
         restaurant_table:
           attributes:
             area:
               too_long:
-                one: "è troppo lunga (il massimo è 1 carattere)"
+                one: "è troppo lunga (il massimo è %{count} carattere)"
                 other: "è troppo lunga (il massimo è %{count} caratteri)"
         wine_list_item:
           attributes:

@@ -94,6 +94,40 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
     end
   end
 
+  # Drift guard for the English side of the too_long/in overrides above.
+  #
+  # We keep en.yml and it.yml at literal key parity because the user asked for
+  # the two files to stay consistent (and i18n-tasks enforces it). For validation
+  # errors the English keys are redundant, not load-bearing: ActiveModel passes
+  # the error-key chain as symbol defaults, which I18n exhausts within :en —
+  # reaching the gem's English errors.messages.* — before the :it fallback, so
+  # English renders in English even without them. That redundancy is exactly why
+  # this guard exists: the English values duplicate rails-i18n's generic defaults,
+  # which would drift silently if the gem reworded. This asserts each English
+  # override still equals the generic message it mirrors (errors.messages.*, owned
+  # by rails-i18n and not shadowed by this app), read from the loaded locale data
+  # at runtime. If it fails, the gem changed its wording: update the en.yml copy —
+  # and re-derive the it.yml gender form from the new wording — rather than
+  # deleting this guard.
+  ENGLISH_GEM_MIRRORED_OVERRIDES = {
+    "activerecord.errors.models.wine.attributes.short_description.too_long" => "errors.messages.too_long",
+    "activerecord.errors.models.wine_list.attributes.season.too_long" => "errors.messages.too_long",
+    "activerecord.errors.models.restaurant_table.attributes.area.too_long" => "errors.messages.too_long",
+    "activerecord.errors.models.wine.attributes.acidity.in" => "errors.messages.in",
+    "activerecord.errors.models.wine.attributes.sweetness.in" => "errors.messages.in"
+  }.freeze
+
+  ENGLISH_GEM_MIRRORED_OVERRIDES.each do |override_key, gem_key|
+    test "English #{override_key} still matches the rails-i18n default #{gem_key}" do
+      I18n.with_locale(:en) do
+        assert_equal I18n.t(gem_key), I18n.t(override_key),
+          "en.yml froze the rails-i18n wording for '#{gem_key}' and the gem has " \
+          "since reworded it. Update the English copy under '#{override_key}' to " \
+          "match (and re-derive the it.yml gender form), then this guard passes."
+      end
+    end
+  end
+
   private
 
   def valid_attributes_for_wine

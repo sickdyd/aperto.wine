@@ -422,7 +422,6 @@ en:
         restaurant: "Restaurant"
       wine_list_item:
         wine: "Wine"
-        wine_id: "Wine"
         wine_list: "Wine list"
         position: "Sort order"
       restaurant_table:
@@ -448,10 +447,21 @@ en:
         order: "Order"
         wine: "Wine"
     errors:
-      # These too_long overrides exist only to keep en/it structurally at parity
-      # (i18n-tasks would flag an it-only key as missing here). The wording
-      # matches the rails-i18n English default; the it.yml counterparts carry the
-      # actual fix — feminine gender agreement.
+      # invalid_url and wrong_restaurant are custom messages with no rails-i18n
+      # fallback, so every locale must define them.
+      #
+      # The too_long/in keys below mirror rails-i18n's generic English defaults
+      # (errors.messages.*). They are NOT required for English to render right:
+      # for validation errors ActiveModel passes the whole error-key chain as
+      # symbol defaults, which I18n exhausts within :en — reaching the gem's
+      # English errors.messages.too_long — before the :it fallback is consulted,
+      # even though I18n.fallbacks[:en] == [:en, :it]. So English resolves in
+      # English without these. We carry them anyway to keep en.yml and it.yml
+      # structurally identical key-for-key (the parity the user asked for, and
+      # what the i18n-tasks gate enforces). Because they duplicate the gem's
+      # values, a guard test (test/models/italian_validation_messages_test.rb)
+      # asserts they still match the gem, so an upstream reword fails loudly here
+      # instead of drifting silently.
       models:
         wine:
           attributes:
@@ -459,10 +469,8 @@ en:
               invalid_url: "must be an http(s) URL"
             short_description:
               too_long:
-                one: "is too long (maximum is 1 character)"
+                one: "is too long (maximum is %{count} character)"
                 other: "is too long (maximum is %{count} characters)"
-            # Parity placeholders for the it.yml gender fix on these keys; the
-            # wording matches the rails-i18n English default.
             acidity:
               in: "must be in %{count}"
             sweetness:
@@ -471,13 +479,13 @@ en:
           attributes:
             season:
               too_long:
-                one: "is too long (maximum is 1 character)"
+                one: "is too long (maximum is %{count} character)"
                 other: "is too long (maximum is %{count} characters)"
         restaurant_table:
           attributes:
             area:
               too_long:
-                one: "is too long (maximum is 1 character)"
+                one: "is too long (maximum is %{count} character)"
                 other: "is too long (maximum is %{count} characters)"
         wine_list_item:
           attributes:
