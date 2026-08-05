@@ -56,21 +56,3 @@
     <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn-wine-quiet"><%= t("shared.cancel") %></a>
   </div>
 <% end %>
-
-<% if @restaurant.restaurant_tables.any? %>
-  <%# The one destructive control on the page, set apart below a section break
-      and never within reach of the generate button. %>
-  <div class="mt-16 max-w-xl">
-    <hr class="rule-section">
-    <div class="panel mt-6">
-      <p class="field-hint"><%= t("owner.tables.bulk.delete_all_hint") %></p>
-      <%= button_to destroy_all_owner_restaurant_tables_path(@restaurant),
-                    method: :delete,
-                    class: "btn-wine-outline mt-4 border-error text-error hover:border-error hover:bg-error hover:text-base-100",
-                    data: { turbo_confirm: t("owner.tables.bulk.confirm_delete_all") } do %>
-        <%= icon "trash", class: "size-4" %>
-        <%= t("owner.tables.bulk.delete_all") %>
-      <% end %>
-    </div>
-  </div>
-<% end %>
