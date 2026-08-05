@@ -448,11 +448,31 @@ en:
         order: "Order"
         wine: "Wine"
     errors:
+      # These too_long overrides exist only to keep en/it structurally at parity
+      # (i18n-tasks would flag an it-only key as missing here). The wording
+      # matches the rails-i18n English default; the it.yml counterparts carry the
+      # actual fix — feminine gender agreement.
       models:
         wine:
           attributes:
             image_url:
               invalid_url: "must be an http(s) URL"
+            short_description:
+              too_long:
+                one: "is too long (maximum is 1 character)"
+                other: "is too long (maximum is %{count} characters)"
+        wine_list:
+          attributes:
+            season:
+              too_long:
+                one: "is too long (maximum is 1 character)"
+                other: "is too long (maximum is %{count} characters)"
+        restaurant_table:
+          attributes:
+            area:
+              too_long:
+                one: "is too long (maximum is 1 character)"
+                other: "is too long (maximum is %{count} characters)"
         wine_list_item:
           attributes:
             wine:

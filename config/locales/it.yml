@@ -388,7 +388,7 @@ it:
       restaurant_table: "Tavolo"
       user: "Utente"
       order: "Ordine"
-      order_item: "Articolo dell'ordine"
+      order_item: "Voce dell'ordine"
     attributes:
       restaurant:
         name: "Nome"
@@ -404,7 +404,7 @@ it:
         vintage_year: "Annata"
         region: "Regione"
         description: "Note di degustazione"
-        bottle_size_ml: "Dimensione bottiglia"
+        bottle_size_ml: "Formato bottiglia"
         price_bottle_cents: "Prezzo bottiglia"
         available_glasses: "Calici disponibili"
         position: "Ordine"
@@ -453,11 +453,31 @@ it:
         order: "Ordine"
         wine: "Vino"
     errors:
+      # Rails composes "%{attribute} %{message}" and rails-i18n's Italian halves
+      # are masculine singular ("è troppo lungo"). These attributes are
+      # feminine, so their too_long message is overridden to agree ("lunga").
+      # See test/models/italian_validation_messages_test.rb for the guard.
       models:
         wine:
           attributes:
             image_url:
               invalid_url: "deve essere un URL http(s)"
+            short_description:
+              too_long:
+                one: "è troppo lunga (il massimo è 1 carattere)"
+                other: "è troppo lunga (il massimo è %{count} caratteri)"
+        wine_list:
+          attributes:
+            season:
+              too_long:
+                one: "è troppo lunga (il massimo è 1 carattere)"
+                other: "è troppo lunga (il massimo è %{count} caratteri)"
+        restaurant_table:
+          attributes:
+            area:
+              too_long:
+                one: "è troppo lunga (il massimo è 1 carattere)"
+                other: "è troppo lunga (il massimo è %{count} caratteri)"
         wine_list_item:
           attributes:
             wine:

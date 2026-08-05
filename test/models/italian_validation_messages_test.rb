@@ -36,6 +36,31 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
     assert_includes item.errors[:wine], "must belong to the same restaurant as the list"
   end
 
+  # Rails composes "%{attribute} %{message}", and rails-i18n's Italian message
+  # halves are masculine singular (`too_long: "è troppo lungo …"`). Several
+  # attributes are grammatically feminine, so without a per-attribute override
+  # they read as broken Italian ("Stagione è troppo lungo") to a native speaker
+  # — worse than an obviously-untranslated string. Each feminine attribute whose
+  # validation can actually fire gets a `too_long` override agreeing in gender.
+  FEMININE_TOO_LONG_CASES = {
+    "Descrizione breve" => -> { Wine.new(valid_attributes_for_wine.merge(short_description: "a" * 501)) },
+    "Stagione" => -> { WineList.new(restaurant: restaurants(:osteria), name: "Estate", season: "a" * 51) },
+    "Sala" => -> { RestaurantTable.new(restaurant: restaurants(:osteria), name: "1", area: "a" * 101) }
+  }.freeze
+
+  FEMININE_TOO_LONG_CASES.each do |label, build|
+    test "#{label} too_long error agrees in gender under :it" do
+      record = instance_exec(&build)
+      I18n.with_locale(:it) do
+        record.valid?
+        message = record.errors.full_messages.find { |m| m.start_with?(label) }
+        assert message, "expected a #{label} error, got: #{record.errors.full_messages.inspect}"
+        assert_match(/è troppo lunga/, message, "feminine attribute should read 'lunga'")
+        assert_no_match(/è troppo lungo\b/, message, "masculine 'lungo' leaked for a feminine attribute")
+      end
+    end
+  end
+
   private
 
   def valid_attributes_for_wine
