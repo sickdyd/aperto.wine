@@ -54,7 +54,7 @@ it:
     account_nav: "Account"
     sign_in: "Accedi"
     sign_up: "Inizia ora"
-    hero_tagline: "La carta dei vini live"
+    hero_tagline: "La carta dei vini in tempo reale"
     # Entrambe le righe in tondo — la seconda è colorata dalla vista con lo
     # scalino centrale della rampa oxblood, mai in corsivo.
     hero_title_html: "Ogni grande bottiglia<br><span>merita di essere aperta</span>"
@@ -64,13 +64,13 @@ it:
     steps:
       - title: "Cura la tua lista"
         description: "Aggiungi i vini che vuoi offrire al calice. Imposta prezzi, dimensioni del calice e disponibilità. Aggiorna quando vuoi."
-      - title: "Posiziona il QR code"
-        description: "Stampa il QR code generato per i tuoi tavoli. I clienti scannerizzano e vedono istantaneamente la tua selezione live."
+      - title: "Posiziona il codice QR"
+        description: "Stampa il codice QR generato per i tuoi tavoli. I clienti scansionano e vedono istantaneamente la tua selezione in tempo reale."
       - title: "Versa e guadagna"
         description: "I clienti ordinano dal telefono. Tu approvi, versi, e trasformi l'inventario fermo in ricavo."
     restaurants_label: "Per i ristoranti"
     restaurants_title: "Trasforma lo stock fermo in profitto versato"
-    restaurants_description: "Le tue bottiglie pregiate non dovrebbero restare chiuse. aperto.wine ti permette di offrire qualsiasi vino al calice senza overhead — nessun menu da ristampare, nessun passaparola. Solo una lista live di cui i tuoi clienti si fidano."
+    restaurants_description: "Le tue bottiglie pregiate non dovrebbero restare chiuse. aperto.wine ti permette di offrire qualsiasi vino al calice senza costi aggiuntivi — nessun menu da ristampare, nessuna spiegazione a voce. Solo una lista in tempo reale di cui i tuoi clienti si fidano."
     restaurants_cta: "Registra il tuo ristorante"
     customers_label: "Per gli amanti del vino"
     customers_title: "Assaggia le bottiglie che hai sempre desiderato"
@@ -185,14 +185,14 @@ it:
         region_placeholder: "es. Piemonte"
         description: "Note di Degustazione"
         pricing: "Prezzi"
-        bottle_size: "Dimensione Bottiglia"
+        bottle_size: "Formato Bottiglia"
         price_bottle: "Prezzo Bottiglia"
         cents_hint: "in centesimi"
-        glass_prices_hint: "Imposta i prezzi per ogni misura di calice offerta (in centesimi). Lascia vuoto per le misure non offerte."
+        glass_prices_hint: "Imposta i prezzi per ogni formato di calice offerto (in centesimi). Lascia vuoto per i formati non offerti."
         availability: "Disponibilità"
         available_glasses: "Calici Disponibili"
         suggested: "Suggeriti"
-        position: "Ordine"
+        position: "Ordinamento"
         active_label: "Il vino è disponibile per l'ordine"
       autofill:
         aria_label: Nome del vino con suggerimenti automatici
@@ -215,20 +215,20 @@ it:
         zero: "Nessun vino"
         one: "1 vino"
         other: "%{count} vini"
-      empty_title: "Nessuna lista curata"
+      empty_title: "Nessuna lista selezionata"
       empty_description: "Crea una lista come Estate o Al Calice e seleziona i vini da mettere in evidenza."
       form:
         name: "Nome Lista"
         name_placeholder: "es. Selezione Estiva"
         season: "Stagione / Tema"
         season_placeholder: "es. Estate"
-        position: "Ordine"
+        position: "Ordinamento"
         active_label: "Pubblicata (visibile sulla carta pubblica)"
       members:
         title: "Vini in questa lista"
         intro: "Scegli i vini dal tuo catalogo condiviso — lo stesso vino può apparire in qualsiasi numero di liste. La disponibilità dipende sempre dalle bottiglie — i vini in evidenza ma esauriti appaiono come non disponibili."
         empty: "Nessun vino in questa lista."
-        position: "Ordine"
+        position: "Ordinamento"
         added: "Vino aggiunto alla lista."
         removed: "Vino rimosso dalla lista."
         reordered: "Ordine della lista aggiornato."
@@ -258,7 +258,7 @@ it:
       updated: "Tavolo aggiornato."
       deleted: "Tavolo rimosso. Gli ordini passati vengono conservati."
       confirm_delete: "Rimuovere questo tavolo? I codici QR già stampati smetteranno di identificarlo."
-      inactive: "Non attivo"
+      inactive: "Inattivo"
       no_area: "Senza sala"
       all_areas: "Tutte le sale"
       table_count:
@@ -318,7 +318,7 @@ it:
         active_label: "Attivo (il QR porta a questo tavolo)"
     qr_code:
       title: "Codice QR"
-      description: "Stampa questo codice QR e posizionalo sui tavoli. I clienti lo scansionano per vedere la tua carta dei vini live."
+      description: "Stampa questo codice QR e posizionalo sui tavoli. I clienti lo scansionano per vedere la tua carta dei vini in tempo reale."
       print: "Stampa Codice QR"
       menu_link: "Link Diretto"
       copy_link: "Copia il link del menu"
@@ -326,7 +326,7 @@ it:
       instructions:
         - "Stampa il codice QR qui sopra"
         - "Posizionalo su ogni tavolo o vicino alla selezione vini"
-        - "I clienti scansionano e vedono la tua carta dei vini live"
+        - "I clienti scansionano e vedono la tua carta dei vini in tempo reale"
         - "Possono ordinare al calice direttamente dal telefono"
     orders:
       title: "Ordini"
@@ -356,10 +356,10 @@ it:
         one: "1 ordine"
         other: "%{count} ordini"
       wine: "Vino"
-      glass_size: "Misura"
+      glass_size: "Formato"
       quantity: "Qtà"
       price: "Prezzo"
-      subtotal: "Subtotale"
+      subtotal: "Totale parziale"
       total: "Totale"
       statuses:
         pending: "In attesa"
@@ -414,7 +414,7 @@ it:
         # attributes so the error verb agrees: "Numero di calici disponibili deve
         # essere …" rather than the plural label clashing with singular "deve".
         available_glasses: "Numero di calici disponibili"
-        position: "Ordine"
+        position: "Ordinamento"
         abv: "Gradazione alcolica"
         tannins: "Livello di tannini"
         acidity: "Acidità"
@@ -430,16 +430,16 @@ it:
       wine_list:
         name: "Nome"
         season: "Stagione"
-        position: "Ordine"
+        position: "Ordinamento"
         restaurant: "Ristorante"
       wine_list_item:
         wine: "Vino"
         wine_list: "Lista"
-        position: "Ordine"
+        position: "Ordinamento"
       restaurant_table:
         name: "Nome"
         area: "Sala"
-        position: "Ordine"
+        position: "Ordinamento"
         restaurant: "Ristorante"
       user:
         email: "Email"
@@ -515,8 +515,8 @@ it:
     add_to_cart: "Aggiungi %{wine}, %{size} ml"
     cart_bar:
       item_count:
-        one: "1 articolo"
-        other: "%{count} articoli"
+        one: "1 vino"
+        other: "%{count} vini"
       view_cart: "Vai al carrello"
   cart:
     title: "Il tuo carrello"
@@ -539,7 +539,7 @@ it:
     dropped_item:
       unknown_wine: "Vino non disponibile"
       unavailable: "Non disponibile"
-      remove_unknown: "Rimuovi articolo non disponibile #%{wine_id} (%{size} ml)"
+      remove_unknown: "Rimuovi vino non disponibile #%{wine_id} (%{size} ml)"
       reasons:
         wine_not_found: "Questo vino non è più nel menu."
         wine_unavailable: "Questo vino non è al momento disponibile."
@@ -547,13 +547,13 @@ it:
     errors:
       wine_not_found: "Vino non trovato."
       wine_unavailable: "Questo vino non è più disponibile."
-      invalid_glass_size: "Formato di bicchiere non valido."
+      invalid_glass_size: "Formato di calice non valido."
       price_unavailable: "Questo vino non ha un prezzo per questo formato."
       cart_full: "Il carrello è pieno — rimuovi un vino prima di aggiungerne un altro."
   orders:
     form:
       guest_name: "Il tuo nome (facoltativo)"
-      guest_name_placeholder: "es. Jane"
+      guest_name_placeholder: "es. Giulia"
       submit: "Invia Ordine"
     errors:
       empty_cart: "Il tuo carrello è vuoto."
