@@ -372,6 +372,96 @@ it:
         tables_per_floor: "Tavoli per piano"
         floor_label: "Nome del piano"
         name_pattern: "Nome dei tavoli"
+  # Model layer. Composed by Rails into "%{model}"/"%{attribute} %{message}"
+  # sentences (see rails-i18n it.yml for the message halves, e.g. "deve
+  # esistere", "non può essere lasciato in bianco"), so the model names carry
+  # the gender the surrounding sentence assumes. Only attributes that surface
+  # in a validation or a form are translated. `wine_list` reads "Lista" to match
+  # the owner UI, which already says "Nuova Lista" / "Aggiungi Lista"; "Carta
+  # dei vini" stays reserved for the public menu.
+  activerecord:
+    models:
+      restaurant: "Ristorante"
+      wine: "Vino"
+      wine_list: "Lista"
+      wine_list_item: "Vino in lista"
+      restaurant_table: "Tavolo"
+      user: "Utente"
+      order: "Ordine"
+      order_item: "Articolo dell'ordine"
+    attributes:
+      restaurant:
+        name: "Nome"
+        address: "Indirizzo"
+        proximity_radius_meters: "Raggio di prossimità ordini"
+        description: "Descrizione"
+        user: "Proprietario"
+      wine:
+        name: "Nome"
+        producer: "Produttore"
+        grape_variety: "Vitigno"
+        color: "Colore"
+        vintage_year: "Annata"
+        region: "Regione"
+        description: "Note di degustazione"
+        bottle_size_ml: "Dimensione bottiglia"
+        price_bottle_cents: "Prezzo bottiglia"
+        available_glasses: "Calici disponibili"
+        position: "Ordine"
+        abv: "Gradazione alcolica"
+        tannins: "Tannini"
+        acidity: "Acidità"
+        sweetness: "Dolcezza"
+        body: "Corpo"
+        style: "Stile"
+        short_description: "Descrizione breve"
+        image_url: "URL immagine"
+        aromas: "Aromi"
+        food_pairings: "Abbinamenti"
+        label_image: "Etichetta"
+        restaurant: "Ristorante"
+      wine_list:
+        name: "Nome"
+        season: "Stagione"
+        position: "Ordine"
+        restaurant: "Ristorante"
+      wine_list_item:
+        wine: "Vino"
+        wine_id: "Vino"
+        wine_list: "Lista"
+        position: "Ordine"
+      restaurant_table:
+        name: "Nome"
+        area: "Sala"
+        position: "Ordine"
+        restaurant: "Ristorante"
+      user:
+        email: "Email"
+        name: "Nome"
+        password: "Password"
+        role: "Ruolo"
+      order:
+        total_amount_cents: "Totale"
+        guest_name: "Nome cliente"
+        restaurant: "Ristorante"
+        customer: "Cliente"
+        restaurant_table: "Tavolo"
+      order_item:
+        glass_size_ml: "Formato calice"
+        quantity: "Quantità"
+        unit_price_cents: "Prezzo unitario"
+        order: "Ordine"
+        wine: "Vino"
+    errors:
+      models:
+        wine:
+          attributes:
+            image_url:
+              invalid_url: "deve essere un URL http(s)"
+        wine_list_item:
+          attributes:
+            wine:
+              wrong_restaurant: "deve appartenere allo stesso ristorante della lista"
   menu:
     title: "Carta dei Vini"
     search_label: "Cerca nella carta"

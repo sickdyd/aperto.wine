@@ -372,6 +372,91 @@ en:
         tables_per_floor: "Tables per floor"
         floor_label: "Floor name"
         name_pattern: "Table naming"
+  # Model layer — English parity for the it.yml activerecord block. The suite
+  # runs under :en, so these values are what the existing model tests assert.
+  activerecord:
+    models:
+      restaurant: "Restaurant"
+      wine: "Wine"
+      wine_list: "Wine list"
+      wine_list_item: "Wine list entry"
+      restaurant_table: "Table"
+      user: "User"
+      order: "Order"
+      order_item: "Order item"
+    attributes:
+      restaurant:
+        name: "Name"
+        address: "Address"
+        proximity_radius_meters: "Order proximity radius"
+        description: "Description"
+        user: "Owner"
+      wine:
+        name: "Name"
+        producer: "Producer"
+        grape_variety: "Grape variety"
+        color: "Color"
+        vintage_year: "Vintage"
+        region: "Region"
+        description: "Tasting notes"
+        bottle_size_ml: "Bottle size"
+        price_bottle_cents: "Bottle price"
+        available_glasses: "Available glasses"
+        position: "Sort order"
+        abv: "ABV"
+        tannins: "Tannins"
+        acidity: "Acidity"
+        sweetness: "Sweetness"
+        body: "Body"
+        style: "Style"
+        short_description: "Short description"
+        image_url: "Image URL"
+        aromas: "Aromas"
+        food_pairings: "Food pairings"
+        label_image: "Label image"
+        restaurant: "Restaurant"
+      wine_list:
+        name: "Name"
+        season: "Season"
+        position: "Sort order"
+        restaurant: "Restaurant"
+      wine_list_item:
+        wine: "Wine"
+        wine_id: "Wine"
+        wine_list: "Wine list"
+        position: "Sort order"
+      restaurant_table:
+        name: "Name"
+        area: "Room"
+        position: "Sort order"
+        restaurant: "Restaurant"
+      user:
+        email: "Email"
+        name: "Name"
+        password: "Password"
+        role: "Role"
+      order:
+        total_amount_cents: "Total"
+        guest_name: "Guest name"
+        restaurant: "Restaurant"
+        customer: "Customer"
+        restaurant_table: "Table"
+      order_item:
+        glass_size_ml: "Glass size"
+        quantity: "Quantity"
+        unit_price_cents: "Unit price"
+        order: "Order"
+        wine: "Wine"
+    errors:
+      models:
+        wine:
+          attributes:
+            image_url:
+              invalid_url: "must be an http(s) URL"
+        wine_list_item:
+          attributes:
+            wine:
+              wrong_restaurant: "must belong to the same restaurant as the list"
   menu:
     title: "Wine List"
     search_label: "Search the list"

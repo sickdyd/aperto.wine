@@ -94,7 +94,7 @@ module Owner
       test "the top-of-form error summary survives alongside the inline errors" do
         render_form wine_with_errors(vintage_year: "is not a valid year")
 
-        assert_select "div[role=alert] p", /Vintage year is not a valid year/
+        assert_select "div[role=alert] p", /Vintage is not a valid year/
         assert_select "input#wine_vintage_year[aria-describedby=?]", "wine_vintage_year_error_0"
         assert_select "p.field-error#wine_vintage_year_error_0", "is not a valid year"
       end

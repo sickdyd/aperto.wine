@@ -27,7 +27,7 @@ class Wine < ApplicationRecord
             allow_nil: true)
   validates :style, :short_description, length: { maximum: 500 }, allow_blank: true
   validates :image_url,
-            format: { with: %r{\Ahttps?://\S+\z}i, message: "must be an http(s) URL" },
+            format: { with: %r{\Ahttps?://\S+\z}i, message: :invalid_url },
             length: { maximum: 2048 },
             allow_blank: true
   validates :aromas, length: { maximum: MAX_AROMAS }
