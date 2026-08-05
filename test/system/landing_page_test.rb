@@ -57,7 +57,7 @@ class LandingPageTest < ApplicationSystemTestCase
     end
   end
 
-  test "hero carries the headline, both CTAs and the pour engraving" do
+  test "hero carries the headline, both CTAs and the engraving" do
     visit root_path
 
     assert_selector "main h1", text: "Every great bottle"
@@ -68,7 +68,7 @@ class LandingPageTest < ApplicationSystemTestCase
 
     # Decorative, so it is hidden from the accessibility tree — assert on the
     # markup rather than through Capybara's visible-text lookup.
-    assert_selector "main .pour[aria-hidden='true'] svg.pour-plate", visible: :all
+    assert_selector "main .engraving[aria-hidden='true'] svg.engraving-plate", visible: :all
   end
 
   test "the how-it-works section lists every step in order" do

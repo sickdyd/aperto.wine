@@ -71,6 +71,50 @@ For landing pages, empty states, marketing sections — richer wine imagery
 | Reshot | Reshot license (free commercial, no attribution) | <https://www.reshot.com/free-svg-icons/wine/> | ~131 wine icons, more illustrative style. |
 | unDraw | Open license (no attribution) | <https://undraw.co> | Flat illustrations, recolorable to brand palette. |
 
+Reachability, checked 2026-08-05: Openclipart's JSON API returns empty bodies,
+publicdomainvectors.net did not resolve, and SVG Repo answers scripted requests
+with HTTP 429. FreeSVG works but its download endpoint needs a `Referer` header
+pointing at the item page, or it serves 0 bytes.
+
+### Museum open-access collections
+
+Where to go when the need is a period engraving rather than an icon. All CC0 or
+public domain, all direct-downloadable, no key.
+
+| Source | URL | Notes |
+|---|---|---|
+| Wikimedia Commons | `https://commons.wikimedia.org/w/api.php` | Best yield. Mirrors Rijksmuseum, British Museum and Cooper Hewitt objects. Check `extmetadata.LicenseShortName` per file — the mix of PD and CC BY-SA is not obvious from the image. Send a descriptive User-Agent. |
+| Met Open Access | `https://collectionapi.metmuseum.org/public/collection/v1/` | No key, but bot-blocks on repeated queries. Filter on `isPublicDomain`. |
+| Rijksmuseum / British Museum | via Commons | Trade cards, shop signs and catalogue plates are the richest source of isolated, hard-line drawings of objects. |
+
+Caveat learnt the hard way: isolated black-line engravings of a *bottle and
+glass together* barely exist in the public domain. Most PD wine imagery is oil
+painting, tavern scenes with figures, or photographs of artifacts. Expect to
+crop a usable object out of a larger plate.
+
+### The hero engraving
+
+`app/views/shared/_engraving.html.erb` — the bottle and glass on the landing
+page. Derived, not downloaded ready-made, so the steps are recorded here:
+
+1. **Source:** *Vignet met een uithangbord van een café*, Rijksmuseum
+   RP-P-OB-30.433, dated 1836–1912 — a tavern hanging-sign vignette. Licence
+   confirmed **CC0** ("Creative Commons Zero, Public Domain Dedication") from
+   the Commons `extmetadata` on 2026-08-05, not inferred from the collection:
+   <https://commons.wikimedia.org/wiki/File:Vignet_met_een_uithangbord_van_een_caf%C3%A9_met_daarop_een_kan,_een_kop,_een_fles_en_een_glas,_RP-P-OB-30.433.jpg>
+   The bottle and stemmed glass are one cluster inside the larger plate.
+2. **Crop** to that cluster (`200x316+1018+679` on the 1956×1595 scan), painting
+   out the neighbouring cup, the sign's edge and a stray plate mark.
+3. **Threshold and trace** — `mkbitmap -f 6 -s 2 -t 0.48` then
+   `potrace -s -u 1 --turdsize 25 --alphamax 1.0 --opttolerance 0.6`. The `-u 1`
+   quantisation is what takes it from 55 KB to 22 KB, visually losslessly.
+4. **Optimise** with `svgo` at `floatPrecision: 0`, then strip `width`/`height`
+   so the viewBox alone sizes it, and set `fill="currentColor"`.
+
+Result is a single path, ~22 KB raw / ~10 KB gzipped, inlined so the hero costs
+no extra request. Re-derive rather than hand-edit if it ever needs redoing —
+tracing is cheap and the source is stable.
+
 ## 4. Avoid (attribution required on free tier)
 
 - **Flaticon** (<https://www.flaticon.com>) — free tier requires visible attribution.
