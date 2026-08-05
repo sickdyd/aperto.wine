@@ -25,6 +25,7 @@ en:
     sign_up: "Create Account"
     sign_out: "Sign Out"
     email: "Email"
+    email_placeholder: "you@example.com"
     password: "Password"
     password_confirmation: "Confirm Password"
     password_hint: "Minimum 8 characters"
@@ -580,3 +581,6 @@ en:
         approved: "Approved — your wine is on its way."
         cancelled: "This order was cancelled."
         completed: "This order has been completed."
+  pwa:
+    # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
+    description: "aperto.wine — wine by the glass, by choice."

@@ -18,7 +18,7 @@
       <%= form_with url: sign_in_path, method: :post, class: "form-section" do |f| %>
         <div class="field">
           <%= f.label :email, t("auth.email"), class: "field-label" %>
-          <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input w-full", placeholder: "you@example.com", data: { dev_login_target: "email" } %>
+          <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input w-full", placeholder: t("auth.email_placeholder"), data: { dev_login_target: "email" } %>
         </div>
 
         <div class="field">
