@@ -251,12 +251,22 @@ class LedgerThemeTest < ActiveSupport::TestCase
       "pulls the smallest mono labels apart into loose letters"
   end
 
+  test "the wider-caps tracking is loosened, not shredded" do
+    value = @css[/--tracking-wider-caps:\s*([\d.]+)em/, 1]
+    assert value, "--tracking-wider-caps is missing"
+    assert_operator value.to_f, :<=, 0.16,
+      "the widest mono caps still ride on already-monospaced letters; " \
+      "wider-caps tracking above 0.16em opens the smallest labels into loose " \
+      "letters, the same failure --tracking-wide-caps guards against"
+  end
+
   test "the admin subtitle sets an explicit weight" do
     block = @css[/^\s*\.admin-subtitle\s*\{[^}]*\}/m]
     assert block, ".admin-subtitle is missing from the stylesheet"
-    assert_match(/font-weight:\s*\d/, block,
+    assert_match(/font-weight:\s*(?:500|600|700)\b/, block,
       "the masthead subtitle is 12px mono caps; only italic 400 of the body " \
-      "loads, so it needs an explicit heavier mono weight to hold up")
+      "loads, so it needs an explicit heavier mono weight (500/600/700) to " \
+      "hold up — a lighter weight would defeat the guard's own purpose")
   end
 
   test "the bare search input paints its own placeholder" do
