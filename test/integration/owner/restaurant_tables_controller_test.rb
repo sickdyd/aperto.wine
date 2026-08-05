@@ -172,17 +172,26 @@ module Owner
       assert_response :success
     end
 
-    test "bulk_new shows the delete-all-tables button when the restaurant has tables" do
+    test "index shows the delete-all-tables button when the restaurant has tables" do
       sign_in_as @owner
-      get bulk_new_owner_restaurant_tables_path(@restaurant)
+      get owner_restaurant_tables_path(@restaurant)
       assert_response :success
       assert_match I18n.t("owner.tables.bulk.delete_all"), response.body
     end
 
-    test "bulk_new hides the delete-all-tables button when the restaurant has no tables" do
+    test "index hides the delete-all-tables button when the restaurant has no tables" do
       sign_in_as @owner
       empty_restaurant = restaurants(:inactive_restaurant)
-      get bulk_new_owner_restaurant_tables_path(empty_restaurant)
+      get owner_restaurant_tables_path(empty_restaurant)
+      assert_response :success
+      assert_no_match I18n.t("owner.tables.bulk.delete_all"), response.body
+    end
+
+    # The delete-all control belongs with the QR-code list, not the generator:
+    # owners look for it where the tables they want gone are shown.
+    test "bulk_new does not show the delete-all-tables button" do
+      sign_in_as @owner
+      get bulk_new_owner_restaurant_tables_path(@restaurant)
       assert_response :success
       assert_no_match I18n.t("owner.tables.bulk.delete_all"), response.body
     end

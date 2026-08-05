@@ -93,12 +93,12 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     assert_text "T3"
   end
 
-  test "owner deletes all tables from the generator page" do
+  test "owner deletes all tables from the table list" do
     sign_in_as_owner
     restaurant = restaurants(:osteria)
 
-    visit bulk_new_owner_restaurant_tables_path(restaurant_id: restaurant)
-    assert_text I18n.t("owner.tables.bulk.title"), wait: 5
+    visit owner_restaurant_tables_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.tables.title"), wait: 5
 
     accept_confirm do
       click_on I18n.t("owner.tables.bulk.delete_all")
@@ -113,8 +113,8 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     sign_in_as_owner
     restaurant = restaurants(:inactive_restaurant)
 
-    visit bulk_new_owner_restaurant_tables_path(restaurant_id: restaurant)
-    assert_text I18n.t("owner.tables.bulk.title"), wait: 5
+    visit owner_restaurant_tables_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.tables.empty_title"), wait: 5
     assert_no_text I18n.t("owner.tables.bulk.delete_all")
   end
 end
