@@ -127,13 +127,31 @@ class FlashTest < ApplicationSystemTestCase
   # Pressing the close button twice, or pressing it at the moment the
   # auto-dismiss timer fires, must not restart the removal timer and hold an
   # invisible band in the document for another fade.
-  test "dismissing twice still removes the band once" do
+  #
+  # Asserted on the timer rather than on the band going away, because the band
+  # goes away either way: a second dismiss only pushes removal out by one more
+  # fade, and no `assert_no_selector` wait short enough to notice 180ms is one
+  # this suite could rely on. The question is whether the second call is inert,
+  # so that is what gets asked — directly, through the controller.
+  test "a second dismiss is inert rather than restarting the removal timer" do
     sign_in_as @owner
-
     assert_selector ".toast-band"
-    find(".toast-dismiss").double_click
 
-    assert_no_selector ".toast-band"
+    first, second = evaluate_script(<<~JS)
+      (() => {
+        const band = document.querySelector(".toast-band")
+        const flash = window.Stimulus.getControllerForElementAndIdentifier(band, "flash")
+        flash.dismiss()
+        const first = flash.removalTimer
+        flash.dismiss()
+        return [first, flash.removalTimer]
+      })()
+    JS
+
+    assert first, "the first dismiss did not arm a removal timer"
+    assert_equal first, second,
+      "the second dismiss armed a new removal timer, holding an invisible " \
+      "band in the document for another fade"
   end
 
   # Turbo paints the cached snapshot of the previous page on back/forward
