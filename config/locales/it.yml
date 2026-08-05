@@ -368,8 +368,11 @@ it:
   activemodel:
     attributes:
       table_bulk_generation:
-        floors_count: "Piani"
-        tables_per_floor: "Tavoli per piano"
+        # Error-message labels only (the form fields use owner.tables.bulk.*).
+        # Singular head-noun so the range error agrees: "Numero di piani deve
+        # essere …" instead of the plural label clashing with singular "deve".
+        floors_count: "Numero di piani"
+        tables_per_floor: "Numero di tavoli per piano"
         floor_label: "Nome del piano"
         name_pattern: "Nome dei tavoli"
   # Model layer. Composed by Rails into "%{model}"/"%{attribute} %{message}"
@@ -406,10 +409,13 @@ it:
         description: "Note di degustazione"
         bottle_size_ml: "Formato bottiglia"
         price_bottle_cents: "Prezzo bottiglia"
-        available_glasses: "Calici disponibili"
+        # Singular head-noun ("Numero di …", "Livello di …") on the count/level
+        # attributes so the error verb agrees: "Numero di calici disponibili deve
+        # essere …" rather than the plural label clashing with singular "deve".
+        available_glasses: "Numero di calici disponibili"
         position: "Ordine"
         abv: "Gradazione alcolica"
-        tannins: "Tannini"
+        tannins: "Livello di tannini"
         acidity: "Acidità"
         sweetness: "Dolcezza"
         body: "Corpo"
@@ -466,13 +472,6 @@ it:
               too_long:
                 one: "è troppo lunga (il massimo è %{count} carattere)"
                 other: "è troppo lunga (il massimo è %{count} caratteri)"
-            # numericality in: composes "deve essere uno tra %{count}" (masculine).
-            # These two tasting attributes are feminine, so agree ("una tra");
-            # tannins/Tannini and body/Corpo are masculine and keep the default.
-            acidity:
-              in: "deve essere una tra %{count}"
-            sweetness:
-              in: "deve essere una tra %{count}"
         wine_list:
           attributes:
             season:

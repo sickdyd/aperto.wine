@@ -451,7 +451,7 @@ en:
       # invalid_url and wrong_restaurant are custom messages with no rails-i18n
       # fallback, so every locale must define them.
       #
-      # The gender/parity keys below (too_long, in, too_short, blank, invalid)
+      # The gender/parity keys below (too_long, too_short, blank, invalid)
       # mirror rails-i18n's generic English defaults (errors.messages.*). Their
       # only reason to exist in English is parity with the Italian overrides,
       # which agree in gender. They are NOT required for English to render right:
@@ -474,10 +474,6 @@ en:
               too_long:
                 one: "is too long (maximum is %{count} character)"
                 other: "is too long (maximum is %{count} characters)"
-            acidity:
-              in: "must be in %{count}"
-            sweetness:
-              in: "must be in %{count}"
         wine_list:
           attributes:
             season:

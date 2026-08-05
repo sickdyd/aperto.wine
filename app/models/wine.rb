@@ -22,8 +22,13 @@ class Wine < ApplicationRecord
   validates :abv,
             numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 },
             allow_nil: true
+  # Bounded with greater_than_or_equal_to/less_than_or_equal_to rather than
+  # `in: TASTING_SCALE` so the error message carries a plain integer bound
+  # instead of interpolating the raw Ruby Range ("0..5") into user copy.
   validates(*TASTING_ATTRIBUTES,
-            numericality: { only_integer: true, in: TASTING_SCALE },
+            numericality: { only_integer: true,
+                            greater_than_or_equal_to: TASTING_SCALE.min,
+                            less_than_or_equal_to: TASTING_SCALE.max },
             allow_nil: true)
   validates :style, :short_description, length: { maximum: 500 }, allow_blank: true
   validates :image_url,

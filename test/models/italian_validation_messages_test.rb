@@ -61,35 +61,57 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
     end
   end
 
-  # The numericality `in:` range check on the tasting attributes composes
-  # "deve essere uno tra %{count}" — masculine, agreeing with an implied "un
-  # valore". Acidità and Dolcezza are feminine and read wrong; Tannini and Corpo
-  # are masculine and must be left alone (the guard below asserts both sides so a
-  # future blanket override can't over-correct them).
-  FEMININE_IN_RANGE_ATTRS = { "Acidità" => :acidity, "Dolcezza" => :sweetness }.freeze
-  MASCULINE_IN_RANGE_ATTRS = { "Tannini" => :tannins, "Corpo" => :body }.freeze
+  # The tasting-attribute range (Wine) and the table-generation counts
+  # (TableBulkGeneration) are validated with greater_than_or_equal_to /
+  # less_than_or_equal_to, not `in: a..b`. Two payoffs the tests below pin down:
+  #   1. `in:` interpolates the raw Ruby Range into %{count}, leaking "0..5" /
+  #      "1..10" (Ruby syntax) into an owner-facing message; the bound clause is
+  #      now a plain integer.
+  #   2. "maggiore"/"minore" are gender-invariant, so feminine attributes
+  #      (Acidità, Dolcezza) read correctly with no per-attribute override.
+  # What still needs care is grammatical NUMBER: a plural-noun label ("Tannini",
+  # "Piani", "Calici disponibili") would clash with the singular verb, so those
+  # carry a singular head-noun label ("Livello di tannini", "Numero di piani",
+  # "Numero di calici disponibili") that agrees.
 
-  FEMININE_IN_RANGE_ATTRS.each do |label, attr|
-    test "#{label} range error agrees in gender under :it" do
-      wine = Wine.new(valid_attributes_for_wine.merge(attr => 9))
+  # attribute => [out-of-range value, full expected message under :it]
+  WINE_RANGE_CASES = {
+    tannins: [ 9, "Livello di tannini deve essere minore o uguale a 5" ],
+    acidity: [ 9, "Acidità deve essere minore o uguale a 5" ],
+    sweetness: [ 9, "Dolcezza deve essere minore o uguale a 5" ],
+    body: [ 9, "Corpo deve essere minore o uguale a 5" ],
+    available_glasses: [ -1, "Numero di calici disponibili deve essere maggiore o uguale a 0" ]
+  }.freeze
+
+  WINE_RANGE_CASES.each do |attr, (value, expected)|
+    test "#{attr} range error reads cleanly and agrees under :it" do
+      wine = Wine.new(valid_attributes_for_wine.merge(attr => value))
       I18n.with_locale(:it) do
         wine.valid?
-        message = wine.errors.full_messages.find { |m| m.start_with?(label) }
-        assert message, "expected a #{label} error, got: #{wine.errors.full_messages.inspect}"
-        assert_match(/deve essere una tra/, message, "feminine attribute should read 'una tra'")
-        assert_no_match(/deve essere uno tra/, message, "masculine 'uno tra' leaked for a feminine attribute")
+        message = wine.errors.full_messages_for(attr).first
+        assert message, "expected a #{attr} error, got: #{wine.errors.details.inspect}"
+        assert_equal expected, message
+        assert_no_match(/\.\./, message, "a raw Ruby Range leaked into the message")
       end
     end
   end
 
-  MASCULINE_IN_RANGE_ATTRS.each do |label, attr|
-    test "#{label} range error stays masculine under :it" do
-      wine = Wine.new(valid_attributes_for_wine.merge(attr => 9))
+  TABLE_COUNT_CASES = {
+    floors_count: [ 11, "Numero di piani deve essere minore o uguale a 10" ],
+    tables_per_floor: [ 101, "Numero di tavoli per piano deve essere minore o uguale a 100" ]
+  }.freeze
+
+  TABLE_COUNT_CASES.each do |attr, (value, expected)|
+    test "#{attr} range error reads cleanly under :it" do
+      gen = TableBulkGeneration.new(restaurant: restaurants(:osteria), floor_label: "F",
+                                    floors_count: 1, tables_per_floor: 1, name_pattern: "t_number")
+      gen.public_send("#{attr}=", value)
       I18n.with_locale(:it) do
-        wine.valid?
-        message = wine.errors.full_messages.find { |m| m.start_with?(label) }
-        assert message, "expected a #{label} error, got: #{wine.errors.full_messages.inspect}"
-        assert_match(/deve essere uno tra/, message, "masculine attribute should keep 'uno tra'")
+        gen.valid?
+        message = gen.errors.full_messages_for(attr).first
+        assert message, "expected a #{attr} error, got: #{gen.errors.details.inspect}"
+        assert_equal expected, message
+        assert_no_match(/\.\./, message, "a raw Ruby Range leaked into the message")
       end
     end
   end
@@ -175,8 +197,6 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
     "activerecord.errors.models.wine.attributes.short_description.too_long" => "errors.messages.too_long",
     "activerecord.errors.models.wine_list.attributes.season.too_long" => "errors.messages.too_long",
     "activerecord.errors.models.restaurant_table.attributes.area.too_long" => "errors.messages.too_long",
-    "activerecord.errors.models.wine.attributes.acidity.in" => "errors.messages.in",
-    "activerecord.errors.models.wine.attributes.sweetness.in" => "errors.messages.in",
     "activerecord.errors.models.user.attributes.password.too_short" => "errors.messages.too_short",
     "activerecord.errors.models.user.attributes.password.blank" => "errors.messages.blank",
     "activerecord.errors.models.user.attributes.email.blank" => "errors.messages.blank",
