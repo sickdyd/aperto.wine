@@ -466,6 +466,13 @@ it:
               too_long:
                 one: "è troppo lunga (il massimo è 1 carattere)"
                 other: "è troppo lunga (il massimo è %{count} caratteri)"
+            # numericality in: composes "deve essere uno tra %{count}" (masculine).
+            # These two tasting attributes are feminine, so agree ("una tra");
+            # tannins/Tannini and body/Corpo are masculine and keep the default.
+            acidity:
+              in: "deve essere una tra %{count}"
+            sweetness:
+              in: "deve essere una tra %{count}"
         wine_list:
           attributes:
             season:

@@ -61,6 +61,39 @@ class ItalianValidationMessagesTest < ActiveSupport::TestCase
     end
   end
 
+  # The numericality `in:` range check on the tasting attributes composes
+  # "deve essere uno tra %{count}" — masculine, agreeing with an implied "un
+  # valore". Acidità and Dolcezza are feminine and read wrong; Tannini and Corpo
+  # are masculine and must be left alone (the guard below asserts both sides so a
+  # future blanket override can't over-correct them).
+  FEMININE_IN_RANGE_ATTRS = { "Acidità" => :acidity, "Dolcezza" => :sweetness }.freeze
+  MASCULINE_IN_RANGE_ATTRS = { "Tannini" => :tannins, "Corpo" => :body }.freeze
+
+  FEMININE_IN_RANGE_ATTRS.each do |label, attr|
+    test "#{label} range error agrees in gender under :it" do
+      wine = Wine.new(valid_attributes_for_wine.merge(attr => 9))
+      I18n.with_locale(:it) do
+        wine.valid?
+        message = wine.errors.full_messages.find { |m| m.start_with?(label) }
+        assert message, "expected a #{label} error, got: #{wine.errors.full_messages.inspect}"
+        assert_match(/deve essere una tra/, message, "feminine attribute should read 'una tra'")
+        assert_no_match(/deve essere uno tra/, message, "masculine 'uno tra' leaked for a feminine attribute")
+      end
+    end
+  end
+
+  MASCULINE_IN_RANGE_ATTRS.each do |label, attr|
+    test "#{label} range error stays masculine under :it" do
+      wine = Wine.new(valid_attributes_for_wine.merge(attr => 9))
+      I18n.with_locale(:it) do
+        wine.valid?
+        message = wine.errors.full_messages.find { |m| m.start_with?(label) }
+        assert message, "expected a #{label} error, got: #{wine.errors.full_messages.inspect}"
+        assert_match(/deve essere uno tra/, message, "masculine attribute should keep 'uno tra'")
+      end
+    end
+  end
+
   private
 
   def valid_attributes_for_wine
