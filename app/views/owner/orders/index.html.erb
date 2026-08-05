@@ -131,15 +131,13 @@
     </tbody>
   </table>
 <% elsif params[:status].present? %>
-  <div class="empty-state">
-    <%= icon "funnel", class: "mx-auto mb-3 block size-8 text-ox-4" %>
-    <p class="font-body text-ink"><%= t("owner.orders.empty_filtered_title") %></p>
-    <p class="mt-1"><%= t("owner.orders.empty_filtered_description") %></p>
-  </div>
+  <%= render "shared/empty_state",
+        icon: "funnel",
+        title: t("owner.orders.empty_filtered_title"),
+        body: t("owner.orders.empty_filtered_description") %>
 <% else %>
-  <div class="empty-state">
-    <%= icon "receipt", class: "mx-auto mb-3 block size-8 text-ox-4" %>
-    <p class="font-body text-ink"><%= t("owner.orders.empty_title") %></p>
-    <p class="mt-1"><%= t("owner.orders.empty_description") %></p>
-  </div>
+  <%= render "shared/empty_state",
+        icon: "receipt",
+        title: t("owner.orders.empty_title"),
+        body: t("owner.orders.empty_description") %>
 <% end %>

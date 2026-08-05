@@ -235,6 +235,75 @@ class LedgerThemeTest < ActiveSupport::TestCase
   end
 
 
+  # A skip link is only half a feature. It has to be the first thing a Tab
+  # reaches, and the id it points at has to exist on the page actually being
+  # rendered — a link that jumps nowhere is worse than no link, because the
+  # keyboard user spends their first Tab on it and lands back at the top.
+  # It lived on the landing page alone for a while; these guard the lift into
+  # the layout, where the target is a per-template obligation.
+  PUBLIC_TEMPLATES = %w[
+    home/index
+    menus/show
+    carts/show
+    orders/show
+    sessions/new
+    registrations/new
+  ].freeze
+
+  test "the public layout opens its body with the skip link" do
+    assert_match(/<a class="skip-link" href="#main">/, @public_layout,
+      "the skip link belongs to the layout so every public page gets one")
+
+    body = @public_layout[/<body[^>]*>(.*)<\/body>/m, 1]
+    assert body, "the public layout has no <body>"
+
+    # ERB comments emit nothing, so they may sit in front of the link.
+    before = body[0...body.index(/<a class="skip-link"/)].gsub(/<%#.*?%>/m, "")
+
+    refute_match(/<(?:a|button|input|select|textarea|summary)\b|tabindex=/, before,
+      "nothing focusable may precede the skip link, or it stops being the " \
+      "first stop and the first Tab lands somewhere else")
+    refute_match(/<%=/, before,
+      "an ERB call ahead of the skip link can render focusable markup — the " \
+      "flash partial and the yielded page both go after it")
+  end
+
+  test "every page the public layout renders carries the skip link target" do
+    PUBLIC_TEMPLATES.each do |template|
+      view = Rails.root.join("app/views/#{template}.html.erb").read
+
+      assert_match(/<main id="main"[\s>]/, view,
+        "#{template}: the layout's skip link points at #main, so this page " \
+        "must offer one")
+      assert_equal 1, view.scan(/<main\b/).size,
+        "#{template}: exactly one <main> per page — a second one makes the " \
+        "target ambiguous and the first is not necessarily the content"
+    end
+  end
+
+  test "the skip link is off-screen until focused, then on screen" do
+    parked = @css[/^\s*\.skip-link\s*\{.*?\}/m]
+    assert parked, ".skip-link is missing from the stylesheet"
+    assert_match(/top:\s*-/, parked,
+      "the link is parked above the viewport rather than display:none, which " \
+      "would take it out of the tab order entirely")
+    assert_match(/\.skip-link:focus\s*\{[^}]*top:\s*[^-]/m, @css,
+      "focus must pull the link back on screen")
+  end
+
+  test "the skip link's copy is a shared key present in both locales" do
+    %w[en it].each do |locale|
+      yaml = YAML.load_file(Rails.root.join("config/locales/#{locale}.yml"))[locale]
+
+      assert yaml.dig("shared", "skip_to_content"),
+        "#{locale}.yml: the layout renders shared.skip_to_content on every page"
+      refute yaml.dig("landing", "skip_to_content"),
+        "#{locale}.yml: landing.skip_to_content is orphaned — the link moved " \
+        "out of the landing page and into the layout"
+    end
+  end
+
+
   test "form controls clear the 44px interactive-target floor" do
     block = @css[/^\.input\.input,.*?\}/m]
     assert block, "the unlayered input reskin is missing"

@@ -41,6 +41,12 @@
   </head>
 
   <body class="bg-base-100 text-base-content font-body antialiased min-h-screen flex flex-col">
+    <%# First focusable element in the document, before the flash and before
+        anything a page yields, so one Tab from a fresh load always reaches it.
+        Every template rendered through this layout carries <main id="main">;
+        a skip link aimed at an id that is not there is worse than none. %>
+    <a class="skip-link" href="#main"><%= t("shared.skip_to_content") %></a>
+
     <%= render "shared/flash" %>
     <%# flex-1: the centred auth pages size themselves off remaining space
         below the flash (see sessions/new, registrations/new) rather than

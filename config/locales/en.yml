@@ -5,6 +5,9 @@ en:
     wines: "Wines"
     orders: "My Orders"
   shared:
+    # Rendered by layouts/application for every public page, not just the
+    # landing page it started on.
+    skip_to_content: "Skip to content"
     save: "Save"
     cancel: "Cancel"
     confirm: "Confirm"
@@ -45,7 +48,6 @@ en:
   landing:
     title: "aperto.wine — By the Glass, By Choice"
     meta_description: "A live digital wine list that lets restaurants sell premium bottles by the glass. Customers discover and order fine wines without committing to a full bottle."
-    skip_to_content: "Skip to content"
     account_nav: "Account"
     sign_in: "Sign In"
     sign_up: "Get Started"

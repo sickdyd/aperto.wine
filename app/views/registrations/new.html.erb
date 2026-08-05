@@ -4,7 +4,7 @@
 <% content_for(:flash_class) { "max-w-md mx-auto px-6" } %>
 
 <%# Same ruled column as sign-in, one step wider to carry four fields. %>
-<div class="flex-1 flex items-center justify-center px-6 py-12">
+<main id="main" class="flex-1 flex items-center justify-center px-6 py-12">
   <div class="w-full max-w-md">
     <header class="mb-8">
       <a href="<%= root_path %>" class="wordmark wordmark-paper press">aperto<b>.wine</b></a>
@@ -72,4 +72,4 @@
       <a href="<%= sign_in_path %>" class="link-mono"><%= t("auth.sign_in_link") %></a>
     </div>
   </div>
-</div>
+</main>

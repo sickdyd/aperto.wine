@@ -126,12 +126,9 @@
     </p>
   </div>
 <% else %>
-  <div class="py-10 text-center">
-    <div class="flex justify-center text-ox-3">
-      <%= icon "wine", class: "size-8" %>
-    </div>
-    <h2 class="mt-4 text-h3"><%= t("owner.wines.empty_title") %></h2>
-    <p class="empty-state"><%= t("owner.wines.empty_description") %></p>
-    <a href="<%= new_owner_restaurant_wine_path(@restaurant) %>" class="btn-wine"><%= t("owner.wines.add_first") %></a>
-  </div>
+  <%= render "shared/empty_state",
+        icon: "wine",
+        title: t("owner.wines.empty_title"),
+        body: t("owner.wines.empty_description"),
+        cta: { label: t("owner.wines.add_first"), path: new_owner_restaurant_wine_path(@restaurant) } %>
 <% end %>

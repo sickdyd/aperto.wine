@@ -5,7 +5,7 @@
     one ruled line per pour, a leader running from each wine to its money,
     and a heavy rule closing the column off from the total. Wider than the
     menu card — the bill carries controls the list does not. %>
-<main class="band-stock flex-1">
+<main id="main" class="band-stock flex-1">
   <div class="sheet mx-auto w-full max-w-2xl">
     <%# Letterhead — where you are, what this page is, and which table it
         will reach. %>
@@ -106,13 +106,13 @@
             removes them (above) or clears the cart. %>
         <div class="empty-state">
           <p><%= t("cart.empty") %></p>
-          <a href="<%= menu_path(id: @restaurant) %>" class="btn-wine mt-6 not-italic"><%= t("cart.browse_menu") %></a>
+          <a href="<%= menu_path(id: @restaurant) %>" class="btn-wine mt-6"><%= t("cart.browse_menu") %></a>
         </div>
       <% end %>
     <% else %>
       <div class="empty-state py-14">
         <p><%= t("cart.empty") %></p>
-        <a href="<%= menu_path(id: @restaurant) %>" class="btn-wine mt-6 not-italic"><%= t("cart.browse_menu") %></a>
+        <a href="<%= menu_path(id: @restaurant) %>" class="btn-wine mt-6"><%= t("cart.browse_menu") %></a>
       </div>
     <% end %>
   </div>

@@ -5,6 +5,9 @@ it:
     wines: "Vini"
     orders: "I miei ordini"
   shared:
+    # Reso da layouts/application per ogni pagina pubblica, non solo per la
+    # landing page da cui è partito.
+    skip_to_content: "Vai al contenuto"
     save: "Salva"
     cancel: "Annulla"
     confirm: "Conferma"
@@ -45,7 +48,6 @@ it:
   landing:
     title: "aperto.wine — Al Calice, Per Scelta"
     meta_description: "Una carta dei vini digitale e aggiornata in tempo reale che permette ai ristoranti di vendere bottiglie pregiate al calice. I clienti scoprono e ordinano vini eccellenti senza impegnarsi per un'intera bottiglia."
-    skip_to_content: "Vai al contenuto"
     account_nav: "Account"
     sign_in: "Accedi"
     sign_up: "Inizia ora"

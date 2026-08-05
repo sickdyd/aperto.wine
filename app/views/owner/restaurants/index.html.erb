@@ -57,9 +57,8 @@
     </tbody>
   </table>
 <% else %>
-  <div class="empty-state">
-    <h2 class="mb-2 not-italic"><%= t("owner.restaurants.empty_title") %></h2>
-    <p class="mb-6"><%= t("owner.restaurants.empty_description") %></p>
-    <a href="<%= new_owner_restaurant_path %>" class="btn-wine"><%= t("owner.restaurants.add_first") %></a>
-  </div>
+  <%= render "shared/empty_state",
+        title: t("owner.restaurants.empty_title"),
+        body: t("owner.restaurants.empty_description"),
+        cta: { label: t("owner.restaurants.add_first"), path: new_owner_restaurant_path } %>
 <% end %>

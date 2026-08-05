@@ -92,19 +92,20 @@
     <% end %>
   </div>
 <% else %>
-  <div class="empty-state">
-    <h2 class="not-italic"><%= t("owner.tables.empty_title") %></h2>
-    <p class="measure mx-auto mt-2"><%= t("owner.tables.empty_description") %></p>
+  <%# Two ways out of an empty table list, so the actions come in as a block. %>
+  <% table_actions = capture do %>
+    <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn-wine">
+      <%= icon "magic-wand", class: "size-4" %>
+      <%= t("owner.tables.bulk.generate") %>
+    </a>
+    <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine-outline">
+      <%= icon "plus", class: "size-4" %>
+      <%= t("owner.tables.add_first") %>
+    </a>
+  <% end %>
 
-    <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
-      <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn-wine">
-        <%= icon "magic-wand", class: "size-4" %>
-        <%= t("owner.tables.bulk.generate") %>
-      </a>
-      <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine-outline">
-        <%= icon "plus", class: "size-4" %>
-        <%= t("owner.tables.add_first") %>
-      </a>
-    </div>
-  </div>
+  <%= render "shared/empty_state",
+        title: t("owner.tables.empty_title"),
+        body: t("owner.tables.empty_description"),
+        cta: table_actions %>
 <% end %>

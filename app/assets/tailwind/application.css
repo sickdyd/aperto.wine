@@ -1137,8 +1137,16 @@
   /* Nothing here yet, or nothing left after a filter. */
   .empty-state {
     @apply py-8 text-center;
-    font-style: italic;
     color: var(--color-quiet);
+  }
+
+  /* The italic is the voice of the explanatory line alone — as a standalone
+     paragraph, or as the body of a composed empty state. Keeping it off the
+     container means a heading or a button nested inside reads upright without
+     an override, which is what `not-italic` was patching around. */
+  p.empty-state,
+  .empty-state > p {
+    font-style: italic;
   }
 
   /* ═════════════════════════════════════════════════════════════════════════

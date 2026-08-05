@@ -22,54 +22,65 @@
             placeholder: t("owner.wines.form.name_placeholder"),
             role: "combobox", "aria-expanded": "false", "aria-autocomplete": "list",
             "aria-label": t("owner.wines.autofill.aria_label"),
-            "aria-invalid": wine.errors[:name].any?.to_s,
             "aria-controls": "wine-suggestions-listbox",
             data: {
               wine_autofill_target: "input",
               action: "input->wine-autofill#search keydown->wine-autofill#navigate blur->wine-autofill#close"
-            } %>
+            },
+            **field_error_attributes(f, :name) %>
       <ul id="wine-suggestions-listbox"
           class="hidden address-suggestions"
           role="listbox"
           data-wine-autofill-target="results"
           data-action="mousedown->wine-autofill#keepOpen"></ul>
-      <% wine.errors[:name].each do |message| %>
-        <p class="field-error"><%= message %></p>
-      <% end %>
+      <%= field_errors f, :name %>
     </div>
 
     <div class="grid sm:grid-cols-2 gap-4">
       <div class="field">
         <%= f.label :producer, t("owner.wines.form.producer"), class: "field-label" %>
-        <%= f.text_field :producer, class: "input w-full font-body", data: { wine_autofill_target: "producer" } %>
+        <%= f.text_field :producer, class: "input w-full font-body", data: { wine_autofill_target: "producer" },
+              **field_error_attributes(f, :producer) %>
+        <%= field_errors f, :producer %>
       </div>
 
       <div class="field">
         <%= f.label :grape_variety, t("owner.wines.form.grape_variety"), class: "field-label" %>
-        <%= f.text_field :grape_variety, class: "input w-full font-body", placeholder: t("owner.wines.form.grape_placeholder"), data: { wine_autofill_target: "grape" } %>
+        <%= f.text_field :grape_variety, class: "input w-full font-body", placeholder: t("owner.wines.form.grape_placeholder"), data: { wine_autofill_target: "grape" },
+              **field_error_attributes(f, :grape_variety) %>
+        <%= field_errors f, :grape_variety %>
       </div>
     </div>
 
     <div class="grid sm:grid-cols-3 gap-4">
       <div class="field">
         <%= f.label :color, t("owner.wines.form.color"), class: "field-label" %>
-        <%= f.select :color, Wine.colors.keys.map { |c| [t("owner.wines.colors.#{c}"), c] }, {}, class: "select w-full font-body", data: { wine_autofill_target: "color" } %>
+        <%= f.select :color, Wine.colors.keys.map { |c| [t("owner.wines.colors.#{c}"), c] }, {},
+              class: "select w-full font-body", data: { wine_autofill_target: "color" },
+              **field_error_attributes(f, :color) %>
+        <%= field_errors f, :color %>
       </div>
 
       <div class="field">
         <%= f.label :vintage_year, t("owner.wines.form.vintage_year"), class: "field-label" %>
-        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input w-full font-mono num", data: { wine_autofill_target: "vintage" } %>
+        <%= f.number_field :vintage_year, min: 1900, max: Date.current.year, class: "input w-full font-mono num", data: { wine_autofill_target: "vintage" },
+              **field_error_attributes(f, :vintage_year) %>
+        <%= field_errors f, :vintage_year %>
       </div>
 
       <div class="field">
         <%= f.label :region, t("owner.wines.form.region"), class: "field-label" %>
-        <%= f.text_field :region, class: "input w-full font-body", placeholder: t("owner.wines.form.region_placeholder"), data: { wine_autofill_target: "region" } %>
+        <%= f.text_field :region, class: "input w-full font-body", placeholder: t("owner.wines.form.region_placeholder"), data: { wine_autofill_target: "region" },
+              **field_error_attributes(f, :region) %>
+        <%= field_errors f, :region %>
       </div>
     </div>
 
     <div class="field">
       <%= f.label :description, t("owner.wines.form.description"), class: "field-label" %>
-      <%= f.text_area :description, rows: 2, class: "textarea w-full font-body" %>
+      <%= f.text_area :description, rows: 2, class: "textarea w-full font-body",
+            **field_error_attributes(f, :description) %>
+      <%= field_errors f, :description %>
     </div>
   </fieldset>
 
@@ -83,24 +94,24 @@
         <div class="flex items-baseline gap-2">
           <%= f.number_field :bottle_size_ml, min: 187, max: 3000, step: 1,
                 class: "input w-28 font-mono num",
-                "aria-invalid": wine.errors[:bottle_size_ml].any?.to_s %>
+                **field_error_attributes(f, :bottle_size_ml) %>
           <span class="mono-micro">ml</span>
         </div>
-        <% wine.errors[:bottle_size_ml].each do |message| %>
-          <p class="field-error"><%= message %></p>
-        <% end %>
+        <%= field_errors f, :bottle_size_ml %>
       </div>
 
       <div class="field">
         <%= f.label :price_bottle_cents, t("owner.wines.form.price_bottle"), class: "field-label" %>
         <div class="flex items-baseline gap-2">
           <span class="mono-micro">&euro;</span>
-          <%= f.number_field :price_bottle_cents, min: 0, step: 1, class: "input w-28 font-mono num", placeholder: t("owner.wines.form.cents_hint") %>
+          <%= f.number_field :price_bottle_cents, min: 0, step: 1, class: "input w-28 font-mono num", placeholder: t("owner.wines.form.cents_hint"),
+                **field_error_attributes(f, :price_bottle_cents) %>
         </div>
+        <%= field_errors f, :price_bottle_cents %>
       </div>
     </div>
 
-    <p class="field-hint"><%= t("owner.wines.form.glass_prices_hint") %></p>
+    <p class="field-hint" id="wine_glass_prices_hint"><%= t("owner.wines.form.glass_prices_hint") %></p>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <% Wine::GLASS_SIZES.each do |size| %>
@@ -108,8 +119,10 @@
           <%= f.label :"price_#{size}ml_cents", "#{size}ml", class: "field-label" %>
           <div class="flex items-baseline gap-1.5">
             <span class="mono-micro">&euro;</span>
-            <%= f.number_field :"price_#{size}ml_cents", min: 0, step: 1, class: "input input-sm w-full font-mono num", placeholder: t("owner.wines.form.cents_hint") %>
+            <%= f.number_field :"price_#{size}ml_cents", min: 0, step: 1, class: "input input-sm w-full font-mono num", placeholder: t("owner.wines.form.cents_hint"),
+                  **field_error_attributes(f, :"price_#{size}ml_cents", describedby: "wine_glass_prices_hint") %>
           </div>
+          <%= field_errors f, :"price_#{size}ml_cents" %>
         </div>
       <% end %>
     </div>
@@ -123,11 +136,9 @@
       <div class="field">
         <%= f.label :available_glasses, t("owner.wines.form.available_glasses"), class: "field-label" %>
         <%= f.number_field :available_glasses, min: 0, class: "input w-28 font-mono num",
-              "aria-invalid": wine.errors[:available_glasses].any?.to_s %>
-        <% wine.errors[:available_glasses].each do |message| %>
-          <p class="field-error"><%= message %></p>
-        <% end %>
-        <p class="field-hint">
+              **field_error_attributes(f, :available_glasses, describedby: "wine_available_glasses_hint") %>
+        <%= field_errors f, :available_glasses %>
+        <p class="field-hint" id="wine_available_glasses_hint">
           <%= t("owner.wines.form.suggested") %>:
           <% Wine::GLASS_SIZES.each do |size| %>
             <span class="num font-medium"><%= (wine.bottle_size_ml || 750) / size %></span> &times; <%= size %>ml<%= size == Wine::GLASS_SIZES.last ? "" : "," %>
@@ -137,7 +148,9 @@
 
       <div class="field">
         <%= f.label :position, t("owner.wines.form.position"), class: "field-label" %>
-        <%= f.number_field :position, min: 0, class: "input w-28 font-mono num" %>
+        <%= f.number_field :position, min: 0, class: "input w-28 font-mono num",
+              **field_error_attributes(f, :position) %>
+        <%= field_errors f, :position %>
       </div>
     </div>
 

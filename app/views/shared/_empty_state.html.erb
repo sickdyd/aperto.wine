@@ -1,0 +1,38 @@
+<%# locals: (title:, body:, icon: nil, cta: nil, heading_level: "h2") %>
+<%# The one empty state: an optional mark, a real heading, the explanatory
+    line, and at most one row of actions. Every admin index that has nothing
+    to show renders this, so "nothing here yet" reads the same everywhere.
+
+    `title` becomes a heading element — pass `heading_level` so the page keeps
+    a sequential hierarchy (the admin pages all open on an h1, so h2 is the
+    default and is right for all of them).
+
+    `icon` is a Phosphor name, drawn quiet: this is the admin, and the mark is
+    there to soften an empty page, not to decorate it.
+
+    `cta` is either a { label:, path: } pair for the single primary action, or
+    a captured block when a page offers more than one route out — see
+    owner/restaurant_tables/index, which offers both "generate" and "add".
+
+    The italic voice comes from `.empty-state` in application.css and now
+    reaches only the explanatory line, so the heading needs no `not-italic`. %>
+<% heading_tag = %w[h1 h2 h3 h4 h5 h6].include?(heading_level.to_s) ? heading_level.to_s : "h2" %>
+<div class="empty-state">
+  <% if icon.present? %>
+    <%# With an argument this is the rails_icons helper, not the local. %>
+    <%= icon icon, class: "mx-auto mb-3 block size-8 text-ox-4" %>
+  <% end %>
+
+  <%= content_tag heading_tag, title, class: "list-title" %>
+  <p class="measure mx-auto mt-2"><%= body %></p>
+
+  <% if cta.present? %>
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+      <% if cta.is_a?(Hash) %>
+        <%= link_to cta[:label], cta[:path], class: "btn-wine" %>
+      <% else %>
+        <%= cta %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
