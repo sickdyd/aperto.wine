@@ -16,76 +16,90 @@
          data-sortable-sort-url-value="<%= sort_owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list) %>"
          data-sortable-reorder-failed-message="<%= t("owner.wine_lists.members.reorder_failed") %>"
          data-sortable-add-failed-message="<%= t("owner.wine_lists.members.add_failed") %>">
-  <h2 class="font-display text-xl font-light mb-1"><%= t("owner.wine_lists.members.title") %></h2>
-  <p class="text-sm text-base-content/50 mb-2"><%= t("owner.wine_lists.members.intro") %></p>
+  <p class="note measure"><%= t("owner.wine_lists.members.intro") %></p>
   <p id="wine_list_drag_hint" class="sr-only"><%= t("owner.wine_lists.members.drag_hint") %></p>
 
-  <div class="grid gap-8 md:grid-cols-2 mt-6">
+  <%# Two columns, deliberately different sheets: the list itself is set on the
+      page, the catalogue it is drawn from sits in a panel on a paler stock. %>
+  <div class="mt-6 grid gap-8 md:grid-cols-2 md:gap-10">
     <%# --- On this list (sortable members, one group per colour) --- %>
-    <div>
+    <%# md:pt-5 matches the panel's own padding so both column heads sit on the
+        same line. %>
+    <div class="min-w-0 md:pt-5">
+      <div class="list-head">
+        <h2 class="list-title"><%= t("owner.wine_lists.members.title") %></h2>
+        <span class="admin-subtitle ml-auto"><%= t("owner.wine_lists.wine_count", count: items.size) %></span>
+      </div>
+
       <% if active_colours.empty? %>
-        <p class="text-sm text-base-content/40 italic"><%= t("owner.wine_lists.members.empty") %></p>
+        <p class="empty-state"><%= t("owner.wine_lists.members.empty") %></p>
       <% end %>
 
       <% active_colours.each do |colour| %>
-        <div class="mb-5">
-          <h4 class="font-body text-xs uppercase tracking-wider text-base-content/50 mb-2 flex items-center gap-2">
-            <%= wine_color_dot(colour, label: false) %>
-            <%= t("owner.wines.colors.#{colour}") %>
-          </h4>
+        <section class="wine-group">
+          <div class="group-head">
+            <h3 class="group-title">
+              <%= wine_color_dot(colour, label: false) %>
+              <%= t("owner.wines.colors.#{colour}") %>
+            </h3>
+            <span class="admin-subtitle ml-auto"><%= (items_by_colour[colour] || []).size %></span>
+          </div>
           <div data-sortable-target="members"
                data-color="<%= colour %>"
                aria-describedby="wine_list_drag_hint"
-               class="space-y-2 min-h-12 rounded-lg <%= "border border-dashed border-base-content/15" if items_by_colour[colour].blank? %>">
+               class="group-body min-h-12 <%= "border border-dashed border-ox-4" if items_by_colour[colour].blank? %>">
             <%= render partial: "owner/wine_lists/member_item", collection: items_by_colour[colour] || [], as: :item, locals: { wine_list: wine_list } %>
             <% if items_by_colour[colour].blank? %>
-              <p data-sortable-placeholder class="text-xs text-base-content/40 italic p-3"><%= t("owner.wine_lists.members.empty_color") %></p>
+              <p data-sortable-placeholder class="note px-3 text-center"><%= t("owner.wine_lists.members.empty_color") %></p>
             <% end %>
           </div>
-        </div>
+        </section>
       <% end %>
     </div>
 
     <%# --- Available wines (drag source + Add button) --- %>
-    <div data-controller="list-filter">
-      <div class="flex items-center justify-between gap-2 mb-3">
-        <h3 class="font-body text-sm font-medium text-base-content/70"><%= t("owner.wine_lists.members.available_title") %></h3>
+    <div data-controller="list-filter" class="panel min-w-0">
+      <div class="list-head">
+        <h2 class="list-title"><%= t("owner.wine_lists.members.available_title") %></h2>
         <%# Adds every available wine regardless of what's typed in the filter
             below — the filter is a client-side display filter only. %>
         <% if available_wines.any? %>
           <%= button_to t("owner.wine_lists.members.add_all"),
                 create_all_owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list),
                 method: :post,
-                class: "btn btn-ghost btn-xs whitespace-nowrap" %>
+                class: "btn-wine-quiet",
+                form_class: "ml-auto self-center" %>
         <% end %>
       </div>
+
       <% if available_wines.any? %>
-        <div class="mb-3">
+        <div class="search-field mt-4">
+          <%= icon "magnifying-glass" %>
           <label for="available_wines_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
           <input type="search"
                  id="available_wines_filter"
-                 class="input input-sm w-full font-body text-sm"
                  placeholder="<%= t("owner.shared.filter.placeholder") %>"
                  data-list-filter-target="input"
                  data-action="input->list-filter#filter">
         </div>
         <div data-sortable-target="available"
              aria-describedby="wine_list_drag_hint"
-             class="space-y-2">
+             class="group-body mt-1">
           <%= render partial: "owner/wine_lists/available_wine", collection: available_wines, as: :wine, locals: { wine_list: wine_list } %>
         </div>
-        <p data-list-filter-target="empty" hidden class="text-xs text-base-content/40 mt-3">
+        <p data-list-filter-target="empty" hidden class="empty-state">
           <%= t("owner.shared.filter.no_results") %>
         </p>
-        <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="inline-block mt-3 text-xs text-base-content/50 link link-hover">
+        <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="link-mono mt-2">
           <%= t("owner.wine_lists.manage_wines") %>
+          <%= icon "arrow-right", class: "ml-2 size-3.5" %>
         </a>
       <% elsif items.any? %>
-        <p class="text-xs text-base-content/40"><%= t("owner.wine_lists.members.all_added") %></p>
+        <p class="empty-state"><%= t("owner.wine_lists.members.all_added") %></p>
       <% else %>
-        <p class="text-sm text-base-content/50 mb-3"><%= t("owner.wine_lists.members.no_wines") %></p>
-        <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn-wine btn-sm">
-          <%= icon "wine", css: "size-4" %>
+        <p class="note mt-4 mb-4"><%= t("owner.wine_lists.members.no_wines") %></p>
+        <a href="<%= owner_restaurant_wines_path(@restaurant) %>" class="btn-wine">
+          <%= icon "wine", class: "size-4" %>
           <%= t("owner.wine_lists.members.go_to_wines") %>
         </a>
       <% end %>

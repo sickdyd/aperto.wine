@@ -1,21 +1,26 @@
-<div class="flex items-center justify-between p-3 rounded-lg border border-base-content/5 bg-base-100 cursor-grab"
+<%# A drag source. data-wine-id / data-color drive the drop (the sortable
+    controller reads them off the clone); data-search-terms drives the filter. %>
+<div class="flex cursor-grab items-center justify-between gap-2 py-2"
      data-wine-id="<%= wine.id %>"
      data-color="<%= wine.color %>"
      data-list-filter-target="item"
      data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety].compact_blank.join(" ").downcase %>">
-  <div class="flex items-center gap-2 min-w-0">
+  <div class="flex min-w-0 items-baseline gap-2">
     <%= wine_color_dot(wine.color) %>
-    <span class="font-body text-sm truncate"><%= wine.name %></span>
-    <% if wine.producer.present? %>
-      <span class="text-xs text-base-content/50 truncate"><%= wine.producer %></span>
-    <% end %>
+    <div class="min-w-0">
+      <span class="wine-name block truncate"><%= wine.name %></span>
+      <% if wine.producer.present? %>
+        <span class="note block truncate"><%= wine.producer %></span>
+      <% end %>
+    </div>
   </div>
 
   <%= button_to owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list),
         params: { wine_id: wine.id },
-        class: "btn btn-ghost btn-xs shrink-0",
+        class: "btn-wine-outline shrink-0",
+        form_class: "shrink-0",
         aria: { label: "#{t('owner.wine_lists.members.add_to_list')}: #{wine.name}" } do %>
-    <%= icon "plus", css: "size-3.5" %>
+    <%= icon "plus", class: "size-4" %>
     <span><%= t("owner.wine_lists.members.add_to_list") %></span>
   <% end %>
 </div>

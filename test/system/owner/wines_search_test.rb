@@ -17,6 +17,13 @@ module Owner
       assert_text I18n.t("owner.wines.title"), wait: 5
     end
 
+    # The colour group headings are set in caps by CSS (`text-transform`), so
+    # the rendered text is "RED" while the translation is "Red". Match the word
+    # case-insensitively rather than asserting on the styling.
+    def color_heading(color)
+      /\b#{Regexp.escape(I18n.t("owner.wines.colors.#{color}"))}\b/i
+    end
+
     test "typing a wine name filters the list and clearing restores it" do
       sign_in_as_owner
       visit_wines
@@ -51,16 +58,16 @@ module Owner
       sign_in_as_owner
       visit_wines
 
-      assert_text I18n.t("owner.wines.colors.red"), wait: 5
-      assert_text I18n.t("owner.wines.colors.white"), wait: 5
+      assert_text color_heading(:red), wait: 5
+      assert_text color_heading(:white), wait: 5
 
       fill_in I18n.t("owner.shared.filter.placeholder"), with: "Barolo"
 
       # Gavi di Gavi is the only white wine, so the whole "White" group
       # (heading included) disappears once it is filtered out. The "Red"
       # group stays visible because Barolo Riserva still matches.
-      assert_text I18n.t("owner.wines.colors.red"), wait: 5
-      assert_no_text I18n.t("owner.wines.colors.white")
+      assert_text color_heading(:red), wait: 5
+      assert_no_text color_heading(:white)
     end
   end
 end

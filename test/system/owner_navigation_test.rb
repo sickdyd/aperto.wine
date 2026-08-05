@@ -1,6 +1,11 @@
 require "application_system_test_case"
 
 class OwnerNavigationTest < ApplicationSystemTestCase
+  # Sidebar entries are set in mono small caps (`.nav-item`), and Selenium
+  # reports rendered text, so `text:` filters would see "MY WINES". Locator
+  # matching (assert_link / click_link) reads the DOM and is unaffected, so
+  # only the `text:` filters below are case-insensitive — they still assert
+  # the same entry, just without pinning the CSS's casing into the test.
   def sign_in_as_owner
     user = users(:owner)
     visit sign_in_path
@@ -47,15 +52,15 @@ class OwnerNavigationTest < ApplicationSystemTestCase
       click_link "My Wines"
     end
     assert_current_path owner_restaurant_wines_path(restaurant_id: restaurant.id)
-    assert_selector ".drawer-side a.menu-active", text: "My Wines"
-    assert_no_selector ".drawer-side a.menu-active", text: "Wine Lists"
+    assert_selector ".drawer-side a.menu-active", text: /My Wines/i
+    assert_no_selector ".drawer-side a.menu-active", text: /Wine Lists/i
 
     within ".drawer-side" do
       click_link "Wine Lists"
     end
     assert_current_path owner_restaurant_wine_lists_path(restaurant_id: restaurant.id)
-    assert_selector ".drawer-side a.menu-active", text: "Wine Lists"
-    assert_no_selector ".drawer-side a.menu-active", text: "My Wines"
+    assert_selector ".drawer-side a.menu-active", text: /Wine Lists/i
+    assert_no_selector ".drawer-side a.menu-active", text: /My Wines/i
   end
 
   # ── Section navigation ────────────────────────────────────────────────────
@@ -69,19 +74,19 @@ class OwnerNavigationTest < ApplicationSystemTestCase
       click_link "Orders"
     end
     assert_current_path owner_restaurant_orders_path(restaurant_id: restaurant.id)
-    assert_selector ".drawer-side a.menu-active", text: "Orders"
+    assert_selector ".drawer-side a.menu-active", text: /Orders/i
 
     within ".drawer-side" do
       click_link "Wine Lists"
     end
     assert_current_path owner_restaurant_wine_lists_path(restaurant_id: restaurant.id)
-    assert_selector ".drawer-side a.menu-active", text: "Wine Lists"
+    assert_selector ".drawer-side a.menu-active", text: /Wine Lists/i
 
     within ".drawer-side" do
       click_link "Settings"
     end
     assert_current_path edit_owner_restaurant_path(id: restaurant.id)
-    assert_selector ".drawer-side a.menu-active", text: "Settings"
+    assert_selector ".drawer-side a.menu-active", text: /Settings/i
   end
 
   test "active section is highlighted" do
@@ -90,7 +95,7 @@ class OwnerNavigationTest < ApplicationSystemTestCase
     visit owner_restaurant_orders_path(restaurant_id: restaurant.id)
 
     within ".drawer-side" do
-      assert_selector "a.menu-active", text: "Orders"
+      assert_selector "a.menu-active", text: /Orders/i
     end
   end
 
@@ -145,7 +150,7 @@ class OwnerNavigationTest < ApplicationSystemTestCase
     page.driver.browser.manage.window.resize_to(390, 844)
     visit owner_restaurant_path(id: restaurants(:osteria).id)
 
-    assert_no_selector ".drawer-side a", text: "Overview", visible: :visible
+    assert_no_selector ".drawer-side a", text: /Overview/i, visible: :visible
 
     find("label[for='owner-drawer']", match: :first).click
 

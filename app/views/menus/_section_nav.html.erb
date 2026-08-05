@@ -1,15 +1,16 @@
 <%# Locals: sections (required) — [dom_id, label] pairs, one per rendered menu
     section, in page order (see MenusHelper#menu_nav_sections).
 
-    Sticky jump navigation: one chip per rendered menu section. Chips are plain
-    anchors so navigation works without JS; smooth scrolling comes from the
-    scroll-smooth class on <html> and scroll-mt-* offsets on the sections. %>
-<nav aria-label="<%= t("menu.sections_nav_label") %>" class="sticky top-0 z-10 -mx-4 px-4 py-3 mb-6 bg-base-100/90 backdrop-blur">
-  <div class="flex gap-2 overflow-x-auto">
+    Sticky jump navigation, ruled into the sheet and bleeding to its edges (see
+    ".jump-nav"). Chips are plain anchors so navigation works without JS;
+    smooth scrolling comes from the scroll-smooth class on <html> and the
+    scroll-margin ".group" puts above each colour section. %>
+<nav aria-label="<%= t("menu.sections_nav_label") %>" class="jump-nav">
+  <ul>
     <% sections.each do |dom_id, label| %>
-      <a href="#<%= dom_id %>" class="badge badge-ghost shrink-0 py-3 px-4 font-body text-xs uppercase tracking-wider hover:badge-primary transition-colors">
-        <%= label %>
-      </a>
+      <%# min-w-11: short labels ("Red") would otherwise fall under the 44px
+          minimum tap target that ".chip" already holds vertically. %>
+      <li><a href="#<%= dom_id %>" class="chip min-w-11 justify-center"><%= label %></a></li>
     <% end %>
-  </div>
+  </ul>
 </nav>

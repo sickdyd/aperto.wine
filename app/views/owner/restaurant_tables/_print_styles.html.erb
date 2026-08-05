@@ -1,0 +1,61 @@
+<%# Print rules for the three QR surfaces. These sheets get cut out and stood on
+    the tables, so paper is the real medium, not the screen.
+
+    Everything screen-only in the page markup carries Tailwind's `print:hidden`;
+    what is left here is the shell we do not own — the fixed grain overlay, the
+    owner drawer and the flash strip — plus the card's own paper behaviour.
+
+    The two rules that matter most: the grain is a fixed, multiplied overlay and
+    would mottle every QR it printed over, and the QR itself is drawn in
+    `currentColor`, so print forces it to black on white. An unscannable code
+    makes the whole card worthless. %>
+<style media="print">
+  @page { margin: 12mm; }
+
+  /* The shell: fixed grain overlay, drawer, mobile bar, flash. */
+  .grain,
+  .drawer-side,
+  .navbar,
+  #flash-messages { display: none !important; }
+
+  html, body { background: #fff !important; }
+
+  /* Give the cards the whole sheet — the admin gutters are screen furniture. */
+  main { max-width: none !important; padding: 0 !important; }
+
+  /* A card is one physical object: never let a page break run through it, and
+     never orphan a room heading from the cards it introduces. */
+  .qr-card {
+    background: #fff !important;
+    border: 1px dashed #9a9a9a !important;
+    padding: 9mm 7mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qr-area-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* White ground, black code — forced through, because a browser drops
+     backgrounds when printing and a tinted QR is a QR that does not scan. */
+  .qr-plate {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Two cards across a sheet: large enough to scan from a seated distance. */
+  .qr-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10mm !important;
+  }
+
+  /* A lone card is the page. */
+  .qr-card-single {
+    margin-inline: auto !important;
+    border: 0 !important;
+  }
+</style>

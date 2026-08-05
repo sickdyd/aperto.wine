@@ -47,7 +47,8 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
       click_link I18n.t("owner.restaurants.tables")
     end
     assert_current_path owner_restaurant_tables_path(restaurant_id: restaurant.id)
-    assert_selector ".drawer-side a.menu-active", text: I18n.t("owner.restaurants.tables")
+    # Sidebar entries are CSS-uppercased, so match case-insensitively.
+    assert_selector ".drawer-side a.menu-active", text: /#{I18n.t("owner.restaurants.tables")}/i
   end
 
   test "bulk print page shows a QR card per active table" do
@@ -57,6 +58,18 @@ class OwnerRestaurantTablesTest < ApplicationSystemTestCase
     visit bulk_print_owner_restaurant_tables_path(restaurant_id: restaurant)
     assert_text I18n.t("owner.tables.bulk_print_title"), wait: 5
     assert_selector ".qr-card", count: restaurant.restaurant_tables.active.count
+
+    # Every card is a self-contained printed artifact: the code itself and the
+    # restaurant it belongs to, with each table named somewhere on the sheet.
+    within first(".qr-card") do
+      assert_selector ".qr-plate svg"
+      assert_text restaurant.name
+    end
+
+    # Table names are stamped in CSS-uppercased mono, so match case-insensitively.
+    restaurant.restaurant_tables.active.each do |table|
+      assert_text(/#{Regexp.escape(table.name)}/i)
+    end
   end
 
   test "owner bulk-generates tables by floor" do

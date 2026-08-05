@@ -5,23 +5,35 @@
     there is something to show, so a flash-less page gets no extra
     whitespace at the top.
 
+    Each state is a ruled band, not a card: the daisyUI colour variant
+    supplies the ground, and a mono label plus its own icon name the state
+    in words as well, so success and error never rest on colour alone.
+    `role="alert"` announces the band without moving focus into it.
+
     Width/alignment default to max-w-2xl, matching the menu/cart/status
     pages this was built for. A page laid out narrower than that (the
     centred auth pages) sets content_for(:flash_class) above its own
     content to keep the banner from rendering wider than the form it
     refers to — see sessions/new and registrations/new. %>
 <% if notice || alert %>
-  <div class="<%= content_for(:flash_class).presence || "max-w-2xl mx-auto px-4" %> pt-6">
+  <%# w-full is load-bearing and belongs here rather than on the band: this div
+      is a flex item of the column-flex <body>, and the `mx-auto` in every
+      flash_class cancels the default stretch, so without it this wrapper
+      shrinks to its own text and the full-width band inside it follows.
+      The band's own width comes from the `.alert` reskin in the stylesheet. %>
+  <div class="w-full <%= content_for(:flash_class).presence || "max-w-2xl mx-auto px-4" %> pt-6">
     <% if notice %>
-      <div role="alert" class="alert alert-success text-sm mb-6">
-        <%= icon "check-circle", css: "size-4" %>
-        <span><%= notice %></span>
+      <div role="alert" class="alert alert-success flex items-start gap-3 mb-6">
+        <%= icon "check-circle", class: "size-4 shrink-0 mt-1" %>
+        <span class="mono-label shrink-0"><%= t("shared.flash_notice") %></span>
+        <span class="min-w-0"><%= notice %></span>
       </div>
     <% end %>
     <% if alert %>
-      <div role="alert" class="alert alert-error text-sm mb-6">
-        <%= icon "warning", css: "size-4" %>
-        <span><%= alert %></span>
+      <div role="alert" class="alert alert-error flex items-start gap-3 mb-6">
+        <%= icon "warning", class: "size-4 shrink-0 mt-1" %>
+        <span class="mono-label shrink-0"><%= t("shared.flash_error") %></span>
+        <span class="min-w-0"><%= alert %></span>
       </div>
     <% end %>
   </div>

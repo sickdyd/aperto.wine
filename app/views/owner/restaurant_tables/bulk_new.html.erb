@@ -1,65 +1,76 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.tables.bulk.title')}" } %>
 
-<div class="mb-8">
-  <h1 class="font-display text-3xl font-light"><%= t("owner.tables.bulk.title") %></h1>
-  <p class="text-sm text-base-content/50 mt-2"><%= t("owner.tables.bulk.intro") %></p>
+<div class="admin-head">
+  <h1 class="admin-title"><%= t("owner.tables.bulk.title") %></h1>
 </div>
 
-<%= form_with model: @generation, url: bulk_create_owner_restaurant_tables_path(@restaurant), scope: :table_bulk_generation, class: "space-y-8 max-w-xl" do |f| %>
+<p class="note measure mb-8"><%= t("owner.tables.bulk.intro") %></p>
+
+<%= form_with model: @generation, url: bulk_create_owner_restaurant_tables_path(@restaurant), scope: :table_bulk_generation, class: "max-w-xl space-y-8" do |f| %>
   <% if @generation.errors.any? %>
-    <div role="alert" class="alert alert-error text-sm">
-      <%= icon "warning", css: "size-4" %>
+    <div role="alert" class="alert alert-error">
+      <%= icon "warning", class: "size-4 shrink-0" %>
       <div>
         <% @generation.errors.full_messages.each do |msg| %>
-          <p><%= msg %></p>
+          <p class="field-error"><%= msg %></p>
         <% end %>
       </div>
     </div>
   <% end %>
 
   <fieldset class="form-section">
-    <div class="grid sm:grid-cols-2 gap-4">
+    <div class="grid gap-4 sm:grid-cols-2">
       <div class="field">
         <%= f.label :floors_count, t("owner.tables.bulk.floors_count"), class: "field-label" %>
-        <%= f.number_field :floors_count, min: 1, max: TableBulkGeneration::MAX_FLOORS, required: true, class: "input w-full font-body" %>
+        <%= f.number_field :floors_count, min: 1, max: TableBulkGeneration::MAX_FLOORS, required: true, class: "input w-full font-body num" %>
       </div>
       <div class="field">
         <%= f.label :tables_per_floor, t("owner.tables.bulk.tables_per_floor"), class: "field-label" %>
-        <%= f.number_field :tables_per_floor, min: 1, max: TableBulkGeneration::MAX_TABLES_PER_FLOOR, required: true, class: "input w-full font-body" %>
+        <%= f.number_field :tables_per_floor, min: 1, max: TableBulkGeneration::MAX_TABLES_PER_FLOOR, required: true, class: "input w-full font-body num" %>
       </div>
     </div>
 
     <div class="field">
       <%= f.label :floor_label, t("owner.tables.bulk.floor_label"), class: "field-label" %>
       <%= f.text_field :floor_label, class: "input w-full font-body" %>
-      <p class="text-xs text-base-content/50 mt-1"><%= t("owner.tables.bulk.floor_label_hint") %></p>
+      <p class="field-hint"><%= t("owner.tables.bulk.floor_label_hint") %></p>
     </div>
+  </fieldset>
 
-    <div class="field">
-      <span class="field-label"><%= t("owner.tables.bulk.name_pattern") %></span>
-      <div class="space-y-2 mt-1">
-        <% TableBulkGeneration::NAME_PATTERNS.each do |pattern| %>
-          <label class="flex items-center gap-3 p-3 rounded-lg border border-base-content/10 cursor-pointer hover:border-primary/20 transition-all">
-            <%= f.radio_button :name_pattern, pattern, class: "radio radio-primary radio-sm" %>
-            <span class="text-sm font-body"><%= t("owner.tables.bulk.patterns.#{pattern}") %></span>
-          </label>
-        <% end %>
-      </div>
+  <fieldset class="form-section">
+    <legend class="form-section-title"><%= t("owner.tables.bulk.name_pattern") %></legend>
+    <%# Ruled rows rather than boxes: a hairline between choices, nothing framed. %>
+    <%# No closing rule: the form-actions rule below already shuts the list. %>
+    <div class="divide-y divide-rule-hair">
+      <% TableBulkGeneration::NAME_PATTERNS.each do |pattern| %>
+        <label class="field-toggle min-h-11">
+          <%= f.radio_button :name_pattern, pattern, class: "radio radio-primary radio-sm" %>
+          <span><%= t("owner.tables.bulk.patterns.#{pattern}") %></span>
+        </label>
+      <% end %>
     </div>
   </fieldset>
 
   <div class="form-actions">
     <%= f.submit t("owner.tables.bulk.submit"), class: "btn-wine" %>
-    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn-wine-quiet"><%= t("shared.cancel") %></a>
   </div>
 <% end %>
 
 <% if @restaurant.restaurant_tables.any? %>
-  <div class="mt-12 pt-8 border-t border-base-content/10 max-w-xl">
-    <%= button_to destroy_all_owner_restaurant_tables_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm text-error", data: { turbo_confirm: t("owner.tables.bulk.confirm_delete_all") } do %>
-      <%= icon "trash", css: "size-4" %>
-      <%= t("owner.tables.bulk.delete_all") %>
-    <% end %>
-    <p class="text-xs text-base-content/50 mt-1"><%= t("owner.tables.bulk.delete_all_hint") %></p>
+  <%# The one destructive control on the page, set apart below a section break
+      and never within reach of the generate button. %>
+  <div class="mt-16 max-w-xl">
+    <hr class="rule-section">
+    <div class="panel mt-6">
+      <p class="field-hint"><%= t("owner.tables.bulk.delete_all_hint") %></p>
+      <%= button_to destroy_all_owner_restaurant_tables_path(@restaurant),
+                    method: :delete,
+                    class: "btn-wine-outline mt-4 border-error text-error hover:border-error hover:bg-error hover:text-base-100",
+                    data: { turbo_confirm: t("owner.tables.bulk.confirm_delete_all") } do %>
+        <%= icon "trash", class: "size-4" %>
+        <%= t("owner.tables.bulk.delete_all") %>
+      <% end %>
+    </div>
   </div>
 <% end %>

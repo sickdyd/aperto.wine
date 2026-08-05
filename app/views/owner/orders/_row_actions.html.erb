@@ -1,0 +1,23 @@
+<%# The approve/cancel pair for one row of the service board. Rendered twice per
+    pending order: once folded into the order cell for narrow screens, once in
+    the trailing column from `md` up, so the phone layout does not have to
+    reserve a whole column it only uses on some rows. %>
+<div class="flex flex-col items-stretch gap-2 md:flex-row md:items-center md:justify-end">
+  <%= button_to approve_owner_restaurant_order_path(restaurant, order),
+        method: :patch,
+        class: "btn-wine-outline min-h-11 w-full",
+        form_class: "button_to w-full md:w-auto" do %>
+    <%= icon "check", class: "size-4" %>
+    <%= t("owner.orders.approve") %>
+  <% end %>
+  <%= button_to cancel_owner_restaurant_order_path(restaurant, order),
+        method: :patch,
+        class: "btn-wine-quiet min-h-11 min-w-11 w-full px-2",
+        form_class: "button_to w-full md:w-auto",
+        aria: { label: t("owner.orders.cancel_order") },
+        data: { turbo_confirm: t("owner.orders.confirm_cancel") } do %>
+    <%= icon "x", class: "size-4" %>
+    <%# A bare × in a list of live orders is too easy to read as "dismiss". %>
+    <span class="md:hidden"><%= t("owner.orders.cancel_order") %></span>
+  <% end %>
+</div>

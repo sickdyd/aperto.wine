@@ -44,18 +44,30 @@ class MenuSearchTest < ApplicationSystemTestCase
     assert_no_text "Gavi di Gavi"
   end
 
+  # Colour headings are scoped to ".group-title" rather than matched against the
+  # whole page: the jump-nav chips name the same colours and stay put while a
+  # section is filtered away. They are also mono small caps, so Selenium reports
+  # them upper-cased — hence the case-insensitive match.
+  def assert_colour_section(colour)
+    assert_selector ".group-title", text: /#{Regexp.escape(I18n.t("owner.wines.colors.#{colour}"))}/i, wait: 5
+  end
+
+  def assert_no_colour_section(colour)
+    assert_no_selector ".group-title", text: /#{Regexp.escape(I18n.t("owner.wines.colors.#{colour}"))}/i
+  end
+
   test "a color section hides entirely once all its wines are filtered out" do
     visit_menu
 
-    assert_text I18n.t("owner.wines.colors.red"), wait: 5
-    assert_text I18n.t("owner.wines.colors.white"), wait: 5
+    assert_colour_section "red"
+    assert_colour_section "white"
 
     fill_in I18n.t("menu.search_placeholder"), with: "Barolo"
 
     # Gavi di Gavi is the only white wine on this menu, so the whole "White"
     # section (heading included) disappears once it is filtered out.
-    assert_text I18n.t("owner.wines.colors.red"), wait: 5
-    assert_no_text I18n.t("owner.wines.colors.white")
+    assert_colour_section "red"
+    assert_no_colour_section "white"
   end
 
   test "a list heading hides once every wine on that list is filtered out" do

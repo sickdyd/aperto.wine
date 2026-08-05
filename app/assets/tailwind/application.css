@@ -6,44 +6,65 @@
 
 @plugin "daisyui";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SOMMELIER'S LEDGER — oxblood on warm stock
+
+   A printed wine ledger rather than a web app: three type families (display
+   serif, text serif, mono for data), a five-step oxblood ramp that carries
+   structure rather than decoration, three paper stocks, hairline rules in
+   place of boxes, leader dots between a label and its value, and a grain
+   overlay so the ground reads as paper. Zero radius, zero shadow, anywhere.
+
+   daisyUI stays — it is rethemed, not replaced. The theme block below hands
+   daisyUI the ledger palette and zeroes its radii; the component layer then
+   layers ledger-specific vocabulary on top for the things daisyUI cannot say.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* daisyUI theme — every built-in component inherits the ledger palette from
+   here, so `btn`, `badge`, `input`, `alert`, `modal` and friends land close to
+   the ledger look before any of our own classes are applied. */
 @plugin "daisyui/theme" {
   name: "wine";
   default: true;
   prefersdark: false;
   color-scheme: light;
 
-  --color-base-100: oklch(98.5% 0.005 30);
-  --color-base-200: oklch(95.5% 0.01 30);
-  --color-base-300: oklch(91% 0.015 30);
-  --color-base-content: oklch(22% 0.02 30);
+  /* grounds: paper, pale stock, stock — and body ink */
+  --color-base-100: #F6F2E9;
+  --color-base-200: #EFE8DA;
+  --color-base-300: #E8DCC6;
+  --color-base-content: #221A15;
 
-  --color-primary: oklch(38% 0.15 18);
-  --color-primary-content: oklch(97% 0.005 18);
+  /* the oxblood ramp, mapped onto daisyUI's semantic slots */
+  --color-primary: #6E1F2A;
+  --color-primary-content: #F6F2E9;
 
-  --color-secondary: oklch(52% 0.12 50);
-  --color-secondary-content: oklch(97% 0.005 50);
+  --color-secondary: #8E2A36;
+  --color-secondary-content: #F6F2E9;
 
-  --color-accent: oklch(58% 0.1 85);
-  --color-accent-content: oklch(22% 0.02 85);
+  --color-accent: #B25563;
+  --color-accent-content: #4A1219;
 
-  --color-neutral: oklch(30% 0.02 30);
-  --color-neutral-content: oklch(97% 0.005 30);
+  --color-neutral: #4A1219;
+  --color-neutral-content: #F3E7E4;
 
-  --color-info: oklch(62% 0.12 240);
-  --color-info-content: oklch(97% 0.005 240);
+  /* status colours are pulled into the ledger's warmth — no primary blues */
+  --color-info: #3F5468;
+  --color-info-content: #F6F2E9;
 
-  --color-success: oklch(58% 0.15 150);
-  --color-success-content: oklch(97% 0.005 150);
+  --color-success: #3E5C34;
+  --color-success-content: #F6F2E9;
 
-  --color-warning: oklch(72% 0.15 75);
-  --color-warning-content: oklch(25% 0.03 75);
+  --color-warning: #7C5E1C;
+  --color-warning-content: #F6F2E9;
 
-  --color-error: oklch(50% 0.2 25);
-  --color-error-content: oklch(97% 0.005 25);
+  --color-error: #9E2B25;
+  --color-error-content: #F6F2E9;
 
-  --radius-selector: 0.25rem;
-  --radius-field: 0.375rem;
-  --radius-box: 0.5rem;
+  /* the ledger is printed, not rendered: no radius, no depth, no noise */
+  --radius-selector: 0;
+  --radius-field: 0;
+  --radius-box: 0;
 
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
@@ -53,116 +74,1338 @@
   --noise: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOKENS — exposed to Tailwind, so every token also has a utility
+   (`text-ox-2`, `bg-stock`, `border-rule-hair`, `font-display`, `text-h2` …)
+   ═══════════════════════════════════════════════════════════════════════════ */
 @theme {
-  --font-display: "Cormorant Garamond", serif;
-  --font-body: "Outfit", sans-serif;
+  /* ── the oxblood ramp — five steps, each with a job ────────────────────── */
+  --color-ox-1: #4A1219;   /* deepest — masthead band, heavy section rules   */
+  --color-ox-2: #6E1F2A;   /* core    — headings, wordmark, prices, actions  */
+  --color-ox-3: #8E2A36;   /* mid     — medium rules, numerals, active state */
+  --color-ox-4: #B25563;   /* light   — hairlines, inactive chips, never text*/
+  --color-ox-5: #E8D5D6;   /* tint    — banded ground, type on deep ground   */
+
+  /* ── paper stocks — three grounds for tonal stacking ───────────────────── */
+  --color-paper: #F6F2E9;       /* the page                                  */
+  --color-stock: #E8DCC6;       /* a genuinely different stock, for bands     */
+  --color-stock-pale: #EFE8DA;  /* between the two — ribbons, quiet panels    */
+  --color-sheet: #FCFAF4;       /* the lighter sheet laid on a stock (cards)  */
+
+  /* ── inks ──────────────────────────────────────────────────────────────── */
+  --color-ink: #221A15;         /* body copy only — never structure           */
+  --color-ink-soft: #514A44;    /* secondary prose, tasting notes             */
+  --color-quiet: #5F5436;        /* quietest ink — producer lines, running feet.
+                                   must NOT be named `meta`, which would collide with
+                                   --text-meta and the `text-meta` utility would
+                                   silently resolve to a colour, never a size. */
+  --color-on-deep: #F3E7E4;     /* type on ox-1                               */
+  --color-on-deep-soft: #D9BDBD;/* quiet type on ox-1                          */
+
+  /* ── the rule ramp — three deliberate weights ──────────────────────────── */
+  --color-rule-hair: rgb(178 85 99 / 0.46);   /* row division                 */
+  --color-rule-fine: rgb(142 42 54 / 0.6);    /* subsection division          */
+  --color-rule-medium: #8E2A36;               /* subsection break             */
+  --color-rule-heavy: #4A1219;                /* section break                */
+  --color-leader: rgb(142 42 54 / 0.52);      /* the dotted filler            */
+
+  /* ── the five wine colours, tuned to read on all three stocks ──────────── */
+  --color-wine-red: #722F37;
+  --color-wine-white: #EFDCA0;
+  --color-wine-rose: #E8A0A0;
+  --color-wine-sparkling: #E6C548;
+  --color-wine-dessert: #C79426;
+
+  /* ── type: one display face, one text face, one data face ──────────────── */
+  --font-display: "Instrument Serif", "EB Garamond", Georgia, serif;
+  --font-body: "EB Garamond", "Iowan Old Style", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-sans: "EB Garamond", "Iowan Old Style", Georgia, serif;
+
+  /* ── the modular scale. Body is 18px; nothing below 11px carries prose ─── */
+  --text-micro: 0.6875rem;                        /* 11 — pour sizes, feet    */
+  --text-micro--line-height: 1.4;
+  --text-label: 0.75rem;                          /* 12 — mono labels, chips  */
+  --text-label--line-height: 1.4;
+  --text-meta: 0.875rem;                          /* 14 — wine meta line      */
+  --text-meta--line-height: 1.45;
+  --text-note: 0.9375rem;                         /* 15 — italic notes, price */
+  --text-note--line-height: 1.5;
+  --text-name: 1.125rem;                          /* 18 — wine names          */
+  --text-name--line-height: 1.22;
+  --text-body: 1.125rem;                          /* 18 — prose               */
+  --text-body--line-height: 1.55;
+  --text-lede: clamp(1.1875rem, 1.7vw, 1.375rem); /* 19–22 — intro paragraphs */
+  --text-lede--line-height: 1.5;
+  --text-h5: 0.8125rem;                           /* 13 — small-caps headings */
+  --text-h5--line-height: 1.3;
+  --text-h4: 1.3125rem;                           /* 21 — list headings       */
+  --text-h4--line-height: 1.25;
+  --text-h3: 1.5rem;                              /* 24 — card headings       */
+  --text-h3--line-height: 1.2;
+  --text-h2: clamp(2.25rem, 5vw, 3.75rem);        /* section display          */
+  --text-h2--line-height: 1;
+  --text-h1: clamp(3.25rem, 10vw, 5.75rem);       /* the opening display      */
+  --text-h1--line-height: 0.9;
+  --text-numeral: clamp(3.25rem, 5.4vw, 4.5rem);  /* display figures          */
+  --text-numeral--line-height: 0.82;
+
+  --tracking-wide-caps: 0.14em;
+  --tracking-wider-caps: 0.22em;
+
+  /* ── nothing on this page has a corner ─────────────────────────────────── */
+  --radius: 0;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════════════════ */
 @layer base {
-  body {
-    font-family: var(--font-body);
-    letter-spacing: -0.01em;
+  :root {
+    /* measures and gutters — the page furniture the ledger is set in */
+    --measure: 34rem;  /* comfortable prose column                           */
+    --spread: 70rem;   /* the full editorial spread                          */
+    --card-w: 27rem;   /* the menu sheet, as a guest holds it                */
+    --gutter: clamp(1.25rem, 5vw, 2.5rem);
+    --indent: 1.375rem;/* dot column + gap, so meta hangs under the name     */
+
+    /* fibre: greyscale turbulence remapped into a narrow high-key band, so it
+       multiplies as paper texture rather than as television static */
+    --grain-fine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.42' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='0.2' intercept='0.8'/%3E%3CfeFuncG type='linear' slope='0.2' intercept='0.8'/%3E%3CfeFuncB type='linear' slope='0.2' intercept='0.8'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23f)'/%3E%3C/svg%3E");
+    --grain-blot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='680' height='680'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='0.09' intercept='0.91'/%3E%3CfeFuncG type='linear' slope='0.09' intercept='0.91'/%3E%3CfeFuncB type='linear' slope='0.09' intercept='0.91'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='680' height='680' filter='url(%23b)'/%3E%3C/svg%3E");
+    --grain-opacity: 1;
+
+    /* the pour's full cycle: one pour, then a long stillness */
+    --pour-cycle: 24s;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: 1.55;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Display face for the two loudest levels; the rest is the text face set
+     semibold. Admin quiets h1/h2 back down — see `.ledger-admin`. */
+  h1, h2 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-weight: 400;
+    letter-spacing: -0.018em;
+    color: var(--color-ox-1);
+  }
+
+  h3, h4, h5, h6 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    letter-spacing: 0.004em;
+    color: var(--color-ox-1);
+  }
+
+  /* one focus treatment everywhere; deep grounds flip it to the tint */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-ox-2);
+    outline-offset: 3px;
+  }
+
+  .on-deep :where(a, button, input):focus-visible,
+  .masthead :where(a, button, input):focus-visible {
+    outline-color: var(--color-ox-5);
+  }
+
+  ::selection {
+    background-color: rgb(142 42 54 / 0.26);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 }
 
 @layer components {
-  .landing-section {
-    @apply px-6 md:px-12 lg:px-20 xl:px-32;
+  /* ═════════════════════════════════════════════════════════════════════════
+     1. PAGE FURNITURE
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  /* The one grain overlay for the whole page — rendered once per layout, just
+     before </body>. Two scales of fibre multiplied over everything so the
+     ground reads as stock. Never interactive. */
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: var(--grain-fine);
+    background-size: 220px 220px;
+    mix-blend-mode: multiply;
   }
 
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--grain-blot);
+    background-size: 680px 680px;
+    mix-blend-mode: multiply;
+  }
+
+  /* The owner admin scope. Same tokens, same vocabulary — held quiet: the
+     display face steps back, the scale compresses, the grain softens, and the
+     rhythm tightens. Put it on <body> in the owner layout. */
+  .ledger-admin {
+    --text-h1: 1.75rem;
+    --text-h2: 1.375rem;
+    --text-h3: 1.125rem;
+    --text-h4: 1rem;
+    --text-body: 1rem;
+    --text-name: 1rem;
+    --text-lede: 1.0625rem;
+    --text-numeral: 1.75rem;
+    --grain-opacity: 0.5;
+
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  /* No display type in the admin — headings are the text face, set tight. */
+  .ledger-admin :is(h1, h2) {
+    font-family: var(--font-body);
+    font-weight: 600;
+    letter-spacing: -0.004em;
+  }
+
+  /* The editorial spread: the shared content column and its gutters. */
+  .spread {
+    max-width: var(--spread);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  /* Skip link — parked off-screen until focused. */
+  .skip-link {
+    @apply absolute left-4 z-100 inline-flex items-center px-4 no-underline;
+    top: -5rem;
+    min-height: 44px;
+    background-color: var(--color-ox-1);
+    color: var(--color-on-deep);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+  }
+
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     2. RULES — three weights, used deliberately.
+        hairline = row division · medium = subsection · heavy = section break
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  .rule-hair {
+    border: 0;
+    border-top: 1px solid var(--color-rule-hair);
+    margin: 0;
+  }
+
+  .rule-fine {
+    border: 0;
+    border-top: 1px solid var(--color-rule-fine);
+    margin: 0;
+  }
+
+  .rule-medium {
+    border: 0;
+    border-top: 1.5px solid var(--color-rule-medium);
+    margin: 0;
+  }
+
+  .rule-heavy {
+    border: 0;
+    border-top: 3px solid var(--color-rule-heavy);
+    margin: 0;
+  }
+
+  /* The section break: a heavy rule with a fine one riding under it. */
+  .rule-section {
+    height: 6px;
+    border: 0;
+    border-top: 3px solid var(--color-rule-heavy);
+    border-bottom: 1px solid var(--color-rule-fine);
+    margin: 0;
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     3. LEADER DOTS — the signature. A label, a dotted rule that grows to fill
+        the gap, and a right-aligned value, all sharing one baseline.
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  .leader-row {
+    @apply flex items-baseline gap-3;
+  }
+
+  .leader-label {
+    @apply min-w-0 shrink;
+  }
+
+  /* An empty flex item carrying the dotted rule across the gap. Always
+     aria-hidden — it says nothing. */
+  .leader {
+    flex: 1 1 1.5rem;
+    min-width: 1.25rem;
+    align-self: baseline;
+    border-bottom: 1px dotted var(--color-leader);
+    transform: translateY(-0.1em);
+  }
+
+  .leader-solid {
+    border-bottom: 1px solid var(--color-rule-hair);
+  }
+
+  .leader-fine {
+    border-bottom: 1px solid var(--color-rule-fine);
+  }
+
+  /* The value the leader runs to: mono, tabular, right-aligned, never wrapping
+     away from its own label. */
+  .leader-value {
+    @apply shrink-0 text-right;
+    font-family: var(--font-mono);
+    font-size: var(--text-note);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.01em;
+    color: var(--color-ox-2);
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     4. TYPE VOCABULARY
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  /* The mono label: small caps for anything that is data about the page
+     rather than the page — section kickers, field labels, chips, running feet. */
+  .mono-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    line-height: 1.4;
+  }
+
+  .mono-micro {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    line-height: 1.4;
+    color: var(--color-quiet);
+  }
+
+  /* A kicker with a short heavy rule leading into it. */
+  .eyebrow {
+    @apply flex items-center gap-3;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-ox-2);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 2.5rem;
+    height: 0;
+    flex: none;
+    border-top: 3px solid var(--color-ox-3);
+  }
+
+  /* Display headings. Drama comes from size and colour, never from weight. */
+  .display-1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--text-h1);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--color-ox-1);
+    text-wrap: balance;
+  }
+
+  .display-2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--text-h2);
+    line-height: 1;
+    letter-spacing: -0.014em;
+    color: var(--color-ox-2);
+    text-wrap: balance;
+  }
+
+  .display-3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--text-h3);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--color-ox-1);
+  }
+
+  
+  /* A section head: title, a leader across the gap, an optional right note. */
+  .section-head {
+    @apply flex items-baseline gap-3;
+    margin-bottom: 2rem;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--text-h2);
+    line-height: 1;
+    letter-spacing: -0.014em;
+    color: var(--color-ox-2);
+    text-wrap: balance;
+  }
+
+  .ledger-admin .section-title {
+    font-family: var(--font-body);
+    font-weight: 600;
+    letter-spacing: -0.004em;
+  }
+
+  .lede {
+    font-size: var(--text-lede);
+    line-height: 1.5;
+    color: var(--color-ink);
+    text-wrap: pretty;
+    max-width: 32rem;
+  }
+
+  /* Italic prose set quieter than body — tasting notes, asides. */
+  .note {
+    font-style: italic;
+    font-size: var(--text-note);
+    color: var(--color-ink-soft);
+    text-wrap: pretty;
+  }
+
+  /* Letterpress: a light lip under the glyph, as if pressed into the sheet. */
+  .press {
+    text-shadow: 0 1px 0 rgb(255 255 255 / 0.6);
+  }
+
+  .press-deep {
+    text-shadow: 0 1px 0 rgb(0 0 0 / 0.4);
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     5. MASTHEAD, NAV AND FOOT
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  /* The deep band across the top of a public page. */
+  .masthead {
+    background-color: var(--color-ox-1);
+    color: var(--color-on-deep);
+    padding: 0.75rem var(--gutter);
+    border-bottom: 4px solid var(--color-ox-3);
+  }
+
+  .masthead-inner {
+    @apply flex flex-wrap items-center justify-between gap-x-6 gap-y-3;
+    max-width: var(--spread);
+    margin-inline: auto;
+  }
+
+  
+  .wordmark {
+    @apply inline-flex items-center no-underline;
+    min-height: 44px;
+    font-family: var(--font-body);
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.012em;
+    color: var(--color-on-deep);
+  }
+
+  .wordmark b {
+    font-weight: 600;
+    color: var(--color-on-deep-soft);
+  }
+
+  /* The wordmark when it sits on paper rather than on the deep band. */
+  .wordmark-paper {
+    color: var(--color-ox-2);
+  }
+
+  .wordmark-paper b {
+    color: var(--color-ox-3);
+  }
+
+  .ledger-admin .wordmark {
+    font-size: 1.25rem;
+  }
+
+  /* A navigation / inline action link. Mono, uppercase, 44px tap target. */
+  .link-mono {
+    @apply inline-flex items-center justify-center no-underline whitespace-nowrap;
+    min-height: 44px;
+    min-width: 44px;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    text-underline-offset: 0.35em;
+    text-decoration-thickness: 1px;
+    color: var(--color-ox-2);
+  }
+
+  .link-mono:hover {
+    color: var(--color-ox-3);
+    text-decoration-line: underline;
+  }
+
+  .link-mono[aria-current] {
+    text-decoration-line: underline;
+    text-decoration-color: var(--color-ox-4);
+  }
+
+  .masthead .link-mono {
+    color: var(--color-on-deep-soft);
+  }
+
+  .masthead .link-mono:hover {
+    color: var(--color-on-deep);
+  }
+
+  .site-foot {
+    padding: 3rem var(--gutter) 4rem;
+  }
+
+  .site-foot-inner {
+    @apply flex flex-wrap items-center justify-between gap-x-6 gap-y-3;
+    max-width: var(--spread);
+    margin-inline: auto;
+  }
+
+  
+  /* The primary action: oxblood block, paper type. */
   .btn-wine {
-    @apply btn btn-primary font-body font-medium tracking-wide uppercase text-xs;
-    letter-spacing: 0.12em;
+    background-color: var(--color-ox-2);
+    color: var(--color-paper);
   }
 
+  .btn-wine:hover {
+    background-color: var(--color-ox-1);
+    border-color: var(--color-ox-1);
+    color: var(--color-paper);
+  }
+
+  /* The secondary action: ruled outline, oxblood type, fills on hover. */
   .btn-wine-outline {
-    @apply btn btn-outline border-base-content/20 font-body font-medium tracking-wide uppercase text-xs hover:bg-base-content hover:text-base-100 hover:border-base-content;
-    letter-spacing: 0.12em;
+    border-color: var(--color-ox-4);
   }
 
-  .divider-wine {
-    @apply w-12 h-px bg-primary/40 mx-auto;
+  .btn-wine-outline:hover {
+    background-color: var(--color-ox-2);
+    border-color: var(--color-ox-2);
+    color: var(--color-paper);
   }
 
-  /* Wine-type color marker shown next to each wine on the public menu.
-     The subtle inset ring keeps the pale white-wine dot visible. */
-  .wine-dot {
-    @apply inline-block size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-base-content/15;
+  /* The tertiary action: no rule at all until hovered. For destructive-adjacent
+     or low-stakes controls, and for dense admin toolbars. */
+  .btn-wine-quiet {
+    border-color: transparent;
   }
 
-  .wine-dot-red {
-    background-color: #722F37;
+  .btn-wine-quiet:hover {
+    background-color: transparent;
+    border-color: var(--color-ox-4);
+    color: var(--color-ox-1);
   }
 
-  .wine-dot-white {
-    background-color: #F5E6B8;
+  /* The action that sits on a deep oxblood ground (masthead, banded CTA). */
+  .btn-wine-deep {
+    border-color: var(--color-ox-5);
+    color: var(--color-on-deep);
   }
 
-  .wine-dot-rose {
-    background-color: #E8A0A0;
+  .btn-wine-deep:hover {
+    background-color: var(--color-ox-5);
+    border-color: var(--color-ox-5);
+    color: var(--color-ox-1);
   }
 
-  .wine-dot-sparkling {
-    background-color: #F0DC82;
+  /* Admin buttons are the same block, set smaller and tighter. */
+  .ledger-admin :is(.btn-wine, .btn-wine-outline, .btn-wine-quiet) {
+    min-height: 40px;
+    padding-inline: 1rem;
+    letter-spacing: 0.1em;
   }
 
-  .wine-dot-dessert {
-    background-color: #D4A840;
+  
+  @media (prefers-reduced-motion: no-preference) {
+    .btn-wine,
+    .btn-wine-outline,
+    .btn-wine-quiet,
+    .btn-wine-deep,
+    .link-mono,
+    .chip {
+      transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+    }
   }
 
-  /* Form vocabulary — daisyUI 5 replaced form-control/label-text; these are the
-     app-wide equivalents so every form shares one field treatment. */
+  /* ═════════════════════════════════════════════════════════════════════════
+     7. FORMS — printed form fields: ruled underneath, never boxed. The
+        `.field*` / `.form-*` names are the app-wide vocabulary and are kept.
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  /* daisyUI's controls, rethemed in place so every existing form inherits the
+     ledger treatment without touching its markup. */
+
   .field {
     @apply flex flex-col gap-1.5;
   }
 
   .field-label {
-    @apply font-body text-xs uppercase tracking-wider text-base-content/60;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-ox-2);
   }
 
   .field-hint {
-    @apply font-body text-xs text-base-content/60;
+    font-family: var(--font-body);
+    font-size: var(--text-meta);
+    font-style: italic;
+    color: var(--color-quiet);
+  }
+
+  .field-error {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-error);
   }
 
   .field-toggle {
-    @apply flex items-center gap-3 cursor-pointer font-body text-sm text-base-content;
+    @apply flex cursor-pointer items-center gap-3;
+    font-family: var(--font-body);
+    font-size: var(--text-meta);
+    color: var(--color-ink);
   }
 
   .form-section {
     @apply flex flex-col gap-4;
   }
 
+  /* A subsection break inside a form — medium rule, mono caps. */
   .form-section-title {
-    @apply font-body text-xs font-semibold uppercase tracking-[0.15em] text-base-content/80 pb-2 mb-1 border-b border-base-300 w-full;
+    @apply w-full pb-2;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider-caps);
+    color: var(--color-ox-2);
+    border-bottom: 1.5px solid var(--color-rule-medium);
   }
 
   .form-actions {
-    @apply flex items-center gap-3 pt-2;
+    @apply flex items-center gap-3 pt-4;
+    border-top: 1px solid var(--color-rule-hair);
   }
 
-  /* Address autocomplete dropdown (stimulus-autocomplete results) */
+  /* The menu search field: a rule, an icon, and the input riding on it. */
+  .search-field {
+    @apply flex items-center gap-2;
+    border-bottom: 1.5px solid var(--color-rule-medium);
+  }
+
+  .search-field svg {
+    @apply size-4 shrink-0;
+    color: var(--color-ox-3);
+  }
+
+  .search-field input {
+    @apply min-w-0 flex-1 appearance-none border-0 bg-transparent p-0;
+    min-height: 46px;
+    font-family: var(--font-body);
+    font-size: var(--text-name);
+    color: var(--color-ink);
+  }
+
+  .search-field input::-webkit-search-decoration,
+  .search-field input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+
+  /* Address autocomplete results (stimulus-autocomplete) — a sheet on a rule. */
   .address-suggestions {
-    @apply absolute left-0 right-0 top-full z-20 mt-1 list-none bg-base-100 border border-base-300 rounded-box shadow-lg p-1 max-h-64 overflow-y-auto;
+    @apply absolute inset-x-0 top-full z-20 max-h-64 list-none overflow-y-auto p-0;
+    background-color: var(--color-sheet);
+    border: 1px solid var(--color-ox-4);
+    border-top: 1.5px solid var(--color-rule-medium);
   }
 
   .address-suggestion {
-    @apply block px-3 py-2 rounded-field cursor-pointer text-sm font-body;
+    @apply block cursor-pointer px-3 py-2;
+    font-family: var(--font-body);
+    font-size: var(--text-meta);
   }
 
   .address-suggestion:hover,
   .address-suggestion[aria-selected="true"],
   .address-suggestion.active {
-    @apply bg-base-200;
+    background-color: var(--color-stock-pale);
   }
 
   .address-suggestion-attribution {
-    @apply px-3 py-1 text-xs text-base-content/40 cursor-default;
+    @apply cursor-default px-3 py-1;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-quiet);
   }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     8. BANDS AND SHEETS — depth comes from stock and overlap, not shadow
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  /* The tinted band: oxblood tint ground, heavy rules top and bottom. */
+  .band-tint {
+    background-color: var(--color-ox-5);
+    border-top: 3px solid var(--color-rule-heavy);
+    border-bottom: 3px solid var(--color-rule-heavy);
+    padding-block: clamp(3rem, 5vw, 4rem);
+  }
+
+  /* The stock band: the menu's own ground, a genuinely different sheet. */
+  .band-stock {
+    background-color: var(--color-stock);
+    border-top: 10px solid var(--color-ox-1);
+    border-bottom: 3px solid var(--color-rule-heavy);
+    padding: 3rem var(--gutter) 4rem;
+  }
+
+  
+  /* A closing call to action, ruled top and bottom like a colophon. */
+  .cta-band {
+    @apply flex flex-wrap items-baseline justify-between gap-6 py-8;
+    border-top: 3px solid var(--color-rule-heavy);
+    border-bottom: 3px solid var(--color-rule-heavy);
+  }
+
+  /* The sheet: a lighter stock laid on a darker one. The public menu card,
+     and any panel that needs to lift off its ground without a shadow. */
+  .sheet {
+    background-color: var(--color-sheet);
+    border: 1px solid var(--color-ox-4);
+    border-top: 3px solid var(--color-rule-heavy);
+    padding: 1.5rem 1.25rem;
+  }
+
+  .sheet-narrow {
+    width: min(100%, var(--card-w));
+    margin-inline: auto;
+  }
+
+  /* A quiet admin panel: no lift, just a hairline and a stock ground. */
+  .panel {
+    background-color: var(--color-stock-pale);
+    border: 1px solid var(--color-rule-hair);
+    padding: 1.25rem;
+  }
+
+  .panel-title {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider-caps);
+    color: var(--color-ox-2);
+    margin-bottom: 0.75rem;
+  }
+
+  /* The one ink stamp: displaced edges, mottled ink, off-square. Use once per
+     page at most — a table number, a status. */
+  .stamp {
+    @apply inline-flex items-center gap-2;
+    padding: 0.45rem 0.9rem;
+    border: 2px solid var(--color-ox-3);
+    color: var(--color-ox-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider-caps);
+    transform: rotate(-1.85deg);
+  }
+
+  /* A chip: an inline filter or jump target. Never a button. */
+  .chip {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap px-2 no-underline;
+    min-height: 44px;
+    border: 1px solid var(--color-ox-4);
+    color: var(--color-ox-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .chip:hover,
+  .chip[aria-current] {
+    background-color: var(--color-ox-2);
+    border-color: var(--color-ox-2);
+    color: var(--color-paper);
+  }
+
+  /* daisyUI badges, rethemed in place: printed annotations, not pills. The
+     `badge-*` colour variants keep working on top of this. */
+
+  /* daisyUI alerts, rethemed: a ruled band, not a card. The `alert-*` colour
+     variants supply the ground; the type stays readable serif. */
+
+  /* An owner sidebar / drawer entry: mono caps, a rule for the current page. */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 no-underline;
+    min-height: 44px;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-ink-soft);
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover {
+    color: var(--color-ox-2);
+    background-color: var(--color-stock-pale);
+  }
+
+  .nav-item[aria-current] {
+    color: var(--color-ox-1);
+    border-left-color: var(--color-ox-3);
+  }
+
+  /* A struck-through annotation tag — sold out, archived, draft. */
+  .tag-out {
+    @apply inline-flex shrink-0 items-center;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid var(--color-ox-4);
+    color: var(--color-ox-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     9. THE WINE LIST — the ledger proper
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  /* Wine-type colour marker. The ring keeps the pale white and sparkling dots
+     legible on every stock; the names are load-bearing (helper + tests). */
+  .wine-dot {
+    @apply inline-block shrink-0 rounded-full;
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid rgb(74 18 25 / 0.78);
+    align-self: baseline;
+    transform: translateY(-0.02em);
+  }
+
+  .wine-dot-sm {
+    width: 9px;
+    height: 9px;
+    border-width: 1px;
+    align-self: center;
+    transform: none;
+  }
+
+  .wine-dot-red {
+    background-color: var(--color-wine-red);
+  }
+
+  .wine-dot-white {
+    background-color: var(--color-wine-white);
+  }
+
+  .wine-dot-rose {
+    background-color: var(--color-wine-rose);
+  }
+
+  .wine-dot-sparkling {
+    background-color: var(--color-wine-sparkling);
+  }
+
+  .wine-dot-dessert {
+    background-color: var(--color-wine-dessert);
+  }
+
+  /* A list block — one wine list, headed like a table. */
+  .list-head {
+    @apply flex items-baseline gap-3 pb-2;
+    border-bottom: 3px solid var(--color-rule-heavy);
+  }
+
+  .list-title {
+    font-size: var(--text-h4);
+    font-weight: 600;
+    letter-spacing: 0.004em;
+    color: var(--color-ox-1);
+  }
+
+  /* A colour group within a list — Rossi, Bianchi, Bollicine. */
+
+  .group-head {
+    @apply flex items-baseline gap-3 pb-1;
+    border-bottom: 1.5px solid var(--color-rule-medium);
+  }
+
+  .group-title {
+    @apply flex items-baseline gap-2;
+    font-size: var(--text-h5);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider-caps);
+    color: var(--color-ox-2);
+  }
+
+  .group-body > * {
+    @apply py-4;
+    border-bottom: 1px solid var(--color-rule-hair);
+  }
+
+  .group-body > *:last-child {
+    border-bottom: 0;
+  }
+
+  /* One wine, as a ledger row. */
+  .wine-head {
+    @apply flex items-baseline gap-3;
+  }
+
+  .wine-name {
+    font-size: var(--text-name);
+    font-weight: 500;
+    line-height: 1.22;
+    color: var(--color-ink);
+  }
+
+  /* Producer · grape · vintage · region. Hangs under the name, past the dot. */
+  .wine-meta {
+    @apply mt-2;
+    padding-left: var(--indent);
+    font-size: var(--text-meta);
+    color: var(--color-quiet);
+    text-wrap: pretty;
+  }
+
+  .wine-vintage {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--color-ox-3);
+  }
+
+  .wine-note {
+    @apply mt-1;
+    padding-left: var(--indent);
+    font-style: italic;
+    font-size: var(--text-note);
+    color: var(--color-ink-soft);
+    text-wrap: pretty;
+  }
+
+  /* An annotation in the margin of the row — "opened 2 hours ago". */
+  .wine-opened {
+    @apply mt-2 flex items-baseline gap-2;
+    padding-left: var(--indent);
+    color: var(--color-ox-3);
+    font-style: italic;
+    font-size: var(--text-note);
+  }
+
+  .wine-opened svg {
+    @apply size-3 shrink-0 translate-y-0.5;
+  }
+
+  /* Sold out — struck through the ledger. Never colour alone. */
+  .wine-soldout .wine-name {
+    color: var(--color-quiet);
+    text-decoration-line: line-through;
+    text-decoration-thickness: 1px;
+  }
+
+  /* The price block: one row per pour size, sizes left, amounts right. */
+  .price-grid {
+    @apply grid shrink-0 items-baseline justify-end text-right;
+    grid-template-columns: auto auto;
+    column-gap: 0.5rem;
+    row-gap: 0.15rem;
+    line-height: 1.2;
+  }
+
+  .price-size {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-quiet);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .price-amount {
+    font-family: var(--font-mono);
+    font-size: var(--text-note);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.01em;
+    color: var(--color-ox-2);
+  }
+
+  /* The sheet's own head and foot. */
+  .sheet-head {
+    @apply text-center;
+  }
+
+  .sheet-address {
+    @apply mt-2;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-quiet);
+  }
+
+  .sheet-foot {
+    @apply mt-8 pt-3 text-center;
+    border-top: 1.5px solid var(--color-rule-medium);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider-caps);
+    color: var(--color-ox-2);
+  }
+
+  /* A sticky in-sheet jump nav. */
+  .jump-nav {
+    @apply sticky top-0 z-5 px-5 py-2;
+    background-color: var(--color-sheet);
+    margin-inline: -1.25rem;
+    border-top: 1px solid var(--color-rule-hair);
+    border-bottom: 1.5px solid var(--color-rule-medium);
+  }
+
+  .jump-nav ul {
+    @apply flex gap-1.5 overflow-x-auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .jump-nav ul::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Nothing here yet, or nothing left after a filter. */
+  .empty-state {
+    @apply py-8 text-center;
+    color: var(--color-quiet);
+  }
+
+  /* The italic is the voice of the explanatory line alone — as a standalone
+     paragraph, or as the body of a composed empty state. Keeping it off the
+     container means a heading or a button nested inside reads upright without
+     an override, which is what `not-italic` was patching around. */
+  p.empty-state,
+  .empty-state > p {
+    font-style: italic;
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     10. NUMBERED STEPS — the "how it works" pattern, ruled as a table
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  .step-number {
+    @apply mb-4 block pb-3;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--text-numeral);
+    line-height: 0.82;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--color-ox-3);
+    border-bottom: 1px solid var(--color-rule-fine);
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     11. DATA — the owner admin lists. A ledger page, not a card grid.
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  /* Table treatment: mono caps head over a heavy rule, hairlines between rows,
+     no zebra, no cell borders, no hover fill beyond the faintest tint. */
+  .ledger-table {
+    @apply w-full border-collapse text-left;
+    font-size: 1rem;
+  }
+
+  .ledger-table thead th {
+    @apply px-3 py-2 align-bottom font-normal;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-ox-2);
+    border-bottom: 3px solid var(--color-rule-heavy);
+  }
+
+  .ledger-table tbody td {
+    @apply px-3 py-3 align-top;
+    border-bottom: 1px solid var(--color-rule-hair);
+  }
+
+  .ledger-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .ledger-table tbody tr:hover td {
+    background-color: var(--color-stock-pale);
+  }
+
+  /* Any numeric cell — right-aligned, tabular, mono. Amounts, counts, years. */
+  .ledger-table .cell-num,
+  .cell-num {
+    @apply text-right;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.01em;
+    color: var(--color-ox-2);
+  }
+
+  /* The head of an admin screen: title, optional count, primary action. */
+  .admin-head {
+    @apply mb-6 flex flex-wrap items-baseline justify-between gap-4 pb-3;
+    border-bottom: 3px solid var(--color-rule-heavy);
+  }
+
+  .admin-title {
+    font-family: var(--font-body);
+    font-size: var(--text-h1);
+    font-weight: 600;
+    letter-spacing: -0.004em;
+    color: var(--color-ox-1);
+  }
+
+  .admin-subtitle {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-quiet);
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     12. THE POUR — the hero engraving. Markup lives in
+         app/views/shared/_pour.html.erb; this is the ink and the sequence.
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  .pour {
+    width: min(100%, 24rem);
+    margin-inline: auto;
+  }
+
+  .pour-plate {
+    @apply block h-auto w-full;
+  }
+
+  /* Contour: the drawn line, in the deepest step of the ramp. */
+  .pour-ln {
+    fill: none;
+    stroke: var(--color-ox-1);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* pathLength="1" normalises every contour, so one dash spans the whole path
+     and the gap is wide enough that an over-shot offset never wraps into view. */
+  .pour-draw {
+    stroke-dasharray: 1 2;
+    stroke-dashoffset: 0;
+  }
+
+  /* Hatching and stipple: the same ink, laid thinner. */
+  .pour-hatch {
+    fill: none;
+    stroke: var(--color-ox-1);
+    stroke-linecap: round;
+    stroke-width: 0.9;
+    --pour-o: 0.56;
+    opacity: var(--pour-o);
+  }
+
+  .pour-hatch-2 { stroke-width: 0.7; --pour-o: 0.42; }
+  .pour-hatch-3 { stroke-width: 0.55; --pour-o: 0.3; }
+  .pour-hatch-4 { stroke-width: 0.45; --pour-o: 0.2; }
+  .pour-hatch-foil { stroke-width: 1.05; --pour-o: 0.62; }
+
+  .pour-stipple {
+    fill: var(--color-ox-1);
+    stroke: none;
+    --pour-o: 0.32;
+    opacity: var(--pour-o);
+  }
+
+  .pour-tint {
+    fill: var(--color-ox-1);
+    stroke: none;
+    --pour-o: 0.22;
+    opacity: var(--pour-o);
+  }
+
+  /* The wine itself, in the core step of the ramp. */
+  .pour-wine { fill: var(--color-ox-2); }
+  .pour-wine-top { fill: color-mix(in srgb, var(--color-ox-3) 82%, var(--color-ox-5)); }
+
+  .pour-wine-edge {
+    fill: none;
+    stroke: var(--color-ox-1);
+    stroke-width: 0.9;
+    opacity: 0.45;
+  }
+
+  .pour-stream-g { opacity: 0; }
+
+  .pour-stream {
+    fill: none;
+    stroke: var(--color-ox-2);
+    stroke-width: 3.1;
+    stroke-linecap: round;
+    stroke-dasharray: 1 2;
+    stroke-dashoffset: 0;
+  }
+
+  .pour-bottle,
+  .pour-rise,
+  .pour-slosh {
+    transform-box: view-box;
+  }
+
+  /* Origins are plain user units — the base of the bottle, the belly of the wine. */
+  .pour-bottle { transform-origin: 78px 318px; }
+  .pour-rise,
+  .pour-slosh { transform-origin: 223px 208px; }
+
+  /* The sequence. Reduced motion gets the finished state declared above,
+     untouched: everything drawn, the glass poured, no stream, no movement. */
+  @media (prefers-reduced-motion: no-preference) {
+    .pour-plate { animation: pour-cycle var(--pour-cycle) cubic-bezier(.4, 0, .6, 1) infinite; }
+    .pour-draw { animation: pour-draw-a var(--pour-cycle) cubic-bezier(.62, .02, .35, 1) infinite; }
+    .pour-glass .pour-draw { animation-name: pour-draw-b; }
+    .pour-detail .pour-draw { animation-name: pour-draw-c; }
+    .pour-hatch,
+    .pour-stipple,
+    .pour-tint { animation: pour-hatch-in var(--pour-cycle) ease-out infinite; }
+    .pour-bottle { animation: pour-tip var(--pour-cycle) cubic-bezier(.45, .02, .3, 1) infinite; }
+    .pour-stream-g { animation: pour-stream-show var(--pour-cycle) linear infinite; }
+    .pour-stream { animation: pour-stream-run var(--pour-cycle) cubic-bezier(.4, 0, .35, 1) infinite; }
+    .pour-rise { animation: pour-fill var(--pour-cycle) cubic-bezier(.42, 0, .35, 1) infinite; }
+    .pour-slosh { animation: pour-settle var(--pour-cycle) cubic-bezier(.37, 0, .63, 1) infinite; }
+  }
+}
+
+/* The plate fades out before the reset, so the rewind is never seen. */
+@keyframes pour-cycle {
+  0%, 91% { opacity: 1; }
+  95.5%, 99.9% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Trim paths: the contour draws itself on, staggered in three passes. */
+@keyframes pour-draw-a {
+  0%, 1.5% { stroke-dashoffset: 1.05; }
+  10.5%, 96% { stroke-dashoffset: 0; }
+  99.9%, 100% { stroke-dashoffset: 1.05; }
+}
+
+@keyframes pour-draw-b {
+  0%, 3.8% { stroke-dashoffset: 1.05; }
+  12.5%, 96% { stroke-dashoffset: 0; }
+  99.9%, 100% { stroke-dashoffset: 1.05; }
+}
+
+@keyframes pour-draw-c {
+  0%, 7.5% { stroke-dashoffset: 1.05; }
+  15%, 96% { stroke-dashoffset: 0; }
+  99.9%, 100% { stroke-dashoffset: 1.05; }
+}
+
+@keyframes pour-hatch-in {
+  0%, 8.3% { opacity: 0; }
+  14.2%, 96% { opacity: var(--pour-o); }
+  99.9%, 100% { opacity: 0; }
+}
+
+@keyframes pour-tip {
+  0%, 14.2% { transform: translate(0, 0) rotate(0deg); }
+  19.2%, 25% { transform: translate(-59px, -106px) rotate(62deg); }
+  30%, 100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes pour-stream-show {
+  0%, 19% { opacity: 0; }
+  19.2%, 28.3% { opacity: 1; }
+  28.5%, 100% { opacity: 0; }
+}
+
+@keyframes pour-stream-run {
+  0%, 19.2% { stroke-dashoffset: 1.05; }
+  22.1%, 25.4% { stroke-dashoffset: 0; }
+  28.4%, 100% { stroke-dashoffset: -1.05; }
+}
+
+@keyframes pour-fill {
+  0%, 19.6% { transform: translateY(60px); }
+  27.1%, 96% { transform: translateY(0); }
+  99.9%, 100% { transform: translateY(60px); }
+}
+
+/* The surface comes to rest: a wobble that damps out. */
+@keyframes pour-settle {
+  0%, 26.7% { transform: rotate(0deg); }
+  28.4% { transform: rotate(2.4deg); }
+  30.2% { transform: rotate(-1.5deg); }
+  31.9% { transform: rotate(0.85deg); }
+  33.4% { transform: rotate(-0.4deg); }
+  34.6% { transform: rotate(0.15deg); }
+  35.6%, 100% { transform: rotate(0deg); }
 }
 
 @layer utilities {
@@ -174,7 +1417,179 @@
     font-family: var(--font-body);
   }
 
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Tabular lining figures — anything a reader compares down a column. */
+  .num {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
   .text-balance {
     text-wrap: balance;
   }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* A prose column no wider than a comfortable measure. */
+  .measure {
+    max-width: var(--measure);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   daisyUI reskins — deliberately UNLAYERED.
+
+   daisyUI 5 emits its component CSS into sublayers nested inside
+   @layer utilities (utilities → daisyui.l1.l2.l3), while our vocabulary lives
+   in @layer components. Cascade LAYER ORDER is resolved before specificity,
+   and utilities is declared after components — so a .input rule inside
+   @layer components loses to daisyUI's .input no matter how specific it is.
+   Doubling the class does not help; this was shipped broken once on exactly
+   that assumption.
+
+   Unlayered declarations outrank every layered one, so these rules live
+   outside @layer entirely. Keep them here — moving any of them back into
+   @layer components silently kills it.
+
+   .steps/.step and .group are NOT in this list: they were renamed to
+   .ledger-steps/.ledger-step and .wine-group instead. daisyUI's stepper
+   draws counter bubbles and a connector bar via ::before/::after, which an
+   override cannot remove, and Tailwind's `group` marker class collides
+   outright — renaming is the only clean fix for those three.
+   ────────────────────────────────────────────────────────────────────────── */
+.input.input,
+.select.select,
+.textarea.textarea,
+.file-input.file-input {
+  @apply shadow-none;
+  border: 0;
+  border-bottom: 1.5px solid var(--color-rule-medium);
+  background-color: transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-name);
+  color: var(--color-ink);
+  outline-offset: 4px;
+  /* daisyUI sizes controls to 2.5rem — 40px, under the 44px interactive-target
+     floor. Overriding height alone is not enough: it must go to auto, or the
+     fixed value keeps winning over min-height. 46px matches .btn-wine so a
+     field and the button beside it sit on the same rhythm. */
+  height: auto;
+  min-height: 46px;
+  /* A ruled field is underlined, not boxed, so its text must start flush with
+     the label above it and with the left end of its own rule. daisyUI's
+     12px inset would indent every value away from the column edge. */
+  padding-inline: 0;
+}
+
+.ledger-admin :is(.input.input, .select.select, .textarea.textarea, .file-input.file-input) {
+  font-size: 1rem;
+}
+
+.input.input::placeholder,
+.textarea.textarea::placeholder {
+  color: var(--color-quiet);
+  opacity: 1;
+}
+
+.input.input:disabled,
+.select.select:disabled,
+.textarea.textarea:disabled {
+  border-bottom-style: dotted;
+  color: var(--color-quiet);
+}
+
+.checkbox.checkbox,
+.toggle.toggle,
+.radio.radio {
+  @apply shadow-none;
+  border-color: var(--color-ox-4);
+}
+
+/* daisyUI moves the toggle's knob between states, but with every radius at 0
+   the off and on shapes are both plain squares and the change is easy to miss
+   at a glance. Invert figure and ground as well: an outlined empty track when
+   off, a filled oxblood one when on. State is then carried by fill AND knob
+   position — never by hue alone, which a colour-blind owner could not read. */
+.toggle.toggle {
+  background-color: transparent;
+  border: 1.5px solid var(--color-rule-medium);
+  color: var(--color-quiet);
+}
+
+.toggle.toggle:checked {
+  background-color: var(--color-ox-2);
+  border-color: var(--color-ox-2);
+  color: var(--color-paper);
+}
+
+.badge.badge {
+  @apply shadow-none;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide-caps);
+}
+
+.alert.alert {
+  @apply shadow-none;
+  font-family: var(--font-body);
+  font-size: var(--text-meta);
+  border-width: 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: var(--color-ox-1);
+  /* daisyUI sets width: fit-content, so a flash shrink-wraps to its own text
+     instead of filling its column — and an explicit width beats a flex
+     parent's align-items: stretch, so the band stays narrow however it is
+     nested. Every .alert in this app is a flash band or a form error summary
+     and wants the full measure. */
+  width: 100%;
+}
+
+.wine-group {
+  margin-top: 1.5rem;
+  scroll-margin-top: 4.5rem;
+}
+
+.ledger-steps {
+  @apply grid gap-0;
+  border-top: 3px solid var(--color-rule-heavy);
+  border-bottom: 1px solid var(--color-rule-fine);
+}
+
+.ledger-step {
+  @apply flex flex-col py-6;
+  border-bottom: 1px solid var(--color-rule-fine);
+}
+
+.ledger-step:last-child {
+  border-bottom: 0;
+}
+
+@media (min-width: 48rem) {
+.ledger-steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+}
+
+@media (min-width: 48rem) {
+.ledger-step {
+  @apply px-6;
+  border-bottom: 0;
+  border-left: 1px solid var(--color-rule-fine);
+}
+
+.ledger-step:first-child {
+  @apply pl-0;
+  border-left: 0;
+}
+
+.ledger-step:last-child {
+  @apply pr-0;
+}
 }

@@ -3,45 +3,52 @@
     page's own form instead of the site-wide max-w-2xl default. %>
 <% content_for(:flash_class) { "max-w-sm mx-auto px-6" } %>
 
-<div class="flex-1 flex items-center justify-center px-6">
+<%# A single ruled column on paper: wordmark, section break, kicker, title,
+    then the form set as printed fields — ruled underneath, never boxed. %>
+<main id="main" class="flex-1 flex items-center justify-center px-6 py-12">
   <div class="w-full max-w-sm">
-    <div class="text-center mb-10">
-      <a href="<%= root_path %>" class="font-display text-2xl font-semibold text-primary">aperto.wine</a>
-      <h1 class="font-display text-3xl font-light mt-4"><%= t("auth.sign_in") %></h1>
-    </div>
+    <header class="mb-8">
+      <a href="<%= root_path %>" class="wordmark wordmark-paper press">aperto<b>.wine</b></a>
+      <hr class="rule-section mt-2">
+      <p class="eyebrow mt-6"><%= t("auth.kicker_sign_in") %></p>
+      <h1 class="section-title mt-3"><%= t("auth.sign_in") %></h1>
+    </header>
 
     <%# Flash is now rendered once from the shared application layout
         (app/views/shared/_flash) — a per-view render here would double it. %>
 
     <div data-controller="dev-login">
-      <%= form_with url: sign_in_path, method: :post, class: "space-y-5" do |f| %>
+      <%= form_with url: sign_in_path, method: :post, class: "form-section" do |f| %>
         <div class="field">
           <%= f.label :email, t("auth.email"), class: "field-label" %>
-          <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input w-full font-body", placeholder: "you@example.com", data: { dev_login_target: "email" } %>
+          <%= f.email_field :email, value: params[:email], required: true, autofocus: true, autocomplete: "email", class: "input w-full", placeholder: "you@example.com", data: { dev_login_target: "email" } %>
         </div>
 
         <div class="field">
           <%= f.label :password, t("auth.password"), class: "field-label" %>
-          <%= f.password_field :password, required: true, autocomplete: "current-password", class: "input w-full font-body", data: { dev_login_target: "password" } %>
+          <%= f.password_field :password, required: true, autocomplete: "current-password", class: "input w-full", data: { dev_login_target: "password" } %>
         </div>
 
-        <%= f.submit t("auth.sign_in"), class: "btn-wine w-full btn-md mt-2" %>
+        <div class="form-actions mt-6">
+          <%= f.submit t("auth.sign_in"), class: "btn-wine w-full" %>
+        </div>
       <% end %>
 
       <%# Opt-in on deployed environments (staging sets SHOW_DEV_LOGIN=1; the
           production block in render.yaml deliberately does not). The buttons
           only pre-fill the form — the password is still verified on submit. %>
       <% if Rails.env.development? || ENV["SHOW_DEV_LOGIN"] == "1" %>
-        <div class="mt-8 pt-6 border-t border-base-content/10">
-          <p class="text-center text-xs uppercase tracking-wider text-base-content/40 mb-3">Dev quick login</p>
-          <div class="flex flex-wrap justify-center gap-2">
+        <div class="mt-10">
+          <hr class="rule-hair">
+          <p class="mono-micro mt-4 mb-3">Dev quick login</p>
+          <div class="flex flex-wrap gap-2">
             <% [
               { label: "Admin", email: "admin@aperto.wine" },
               { label: "Owner", email: "owner@aperto.wine" },
               { label: "Customer", email: "customer@aperto.wine" }
             ].each do |account| %>
               <button type="button"
-                      class="btn btn-outline btn-sm font-body"
+                      class="btn-wine-outline px-4"
                       data-action="dev-login#fill"
                       data-dev-login-email-param="<%= account[:email] %>"
                       data-dev-login-password-param="password">
@@ -53,9 +60,11 @@
       <% end %>
     </div>
 
-    <p class="text-center mt-8 text-sm text-base-content/50">
-      <%= t("auth.no_account") %>
-      <a href="<%= sign_up_path %>" class="text-primary hover:underline"><%= t("auth.sign_up_link") %></a>
-    </p>
+    <%# The leader dots run from the question to the answer, as in the ledger. %>
+    <div class="leader-row mt-10">
+      <span class="leader-label mono-label"><%= t("auth.no_account") %></span>
+      <span class="leader" aria-hidden="true"></span>
+      <a href="<%= sign_up_path %>" class="link-mono"><%= t("auth.sign_up_link") %></a>
+    </div>
   </div>
-</div>
+</main>

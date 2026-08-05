@@ -1,0 +1,29 @@
+<%# locals: (restaurant:, qr_svg:, id: nil, stamp_label: nil, sub_label: nil, extra_class: nil) %>
+<%# A printed table card — the one admin surface a guest ever holds, so it is
+    set as a card rather than held quiet.
+
+    The QR sits on its own white plate at its natural size. QrSvgRenderer emits
+    an SVG with no viewBox (the modules are drawn under a `scale(4)` transform),
+    so the code cannot be stretched without cropping — the plate hugs it
+    instead. The plate's padding is the quiet zone rqrcode does not emit, and
+    without it the code is much harder to scan. Print rules: `_print_styles`. %>
+<%= tag.div id: id, class: ["qr-card", "sheet", "flex flex-col items-center text-center", extra_class] do %>
+  <div class="sheet-head">
+    <h3 class="display-3 press"><%= restaurant.name %></h3>
+    <p class="sheet-address"><%= restaurant.address %></p>
+  </div>
+
+  <div class="qr-plate mt-5 max-w-full overflow-hidden bg-white p-4 text-ox-1 [&_svg]:block">
+    <%= qr_svg %>
+  </div>
+
+  <% if sub_label.present? %>
+    <p class="mono-micro mt-5"><%= sub_label %></p>
+  <% end %>
+
+  <% if stamp_label.present? %>
+    <p class="<%= sub_label.present? ? "mt-2" : "mt-5" %>"><span class="stamp"><%= stamp_label %></span></p>
+  <% end %>
+
+  <p class="sheet-foot mt-6 w-full">aperto.wine</p>
+<% end %>

@@ -1,7 +1,7 @@
 <% content_for(:title) { t("owner.tables.new_title") } %>
 
-<div class="mb-8">
-  <h1 class="font-display text-3xl font-light"><%= t("owner.tables.new_title") %></h1>
+<div class="admin-head">
+  <h1 class="admin-title"><%= t("owner.tables.new_title") %></h1>
 </div>
 
 <%= render "form", table: @table %>

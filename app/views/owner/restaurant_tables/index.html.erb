@@ -1,91 +1,111 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.tables.title')}" } %>
+<% table_count = @grouped_tables.values.sum(&:size) %>
 
-<div class="mb-8">
-  <div class="flex items-center justify-between">
-    <h1 class="font-display text-3xl font-light"><%= t("owner.tables.title") %></h1>
-    <div class="flex items-center gap-2">
-      <% if @grouped_tables.any? %>
-        <a href="<%= bulk_print_owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost btn-sm">
-          <%= icon "printer", css: "size-4" %>
-          <%= t("owner.tables.print_all") %>
-        </a>
-      <% end %>
-      <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost btn-sm">
-        <%= icon "magic-wand", css: "size-4" %>
-        <%= t("owner.tables.bulk.generate") %>
-      </a>
-      <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine btn-sm">
-        <%= icon "plus", css: "size-4" %>
-        <%= t("owner.tables.add") %>
-      </a>
-    </div>
+<div class="admin-head">
+  <div>
+    <h1 class="admin-title"><%= t("owner.tables.title") %></h1>
+    <p class="admin-subtitle mt-1"><%= t("owner.tables.table_count", count: table_count) %></p>
   </div>
-  <p class="text-sm text-base-content/50 mt-2"><%= t("owner.tables.intro") %></p>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <% if @grouped_tables.any? %>
+      <a href="<%= bulk_print_owner_restaurant_tables_path(@restaurant) %>" class="btn-wine-quiet">
+        <%= icon "printer", class: "size-4" %>
+        <%= t("owner.tables.print_all") %>
+      </a>
+    <% end %>
+    <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn-wine-outline">
+      <%= icon "magic-wand", class: "size-4" %>
+      <%= t("owner.tables.bulk.generate") %>
+    </a>
+    <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine">
+      <%= icon "plus", class: "size-4" %>
+      <%= t("owner.tables.add") %>
+    </a>
+  </div>
 </div>
 
+<p class="note measure mb-8"><%= t("owner.tables.intro") %></p>
+
 <% if @grouped_tables.any? %>
-  <div class="space-y-8">
+  <div class="space-y-10">
     <% @grouped_tables.each do |area, tables| %>
+      <% area_name = area.presence || t("owner.tables.no_area") %>
       <section>
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50">
-            <%= area.presence || t("owner.tables.no_area") %>
-          </h2>
-          <a href="<%= bulk_print_owner_restaurant_tables_path(@restaurant, area: area) %>" class="btn btn-ghost btn-xs">
-            <%= icon "printer", css: "size-3.5" %>
+        <%# px-3 so the room title hangs on the same left edge as the column
+            heads and the cells below it. %>
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 px-3">
+          <h2 class="list-title"><%= area_name %></h2>
+          <a href="<%= bulk_print_owner_restaurant_tables_path(@restaurant, area: area) %>" class="link-mono">
+            <%= icon "printer", class: "size-4 me-1.5" %>
             <%= t("owner.tables.print_area") %>
           </a>
         </div>
 
-        <div class="space-y-2">
-          <% tables.each do |table| %>
-            <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all">
-              <div class="flex items-center gap-3 min-w-0">
-                <%= icon "picnic-table", css: "size-5 text-primary/70 shrink-0" %>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="font-body font-medium text-sm truncate"><%= table.name %></span>
+        <table class="ledger-table">
+          <caption class="sr-only"><%= area_name %></caption>
+          <thead>
+            <tr>
+              <th scope="col"><%= t("owner.tables.table.name") %></th>
+              <th scope="col" class="text-right"><span class="sr-only"><%= t("owner.tables.table.actions") %></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% tables.each do |table| %>
+              <tr>
+                <td class="align-middle">
+                  <div class="flex items-baseline gap-2">
+                    <span class="font-medium"><%= table.name %></span>
                     <% unless table.active? %>
-                      <span class="badge badge-ghost badge-xs"><%= t("owner.tables.inactive") %></span>
+                      <span class="tag-out"><%= t("owner.tables.inactive") %></span>
                     <% end %>
                   </div>
-                </div>
-              </div>
+                </td>
+                <td class="w-px align-middle whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1">
+                    <a href="<%= qr_owner_restaurant_table_path(@restaurant, table) %>" class="link-mono px-2">
+                      <%= icon "qr-code", class: "size-4 me-1.5" %>
+                      <%= t("owner.tables.view_qr") %>
+                    </a>
+                    <a href="<%= edit_owner_restaurant_table_path(@restaurant, table) %>" class="link-mono" aria-label="<%= t("owner.tables.edit_table", name: table.name) %>">
+                      <%= icon "pencil-simple", class: "size-4" %>
+                    </a>
 
-              <div class="flex items-center gap-1 ml-4">
-                <a href="<%= qr_owner_restaurant_table_path(@restaurant, table) %>" class="btn btn-ghost btn-xs">
-                  <%= icon "qr-code", css: "size-3.5" %>
-                  <span class="hidden sm:inline"><%= t("owner.tables.view_qr") %></span>
-                </a>
-                <a href="<%= edit_owner_restaurant_table_path(@restaurant, table) %>" class="btn btn-ghost btn-xs">
-                  <%= icon "pencil-simple", css: "size-3.5" %>
-                </a>
-                <%= button_to owner_restaurant_table_path(@restaurant, table), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.tables.confirm_delete") } do %>
-                  <%= icon "trash", css: "size-3.5" %>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
+                    <%# The destructive action is kept off on its own side of a
+                        hairline, so it is never the neighbour of a mis-tap. %>
+                    <span class="ms-2 ps-2 border-s border-rule-hair">
+                      <%= button_to owner_restaurant_table_path(@restaurant, table),
+                                    method: :delete,
+                                    class: "link-mono text-error hover:text-error",
+                                    aria: { label: t("owner.tables.delete_table", name: table.name) },
+                                    data: { turbo_confirm: t("owner.tables.confirm_delete") } do %>
+                        <%= icon "trash", class: "size-4" %>
+                      <% end %>
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </section>
     <% end %>
   </div>
 <% else %>
-  <div class="text-center py-16">
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
-      <%= icon "picnic-table", css: "size-7 text-base-content/30" %>
-    </div>
-    <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.tables.empty_title") %></h2>
-    <p class="text-base-content/50 mb-6"><%= t("owner.tables.empty_description") %></p>
-    <div class="flex items-center justify-center gap-2">
-      <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn-wine btn-sm">
-        <%= icon "magic-wand", css: "size-4" %>
-        <%= t("owner.tables.bulk.generate") %>
-      </a>
-      <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn btn-ghost btn-sm">
-        <%= icon "plus", css: "size-4" %>
-        <%= t("owner.tables.add_first") %>
-      </a>
-    </div>
-  </div>
+  <%# Two ways out of an empty table list, so the actions come in as a block. %>
+  <% table_actions = capture do %>
+    <a href="<%= bulk_new_owner_restaurant_tables_path(@restaurant) %>" class="btn-wine">
+      <%= icon "magic-wand", class: "size-4" %>
+      <%= t("owner.tables.bulk.generate") %>
+    </a>
+    <a href="<%= new_owner_restaurant_table_path(@restaurant) %>" class="btn-wine-outline">
+      <%= icon "plus", class: "size-4" %>
+      <%= t("owner.tables.add_first") %>
+    </a>
+  <% end %>
+
+  <%= render "shared/empty_state",
+        title: t("owner.tables.empty_title"),
+        body: t("owner.tables.empty_description"),
+        cta: table_actions %>
 <% end %>

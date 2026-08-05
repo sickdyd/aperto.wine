@@ -78,6 +78,36 @@ module Owner
       assert_response :unprocessable_entity
     end
 
+    test "POST /owner/restaurants/:id/wines with invalid params wires each error to its field" do
+      sign_in_as @owner
+      post owner_restaurant_wines_path(restaurant_id: @restaurant), params: {
+        wine: { name: "", bottle_size_ml: "", available_glasses: -1, price_bottle_cents: 1500 }
+      }
+      assert_response :unprocessable_entity
+
+      # The summary at the top stays; the inline errors complement it.
+      assert_select "div[role=alert] p", minimum: 3
+
+      {
+        "wine_name" => "wine_name_error_0",
+        "wine_bottle_size_ml" => "wine_bottle_size_ml_error_0",
+        "wine_available_glasses" => "wine_available_glasses_hint wine_available_glasses_error_0"
+      }.each do |field_id, described_by|
+        assert_select "##{field_id}[aria-invalid=?]", "true"
+        assert_select "##{field_id}[aria-describedby=?]", described_by
+      end
+
+      described_ids = css_select("[aria-describedby]").flat_map { |node| node["aria-describedby"].split }
+      css_select("p.field-error").each do |error|
+        assert_includes described_ids, error["id"],
+          "inline error #{error['id']} is not referenced by any aria-describedby"
+      end
+
+      # Fields that validated fine must not claim to be invalid.
+      assert_select "#wine_price_bottle_cents[aria-invalid]", false
+      assert_select "#wine_region[aria-invalid]", false
+    end
+
     # --- EDIT ---
 
     test "GET /owner/restaurants/:id/wines/:id/edit as owner renders edit form" do

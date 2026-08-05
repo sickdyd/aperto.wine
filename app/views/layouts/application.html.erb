@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>" data-theme="wine" class="scroll-smooth">
   <head>
+    <meta charset="utf-8">
     <title><%= content_for(:title) || t("app_name") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,7 +19,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <%# The ledger's three families: Instrument Serif for display, EB Garamond
+        for body and menu copy, JetBrains Mono for labels, data and prices. %>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
@@ -38,6 +41,12 @@
   </head>
 
   <body class="bg-base-100 text-base-content font-body antialiased min-h-screen flex flex-col">
+    <%# First focusable element in the document, before the flash and before
+        anything a page yields, so one Tab from a fresh load always reaches it.
+        Every template rendered through this layout carries <main id="main">;
+        a skip link aimed at an id that is not there is worse than none. %>
+    <a class="skip-link" href="#main"><%= t("shared.skip_to_content") %></a>
+
     <%= render "shared/flash" %>
     <%# flex-1: the centred auth pages size themselves off remaining space
         below the flash (see sessions/new, registrations/new) rather than
@@ -48,5 +57,9 @@
     <div class="flex-1 flex flex-col">
       <%= yield %>
     </div>
+
+    <%# The page's one grain overlay — paper fibre multiplied over everything,
+        never interactive. Applied once here, never per-section. %>
+    <div class="grain" aria-hidden="true"></div>
   </body>
 </html>

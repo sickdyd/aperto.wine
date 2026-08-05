@@ -1,86 +1,108 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.wine_lists.title')}" } %>
 
-<div class="mb-8">
-  <div class="flex items-center justify-between">
-    <h1 class="font-display text-3xl font-light"><%= t("owner.wine_lists.title") %></h1>
-    <div class="flex items-center gap-2">
-      <% if @restaurant.active? %>
-        <a href="<%= menu_path(id: @restaurant.id) %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm text-xs uppercase tracking-wider">
-          <%= icon "eye", css: "size-4" %>
-          <%= t("owner.restaurants.preview_menu") %>
-        </a>
-      <% else %>
-        <span class="btn btn-ghost btn-sm btn-disabled text-xs uppercase tracking-wider" title="<%= t("owner.restaurants.preview_inactive_hint") %>">
-          <%= icon "eye-slash", css: "size-4" %>
-          <%= t("owner.restaurants.preview_menu") %>
-        </span>
-      <% end %>
-      <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine btn-sm">
-        <%= icon "plus", css: "size-4" %>
-        <%= t("owner.wine_lists.add") %>
-      </a>
-    </div>
+<header class="admin-head">
+  <div class="flex items-baseline gap-3">
+    <h1 class="admin-title"><%= t("owner.wine_lists.title") %></h1>
+    <span class="admin-subtitle"><%= @restaurant.name %></span>
   </div>
-  <p class="text-sm text-base-content/50 mt-2"><%= t("owner.wine_lists.intro") %></p>
-</div>
 
-<div class="space-y-2">
-  <% if @wine_lists.any? %>
-    <div data-controller="list-filter">
-      <div class="mb-2 max-w-sm">
-        <label for="wine_lists_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
-        <input type="search"
-               id="wine_lists_filter"
-               class="input w-full font-body text-sm"
-               placeholder="<%= t("owner.shared.filter.placeholder") %>"
-               data-list-filter-target="input"
-               data-action="input->list-filter#filter">
-      </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <% if @restaurant.active? %>
+      <a href="<%= menu_path(id: @restaurant.id) %>" target="_blank" rel="noopener" class="btn-wine-outline">
+        <%= icon "eye", class: "size-4" %>
+        <%= t("owner.restaurants.preview_menu") %>
+      </a>
+    <% else %>
+      <span class="btn-wine-outline btn-disabled" title="<%= t("owner.restaurants.preview_inactive_hint") %>">
+        <%= icon "eye-slash", class: "size-4" %>
+        <%= t("owner.restaurants.preview_menu") %>
+      </span>
+    <% end %>
+    <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine">
+      <%= icon "plus", class: "size-4" %>
+      <%= t("owner.wine_lists.add") %>
+    </a>
+  </div>
+</header>
 
-      <div class="space-y-2">
-        <% @wine_lists.each do |wine_list| %>
-          <div class="flex items-center justify-between p-4 rounded-lg border border-base-content/5 bg-base-100 hover:border-primary/10 transition-all"
-               data-list-filter-target="item"
-               data-search-terms="<%= wine_list.name.downcase %>">
-            <div class="flex items-center gap-3 min-w-0">
-              <%= form_with model: [ :owner, @restaurant, wine_list ], method: :patch, data: { controller: "auto-submit" } do |f| %>
-                <%= f.check_box :active,
-                      class: "toggle toggle-primary toggle-sm",
-                      aria: { label: t("owner.wine_lists.toggle_label") },
-                      data: { action: "change->auto-submit#submit" } %>
-              <% end %>
-              <div class="min-w-0">
-                <span class="font-body font-medium text-sm truncate"><%= wine_list.name %></span>
-                <p class="text-xs text-base-content/50 truncate">
-                  <%= [ wine_list.season, t("owner.wine_lists.wine_count", count: wine_list.wine_list_items.size) ].compact_blank.join(" · ") %>
-                </p>
-              </div>
-            </div>
+<p class="note measure mb-6"><%= t("owner.wine_lists.intro") %></p>
 
-            <div class="flex items-center gap-1 ml-4">
-              <a href="<%= edit_owner_restaurant_wine_list_path(@restaurant, wine_list) %>" class="btn btn-ghost btn-xs">
-                <%= icon "pencil-simple", css: "size-3.5" %>
-              </a>
-              <%= button_to owner_restaurant_wine_list_path(@restaurant, wine_list), method: :delete, class: "btn btn-ghost btn-xs text-error", data: { turbo_confirm: t("owner.wine_lists.confirm_delete") } do %>
-                <%= icon "trash", css: "size-3.5" %>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-      </div>
-
-      <p data-list-filter-target="empty" hidden class="text-sm text-base-content/50 text-center py-8">
-        <%= t("owner.shared.filter.no_results") %>
-      </p>
+<% if @wine_lists.any? %>
+  <div data-controller="list-filter">
+    <div class="search-field mb-6 max-w-sm">
+      <%= icon "magnifying-glass" %>
+      <label for="wine_lists_filter" class="sr-only"><%= t("owner.shared.filter.placeholder") %></label>
+      <input type="search"
+             id="wine_lists_filter"
+             placeholder="<%= t("owner.shared.filter.placeholder") %>"
+             data-list-filter-target="input"
+             data-action="input->list-filter#filter">
     </div>
-  <% else %>
-    <div class="text-center py-20">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-200 mb-6">
-        <%= icon "list", css: "size-7 text-base-content/30" %>
-      </div>
-      <h2 class="font-display text-2xl font-light mb-2"><%= t("owner.wine_lists.empty_title") %></h2>
-      <p class="text-base-content/50 mb-6"><%= t("owner.wine_lists.empty_description") %></p>
-      <a href="<%= new_owner_restaurant_wine_list_path(@restaurant) %>" class="btn-wine"><%= t("owner.wine_lists.add_first") %></a>
+
+    <%# The table can outgrow a phone: let it scroll inside its own box rather
+        than pushing the page sideways. %>
+    <div class="overflow-x-auto">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <%# The toggle column is self-explanatory once the label has nowhere
+                to go: below md the head is read out rather than set. %>
+            <th scope="col" class="w-px"><span class="sr-only md:not-sr-only"><%= t("owner.wine_lists.published") %></span></th>
+            <th scope="col"><%= t("owner.wine_lists.form.name") %></th>
+            <th scope="col" class="hidden whitespace-nowrap md:table-cell"><%= t("owner.wine_lists.form.season") %></th>
+            <th scope="col" class="cell-num whitespace-nowrap"><%= t("nav.wines") %></th>
+            <th scope="col" class="w-px"><span class="sr-only"><%= t("shared.edit") %></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @wine_lists.each do |wine_list| %>
+            <tr data-list-filter-target="item"
+                data-search-terms="<%= wine_list.name.downcase %>">
+              <td>
+                <%= form_with model: [ :owner, @restaurant, wine_list ], method: :patch, data: { controller: "auto-submit" } do |f| %>
+                  <%= f.check_box :active,
+                        class: "toggle toggle-primary toggle-sm",
+                        aria: { label: t("owner.wine_lists.toggle_label") },
+                        data: { action: "change->auto-submit#submit" } %>
+                <% end %>
+              </td>
+              <td>
+                <span class="wine-name"><%= wine_list.name %></span>
+                <span class="mono-micro mt-1 block md:hidden"><%= wine_list.season %></span>
+              </td>
+              <td class="hidden text-ink-soft md:table-cell"><%= wine_list.season %></td>
+              <td class="cell-num"><%= wine_list.wine_list_items.size %></td>
+              <td>
+                <div class="flex items-center justify-end gap-1">
+                  <a href="<%= edit_owner_restaurant_wine_list_path(@restaurant, wine_list) %>"
+                     class="btn-wine-quiet"
+                     aria-label="<%= "#{t('shared.edit')}: #{wine_list.name}" %>"
+                     title="<%= t("shared.edit") %>">
+                    <%= icon "pencil-simple", class: "size-4" %>
+                  </a>
+                  <%= button_to owner_restaurant_wine_list_path(@restaurant, wine_list),
+                        method: :delete,
+                        class: "btn-wine-quiet",
+                        title: t("shared.delete"),
+                        aria: { label: "#{t('shared.delete')}: #{wine_list.name}" },
+                        data: { turbo_confirm: t("owner.wine_lists.confirm_delete") } do %>
+                    <%= icon "trash", class: "size-4" %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
     </div>
-  <% end %>
-</div>
+
+    <p data-list-filter-target="empty" hidden class="empty-state">
+      <%= t("owner.shared.filter.no_results") %>
+    </p>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("owner.wine_lists.empty_title"),
+        body: t("owner.wine_lists.empty_description"),
+        cta: { label: t("owner.wine_lists.add_first"), path: new_owner_restaurant_wine_list_path(@restaurant) } %>
+<% end %>

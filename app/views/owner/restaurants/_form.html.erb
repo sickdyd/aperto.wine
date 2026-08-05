@@ -1,7 +1,7 @@
 <%= form_with model: [:owner, restaurant], class: "space-y-8 max-w-xl" do |f| %>
   <% if restaurant.errors.any? %>
-    <div role="alert" class="alert alert-error text-sm">
-      <%= icon "warning", css: "size-4" %>
+    <div role="alert" class="alert alert-error items-start">
+      <%= icon "warning", class: "size-4 shrink-0 translate-y-0.5" %>
       <div>
         <% restaurant.errors.full_messages.each do |msg| %>
           <p><%= msg %></p>
@@ -11,11 +11,15 @@
   <% end %>
 
   <fieldset class="form-section">
+    <legend class="form-section-title mb-4"><%= t("owner.restaurants.form.section_details") %></legend>
+
     <div class="field">
       <%= f.label :name, t("owner.restaurants.form.name"), class: "field-label" %>
       <%= f.text_field :name, required: true, class: "input w-full font-body", placeholder: t("owner.restaurants.form.name_placeholder") %>
     </div>
 
+    <%# The address drives stimulus-autocomplete: the controller names, targets
+        and actions below are load-bearing — restyle around them, never rename. %>
     <div class="field relative"
          data-controller="autocomplete address-autocomplete"
          data-autocomplete-url-value="<%= owner_address_suggestions_path %>"
@@ -35,11 +39,15 @@
       <%= f.label :description, t("owner.restaurants.form.description"), class: "field-label" %>
       <%= f.text_area :description, rows: 3, class: "textarea w-full font-body", placeholder: t("owner.restaurants.form.description_placeholder") %>
     </div>
+  </fieldset>
+
+  <fieldset class="form-section">
+    <legend class="form-section-title mb-4"><%= t("owner.restaurants.form.section_service") %></legend>
 
     <div class="field">
       <%= f.label :proximity_radius_meters, t("owner.restaurants.form.proximity_radius"), class: "field-label" %>
-      <div class="flex items-center gap-2">
-        <%= f.number_field :proximity_radius_meters, min: 50, max: 1000, step: 50, class: "input w-28 font-body" %>
+      <div class="flex items-baseline gap-2">
+        <%= f.number_field :proximity_radius_meters, min: 50, max: 1000, step: 50, class: "input w-28 font-mono num" %>
         <span class="field-hint"><%= t("owner.restaurants.form.meters") %></span>
       </div>
     </div>
@@ -52,6 +60,6 @@
 
   <div class="form-actions">
     <%= f.submit class: "btn-wine" %>
-    <a href="<%= owner_restaurants_path %>" class="btn btn-ghost text-xs uppercase tracking-wider"><%= t("shared.cancel") %></a>
+    <a href="<%= owner_restaurants_path %>" class="btn-wine-quiet"><%= t("shared.cancel") %></a>
   </div>
 <% end %>

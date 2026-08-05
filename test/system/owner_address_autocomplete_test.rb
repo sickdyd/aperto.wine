@@ -51,5 +51,11 @@ class OwnerAddressAutocompleteTest < ApplicationSystemTestCase
 
     assert_equal "", find("input[name='restaurant[latitude]']", visible: false).value
     assert_equal "", find("input[name='restaurant[longitude]']", visible: false).value
+
+    # That edit fired one more debounced suggestions request. Let it land before
+    # the test ends: WebMock's stub is torn down with the test, and a late
+    # request would raise an unstubbed-connection error inside the Capybara
+    # server that Capybara then re-raises.
+    assert_selector "li[role='option']", wait: 5
   end
 end

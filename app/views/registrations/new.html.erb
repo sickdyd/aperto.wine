@@ -3,29 +3,33 @@
     page's own form instead of the site-wide max-w-2xl default. %>
 <% content_for(:flash_class) { "max-w-md mx-auto px-6" } %>
 
-<div class="flex-1 flex items-center justify-center px-6">
+<%# Same ruled column as sign-in, one step wider to carry four fields. %>
+<main id="main" class="flex-1 flex items-center justify-center px-6 py-12">
   <div class="w-full max-w-md">
-    <div class="text-center mb-10">
-      <a href="<%= root_path %>" class="font-display text-2xl font-semibold text-primary">aperto.wine</a>
-      <h1 class="font-display text-3xl font-light mt-4"><%= t("auth.sign_up") %></h1>
-    </div>
+    <header class="mb-8">
+      <a href="<%= root_path %>" class="wordmark wordmark-paper press">aperto<b>.wine</b></a>
+      <hr class="rule-section mt-2">
+      <p class="eyebrow mt-6"><%= t("auth.kicker_sign_up") %></p>
+      <h1 class="section-title mt-3"><%= t("auth.sign_up") %></h1>
+    </header>
 
-    <%# Role tabs %>
-    <div role="tablist" class="tabs tabs-border mb-8">
-      <a role="tab" href="<%= sign_up_path(tab: 'customer') %>"
-         class="tab font-body text-xs uppercase tracking-wider <%= @tab == 'customer' ? 'tab-active' : '' %>">
-        <%= t("auth.tab_customer") %>
-      </a>
-      <a role="tab" href="<%= sign_up_path(tab: 'owner') %>"
-         class="tab font-body text-xs uppercase tracking-wider <%= @tab == 'owner' ? 'tab-active' : '' %>">
-        <%= t("auth.tab_owner") %>
-      </a>
+    <%# Role tabs — chips over a subsection rule. Each one is a link to the
+        same page with a different tab, so the current one is aria-current as
+        well as aria-selected; the fill, not the colour alone, marks it. %>
+    <div role="tablist" aria-label="<%= t("auth.role_tablist") %>" class="flex flex-wrap gap-2">
+      <% [ [ "customer", t("auth.tab_customer") ], [ "owner", t("auth.tab_owner") ] ].each do |value, label| %>
+        <% current = @tab == value %>
+        <%= link_to label, sign_up_path(tab: value), role: "tab", class: "chip",
+                    aria: { selected: current, current: ("page" if current) } %>
+      <% end %>
     </div>
+    <hr class="rule-medium mt-3 mb-8">
 
     <% if @user.errors.any? %>
-      <div role="alert" class="alert alert-error mb-6 text-sm">
-        <%= icon "warning", css: "size-4" %>
-        <div>
+      <div role="alert" class="alert alert-error flex items-start gap-3 mb-8">
+        <%= icon "warning", class: "size-4 shrink-0 mt-1" %>
+        <div class="min-w-0">
+          <p class="mono-label mb-1"><%= t("shared.flash_error") %></p>
           <% @user.errors.full_messages.each do |msg| %>
             <p><%= msg %></p>
           <% end %>
@@ -33,36 +37,39 @@
       </div>
     <% end %>
 
-    <%= form_with model: @user, url: sign_up_path, method: :post, class: "space-y-5" do |f| %>
+    <%= form_with model: @user, url: sign_up_path, method: :post, class: "form-section" do |f| %>
       <%= f.hidden_field :role, value: @tab %>
 
       <div class="field">
         <%= f.label :name, t("auth.name"), class: "field-label" %>
-        <%= f.text_field :name, required: true, autofocus: true, autocomplete: "name", class: "input w-full font-body" %>
+        <%= f.text_field :name, required: true, autofocus: true, autocomplete: "name", class: "input w-full" %>
       </div>
 
       <div class="field">
         <%= f.label :email, t("auth.email"), class: "field-label" %>
-        <%= f.email_field :email, required: true, autocomplete: "email", class: "input w-full font-body", placeholder: "you@example.com" %>
+        <%= f.email_field :email, required: true, autocomplete: "email", class: "input w-full", placeholder: "you@example.com" %>
       </div>
 
       <div class="field">
         <%= f.label :password, t("auth.password"), class: "field-label" %>
-        <%= f.password_field :password, required: true, autocomplete: "new-password", class: "input w-full font-body" %>
+        <%= f.password_field :password, required: true, autocomplete: "new-password", class: "input w-full" %>
         <p class="field-hint"><%= t("auth.password_hint") %></p>
       </div>
 
       <div class="field">
         <%= f.label :password_confirmation, t("auth.password_confirmation"), class: "field-label" %>
-        <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "input w-full font-body" %>
+        <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "input w-full" %>
       </div>
 
-      <%= f.submit t("auth.create_account"), class: "btn-wine w-full btn-md mt-2" %>
+      <div class="form-actions mt-6">
+        <%= f.submit t("auth.create_account"), class: "btn-wine w-full" %>
+      </div>
     <% end %>
 
-    <p class="text-center mt-8 text-sm text-base-content/50">
-      <%= t("auth.have_account") %>
-      <a href="<%= sign_in_path %>" class="text-primary hover:underline"><%= t("auth.sign_in_link") %></a>
-    </p>
+    <div class="leader-row mt-10">
+      <span class="leader-label mono-label"><%= t("auth.have_account") %></span>
+      <span class="leader" aria-hidden="true"></span>
+      <a href="<%= sign_in_path %>" class="link-mono"><%= t("auth.sign_in_link") %></a>
+    </div>
   </div>
-</div>
+</main>

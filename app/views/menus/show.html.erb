@@ -1,86 +1,99 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('menu.title')}" } %>
 
-<%# Extra bottom padding keeps the sticky cart bar from covering the last
-    wine row once it appears (see the "cart_bar" partial below). %>
-<main class="min-h-screen max-w-2xl mx-auto px-4 py-8 <%= "pb-24" unless @cart.empty? %>">
-  <%# Header %>
-  <header class="text-center mb-10">
-    <h1 class="font-display text-3xl font-light"><%= @restaurant.name %></h1>
-    <p class="text-sm text-base-content/50 mt-1"><%= @restaurant.address %></p>
-    <% if @restaurant_table %>
-      <%# The table label is owner-defined (e.g. "Tavolo 3"), shown as-is. %>
-      <span class="badge badge-ghost badge-sm mt-3 font-body"><%= @restaurant_table.name %></span>
-    <% end %>
-    <div class="divider-wine mt-6"></div>
-  </header>
-
-  <%# Render every enabled curated list, each grouped into colour sections in
-      wine colour enum order. Curated lists hide deactivated wines entirely;
-      active wines with no glasses still render with the "unavailable" badge. %>
-  <% rendered_lists = renderable_wine_lists(@wine_lists) %>
-
-  <% if rendered_lists.any? %>
-    <div data-controller="list-filter">
-      <div class="mb-8">
-        <label for="menu_search" class="sr-only"><%= t("menu.search_placeholder") %></label>
-        <input type="search"
-               id="menu_search"
-               placeholder="<%= t('menu.search_placeholder') %>"
-               class="input w-full font-body text-sm"
-               data-list-filter-target="input"
-               data-action="input->list-filter#filter">
-      </div>
-
-      <% nav_sections = menu_nav_sections(rendered_lists) %>
-      <% if nav_sections.size > 1 %>
-        <%= render "section_nav", sections: nav_sections %>
+<%# The guest's sheet: a lighter stock laid on the menu band, no wider than a
+    card held in one hand. Extra bottom padding keeps the sticky cart bar from
+    covering the last wine row once it appears (see the "cart_bar" partial at
+    the foot of this file). %>
+<main id="main" class="band-stock flex-1 <%= "pb-32" unless @cart.empty? %>">
+  <div class="sheet sheet-narrow">
+    <header class="sheet-head">
+      <h1 class="display-3 press"><%= @restaurant.name %></h1>
+      <p class="sheet-address"><%= @restaurant.address %></p>
+      <% if @restaurant_table %>
+        <%# The table label is owner-defined (e.g. "Tavolo 3"), shown as-is.
+            The page's one ink stamp — see the vocabulary's ".stamp". %>
+        <p class="mt-4"><span class="stamp"><%= @restaurant_table.name %></span></p>
       <% end %>
+    </header>
 
-      <% rendered_lists.each do |wine_list, colour_groups| %>
-        <%# Also a filter group, nested around the colour sections: without this
-            a list whose wines all filter out would leave a bare heading behind. %>
-        <div class="mb-10" data-list-filter-target="group">
-          <h2 class="font-display text-xl font-medium mb-1"><%= wine_list.name %></h2>
-          <% if wine_list.season.present? %>
-            <p class="text-xs uppercase tracking-[0.15em] text-base-content/40 mb-4"><%= wine_list.season %></p>
-          <% else %>
-            <div class="mb-4"></div>
-          <% end %>
+    <%# Render every enabled curated list, each grouped into colour sections in
+        wine colour enum order. Curated lists hide deactivated wines entirely;
+        active wines with no glasses still render with the "unavailable" tag. %>
+    <% rendered_lists = renderable_wine_lists(@wine_lists) %>
 
-          <% colour_groups.each do |colour, items| %>
-            <section id="list-<%= wine_list.id %>-<%= colour %>" class="mb-10 scroll-mt-20" data-list-filter-target="group">
-              <h3 class="font-display text-lg font-medium mb-4 flex items-center gap-2">
-                <%= wine_color_dot(colour, label: false) %>
-                <%= t("owner.wines.colors.#{colour}") %>
-              </h3>
-
-              <div class="space-y-3">
-                <% items.each do |item| %>
-                  <%= render "wine_row", wine: item.wine, restaurant: @restaurant, unavailable_label: t("menu.unavailable") %>
-                <% end %>
-              </div>
-            </section>
-          <% end %>
+    <% if rendered_lists.any? %>
+      <div data-controller="list-filter">
+        <div class="mt-6">
+          <label for="menu_search" class="mono-label mb-2 block text-ox-2"><%= t("menu.search_label") %></label>
+          <div class="search-field">
+            <%= icon "magnifying-glass", class: "size-4", "aria-hidden": "true" %>
+            <input type="search"
+                   id="menu_search"
+                   placeholder="<%= t('menu.search_placeholder') %>"
+                   autocomplete="off"
+                   spellcheck="false"
+                   data-list-filter-target="input"
+                   data-action="input->list-filter#filter">
+          </div>
         </div>
-      <% end %>
 
-      <p data-list-filter-target="empty" hidden class="text-sm text-base-content/50 text-center py-8">
-        <%= t("menu.no_results") %>
-      </p>
-    </div>
-  <% else %>
-    <div class="text-center py-16">
-      <p class="text-base-content/50"><%= t("menu.empty") %></p>
-    </div>
-  <% end %>
+        <% nav_sections = menu_nav_sections(rendered_lists) %>
+        <% if nav_sections.size > 1 %>
+          <%= render "section_nav", sections: nav_sections %>
+        <% end %>
 
-  <%# Footer %>
-  <footer class="text-center mt-12 pt-6 border-t border-base-content/5">
-    <p class="text-xs text-base-content/30">
+        <% rendered_lists.each do |wine_list, colour_groups| %>
+          <%# Also a filter group, nested around the colour sections: without
+              this a list whose wines all filter out would leave a bare heading
+              behind. %>
+          <section class="mt-8" data-list-filter-target="group"
+                   aria-labelledby="list-<%= wine_list.id %>-title">
+            <div class="list-head">
+              <h2 id="list-<%= wine_list.id %>-title" class="list-title font-body"><%= wine_list.name %></h2>
+              <span class="leader leader-solid" aria-hidden="true"></span>
+              <% if wine_list.season.present? %>
+                <span class="mono-micro num shrink-0 text-ox-3"><%= wine_list.season %></span>
+              <% end %>
+            </div>
+
+            <% colour_groups.each do |colour, items| %>
+              <%# The jump-nav anchor. ".group" carries the scroll-margin that
+                  keeps the heading clear of the sticky nav above it. %>
+              <section id="list-<%= wine_list.id %>-<%= colour %>"
+                       class="wine-group"
+                       data-list-filter-target="group"
+                       aria-labelledby="list-<%= wine_list.id %>-<%= colour %>-title">
+                <div class="group-head">
+                  <h3 id="list-<%= wine_list.id %>-<%= colour %>-title" class="group-title">
+                    <%= wine_color_dot(colour, label: false) %>
+                    <%= t("owner.wines.colors.#{colour}") %>
+                  </h3>
+                  <span class="leader leader-solid" aria-hidden="true"></span>
+                </div>
+
+                <ul class="group-body">
+                  <% items.each do |item| %>
+                    <%= render "wine_row", wine: item.wine, restaurant: @restaurant, unavailable_label: t("menu.unavailable") %>
+                  <% end %>
+                </ul>
+              </section>
+            <% end %>
+          </section>
+        <% end %>
+
+        <p data-list-filter-target="empty" hidden class="empty-state">
+          <%= t("menu.no_results") %>
+        </p>
+      </div>
+    <% else %>
+      <p class="empty-state"><%= t("menu.empty") %></p>
+    <% end %>
+
+    <footer class="sheet-foot">
       <%= t("menu.powered_by") %>
-      <a href="<%= root_path %>" class="text-primary/60 hover:text-primary">aperto.wine</a>
-    </p>
-  </footer>
+      <a href="<%= root_path %>" class="underline decoration-ox-4 underline-offset-4 hover:text-ox-1">aperto.wine</a>
+    </footer>
+  </div>
 </main>
 
 <% unless @cart.empty? %>

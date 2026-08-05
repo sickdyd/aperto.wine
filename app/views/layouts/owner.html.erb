@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>" data-theme="wine">
   <head>
+    <meta charset="utf-8">
     <title><%= content_for(:title) || t("app_name") %> — <%= t("owner.dashboard") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -9,13 +10,33 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <%# Same three families as the public shell — the admin uses the display
+        face sparingly (see `.ledger-admin` in the stylesheet), not never. %>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <%# Disable CSS transitions/animations under system tests so Capybara never
+        clicks an element mid-transition — a common source of flaky failures.
+        The admin drawer slides, so without this the owner suite is markedly
+        flakier than the public one, which has had this guard all along. %>
+    <% if Rails.env.test? %>
+      <style>
+        *, *::before, *::after {
+          transition-duration: 0s !important;
+          transition-delay: 0s !important;
+          animation-duration: 0s !important;
+          animation-delay: 0s !important;
+        }
+      </style>
+    <% end %>
   </head>
 
-  <body class="bg-base-100 text-base-content font-body antialiased min-h-screen">
+  <%# ledger-admin: the same tokens and vocabulary as the public shell, held
+      quiet — compressed type scale, no display face in headings, denser
+      controls, softened grain. The admin should disappear into the task. %>
+  <body class="ledger-admin bg-base-100 text-base-content font-body antialiased min-h-screen">
     <div class="drawer lg:drawer-open">
       <input id="owner-drawer" type="checkbox" class="drawer-toggle">
 
@@ -23,7 +44,7 @@
         <%# Mobile top bar %>
         <header class="navbar sticky top-0 z-40 bg-base-100 border-b border-base-content/5 lg:hidden">
           <label for="owner-drawer" class="btn btn-square btn-ghost drawer-button" aria-label="<%= t("owner.nav.open_menu") %>">
-            <%= icon "list", css: "size-5" %>
+            <%= icon "list", class: "size-5" %>
           </label>
           <a href="<%= owner_restaurants_path %>" class="font-display text-lg font-semibold text-primary px-2">aperto.wine</a>
         </header>
@@ -42,5 +63,8 @@
         <%= render "owner/shared/sidebar" %>
       </div>
     </div>
+
+    <%# The page's one grain overlay, halved in the admin (see --grain-opacity). %>
+    <div class="grain" aria-hidden="true"></div>
   </body>
 </html>

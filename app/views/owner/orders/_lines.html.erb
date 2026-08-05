@@ -1,0 +1,12 @@
+<%# What was ordered, one line per pour: a mono tabular count, the wine, the
+    size. Rendered in the items column from `md` up, and folded into the order
+    cell below it. %>
+<ul class="text-meta text-ink-soft">
+  <% order.order_items.each do |item| %>
+    <li>
+      <span class="font-mono text-ox-3 num"><%= item.quantity %>&times;</span>
+      <%= item.wine.name %>
+      <span class="mono-micro"><%= item.glass_size_ml %>ml</span>
+    </li>
+  <% end %>
+</ul>

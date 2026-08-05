@@ -1,55 +1,49 @@
 <% content_for(:title) { "#{@restaurant.name} — #{t('owner.tables.bulk_print_title')}" } %>
 
-<div class="mb-8 flex items-center justify-between" id="bulk-print-header">
+<div class="admin-head print:hidden" id="bulk-print-header">
   <div>
-    <h1 class="font-display text-3xl font-light"><%= t("owner.tables.bulk_print_title") %></h1>
-    <p class="text-base-content/50 mt-2">
-      <%= params[:area].presence || t("owner.tables.all_areas") %>
-    </p>
+    <h1 class="admin-title"><%= t("owner.tables.bulk_print_title") %></h1>
+    <p class="admin-subtitle mt-1"><%= params[:area].presence || t("owner.tables.all_areas") %></p>
   </div>
-  <div class="flex items-center gap-2">
-    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn btn-ghost btn-sm text-xs uppercase tracking-wider">
-      <%= icon "arrow-left", css: "size-4" %>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="<%= owner_restaurant_tables_path(@restaurant) %>" class="btn-wine-quiet">
+      <%= icon "arrow-left", class: "size-4" %>
       <%= t("owner.tables.back_to_tables") %>
     </a>
-    <button onclick="window.print()" class="btn-wine btn-sm">
-      <%= icon "printer", css: "size-4" %>
+    <button type="button" onclick="window.print()" class="btn-wine">
+      <%= icon "printer", class: "size-4" %>
       <%= t("owner.tables.print") %>
     </button>
   </div>
 </div>
 
 <% if @grouped_tables.any? %>
-  <div class="space-y-10" id="qr-sheet">
+  <p class="note measure mb-8 print:hidden"><%= t("owner.tables.print_hint") %></p>
+
+  <div class="space-y-12" id="qr-sheet">
     <% @grouped_tables.each do |area, tables| %>
       <section class="qr-area">
-        <h2 class="font-body text-xs uppercase tracking-[0.15em] text-base-content/50 mb-4 qr-area-title">
+        <h2 class="group-title qr-area-title mb-4">
           <%= area.presence || t("owner.tables.no_area") %>
         </h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+
+        <div class="qr-grid grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <% tables.each do |table| %>
-            <div class="qr-card bg-white p-6 rounded-xl border border-base-content/10 text-base-content flex flex-col items-center">
-              <div class="w-40 h-40 flex items-center justify-center">
-                <%= @table_qr_svgs[table] %>
-              </div>
-              <p class="text-center mt-3 font-display text-base font-medium"><%= @restaurant.name %></p>
-              <p class="text-center text-sm text-base-content/60"><%= [ table.area, table.name ].compact_blank.join(" · ") %></p>
-              <p class="text-center text-xs text-base-content/40 mt-1">aperto.wine</p>
-            </div>
+            <%= render "qr_card",
+                       restaurant: @restaurant,
+                       qr_svg: @table_qr_svgs[table],
+                       stamp_label: table.name,
+                       sub_label: table.area.presence %>
           <% end %>
         </div>
       </section>
     <% end %>
   </div>
 <% else %>
-  <div class="text-center py-16">
-    <p class="text-base-content/50"><%= t("owner.tables.empty_title") %></p>
+  <div class="empty-state">
+    <p class="not-italic"><%= t("owner.tables.empty_title") %></p>
   </div>
 <% end %>
 
-<%# Print styles: one clean grid of cards, avoid splitting a card across pages %>
-<style media="print">
-  nav, .btn, button, #bulk-print-header { display: none !important; }
-  .qr-card { border: 1px dashed #ccc !important; box-shadow: none !important; break-inside: avoid; }
-  .qr-area { break-inside: avoid-page; }
-</style>
+<%= render "print_styles" %>

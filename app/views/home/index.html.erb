@@ -1,200 +1,150 @@
 <% content_for(:title) { t("landing.title") } %>
 
 <%# ═══════════════════════════════════════════════════════════════════════════
-    NAVIGATION
+    MASTHEAD — the one deep band, carrying the wordmark and the account nav.
+    Exactly one <nav> on this page: the footer's locale switcher is a plain
+    list, so `within "nav"` in the system tests stays unambiguous.
     ═══════════════════════════════════════════════════════════════════════════ %>
-<nav class="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-base-100/80 border-b border-base-content/5">
-  <div class="landing-section flex items-center justify-between h-16 md:h-20">
-    <a href="<%= root_path %>" class="flex items-center gap-2">
-      <span class="font-display text-xl md:text-2xl font-semibold text-primary tracking-tight">aperto.wine</span>
-    </a>
+<header class="masthead">
+  <div class="masthead-inner">
+    <a class="wordmark press-deep" href="<%= root_path %>">aperto<b>.wine</b></a>
 
-    <div class="flex items-center gap-3">
+    <nav class="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="<%= t("landing.account_nav") %>">
       <% if signed_in? %>
-        <span class="text-sm text-base-content/60"><%= current_user.name %></span>
-        <%= button_to t("auth.sign_out"), sign_out_path, method: :delete, class: "btn-wine-outline btn-sm" %>
+        <%# A person's name is set in the text face, not shouted in mono caps. %>
+        <span class="text-meta text-on-deep-soft"><%= current_user.name %></span>
+        <%= button_to t("auth.sign_out"), sign_out_path, method: :delete, class: "btn-wine-deep" %>
       <% else %>
-        <a href="<%= sign_in_path %>" class="btn-wine-outline btn-sm"><%= t("landing.sign_in") %></a>
-        <a href="<%= sign_up_path %>" class="btn-wine btn-sm"><%= t("landing.sign_up") %></a>
+        <a class="link-mono" href="<%= sign_in_path %>"><%= t("landing.sign_in") %></a>
+        <a class="btn-wine-deep" href="<%= sign_up_path %>"><%= t("landing.sign_up") %></a>
       <% end %>
-    </div>
+    </nav>
   </div>
-</nav>
+</header>
 
-<%# ═══════════════════════════════════════════════════════════════════════════
-    HERO
-    ═══════════════════════════════════════════════════════════════════════════ %>
-<section class="landing-section min-h-screen flex flex-col justify-center pt-20 relative overflow-hidden">
-  <%# Decorative background %>
-  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-    <div class="absolute top-1/4 right-0 w-96 h-96 rounded-full bg-primary/3 blur-3xl"></div>
-    <div class="absolute bottom-1/4 left-0 w-64 h-64 rounded-full bg-secondary/5 blur-3xl"></div>
-  </div>
+<main id="main">
+  <%# ═════════════════════════════════════════════════════════════════════════
+      HERO — headline column, engraving column. The pour is decorative
+      (aria-hidden inside the partial), so the copy carries the meaning.
+      ═════════════════════════════════════════════════════════════════════════ %>
+  <section class="spread py-10 md:py-16 lg:grid lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-center lg:gap-x-16 lg:py-24" aria-labelledby="hero-title">
+    <div>
+      <p class="eyebrow"><%= t("landing.hero_tagline") %></p>
 
-  <div class="relative max-w-4xl">
-    <p class="font-body text-xs uppercase tracking-[0.2em] text-primary/70 mb-6"><%= t("landing.hero_tagline") %></p>
+      <h1 id="hero-title" class="display-1 press my-6 [&_span]:text-ox-3"><%= t("landing.hero_title_html") %></h1>
 
-    <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-light leading-[0.9] tracking-tight text-balance mb-8">
-      <%= t("landing.hero_title_html") %>
-    </h1>
+      <hr class="rule-section">
 
-    <p class="font-body text-lg md:text-xl text-base-content/60 max-w-xl leading-relaxed mb-12">
-      <%= t("landing.hero_subtitle") %>
-    </p>
+      <p class="lede mt-6 md:mt-8"><%= t("landing.hero_subtitle") %></p>
 
-    <div class="flex flex-col sm:flex-row gap-4">
-      <a href="#" class="btn-wine btn-lg">
-        <%= icon "storefront", variant: "regular", css: "size-4 opacity-70" %>
-        <%= t("landing.cta_restaurant") %>
-      </a>
-      <a href="#" class="btn-wine-outline btn-lg">
-        <%= icon "wine", variant: "regular", css: "size-4 opacity-70" %>
-        <%= t("landing.cta_customer") %>
-      </a>
-    </div>
-  </div>
-
-  <%# Scroll indicator %>
-  <div class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-    <span class="font-body text-[10px] uppercase tracking-[0.2em]"><%= t("landing.scroll") %></span>
-    <div class="w-px h-8 bg-base-content/30 animate-pulse"></div>
-  </div>
-</section>
-
-<%# ═══════════════════════════════════════════════════════════════════════════
-    PROBLEM / SOLUTION
-    ═══════════════════════════════════════════════════════════════════════════ %>
-<section class="landing-section py-32 md:py-40">
-  <div class="max-w-5xl mx-auto">
-    <div class="divider-wine mb-12"></div>
-
-    <div class="grid md:grid-cols-2 gap-16 md:gap-24">
-      <div>
-        <p class="font-body text-xs uppercase tracking-[0.2em] text-primary/60 mb-4"><%= t("landing.problem_label") %></p>
-        <h2 class="font-display text-3xl md:text-4xl font-light leading-tight mb-6"><%= t("landing.problem_title") %></h2>
-        <p class="text-base-content/60 leading-relaxed"><%= t("landing.problem_description") %></p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a class="btn-wine" href="#">
+          <%= icon "storefront", variant: "regular", class: "size-4" %>
+          <%= t("landing.cta_restaurant") %>
+        </a>
+        <a class="btn-wine-outline" href="#">
+          <%= icon "wine", variant: "regular", class: "size-4" %>
+          <%= t("landing.cta_customer") %>
+        </a>
       </div>
 
-      <div>
-        <p class="font-body text-xs uppercase tracking-[0.2em] text-secondary/80 mb-4"><%= t("landing.solution_label") %></p>
-        <h2 class="font-display text-3xl md:text-4xl font-light leading-tight mb-6"><%= t("landing.solution_title") %></h2>
-        <p class="text-base-content/60 leading-relaxed"><%= t("landing.solution_description") %></p>
-      </div>
+      <hr class="rule-fine mt-10 md:mt-12">
     </div>
-  </div>
-</section>
+
+    <%= render "shared/pour", css: "mt-12 lg:mt-0" %>
+  </section>
+
+  <%# ═════════════════════════════════════════════════════════════════════════
+      HOW IT WORKS — the tinted band, ruled as a table
+      ═════════════════════════════════════════════════════════════════════════ %>
+  <section class="band-tint" aria-labelledby="how-title">
+    <div class="spread">
+      <div class="section-head">
+        <h2 id="how-title" class="section-title press"><%= t("landing.how_title") %></h2>
+        <span class="leader leader-fine" aria-hidden="true"></span>
+        <%# The running head repeats the section's own name; on a narrow screen
+            the title already fills the line, so it steps out rather than
+            crushing the leader into nothing. %>
+        <span class="mono-label hidden shrink-0 text-ox-2 md:inline"><%= t("landing.how_label") %></span>
+      </div>
+
+      <ol class="ledger-steps">
+        <% t("landing.steps").each_with_index do |step, i| %>
+          <li class="ledger-step">
+            <span class="step-number num" aria-hidden="true"><%= format("%02d", i + 1) %></span>
+            <h3 class="text-h4"><%= step[:title] %></h3>
+            <p class="mt-2 text-pretty"><%= step[:description] %></p>
+          </li>
+        <% end %>
+      </ol>
+    </div>
+  </section>
+
+  <%# ═════════════════════════════════════════════════════════════════════════
+      THE TWO SIDES OF THE LIST — restaurants on the left, diners on the right,
+      divided by a rule rather than boxed into cards.
+      ═════════════════════════════════════════════════════════════════════════ %>
+  <section class="spread py-14 md:py-20">
+    <hr class="rule-heavy">
+
+    <div class="mt-8 grid gap-12 md:mt-10 md:grid-cols-2 md:gap-0 md:divide-x md:divide-rule-fine">
+      <article class="md:pr-10" aria-labelledby="restaurants-title">
+        <p class="eyebrow"><%= t("landing.restaurants_label") %></p>
+        <h2 id="restaurants-title" class="display-2 mt-5 text-h3 md:text-[2.25rem]"><%= t("landing.restaurants_title") %></h2>
+        <p class="mt-4 text-pretty"><%= t("landing.restaurants_description") %></p>
+        <p class="mt-4">
+          <a class="link-mono" href="#">
+            <%= t("landing.restaurants_cta") %>
+            <%= icon "arrow-right", variant: "regular", class: "size-3.5 ml-2" %>
+          </a>
+        </p>
+      </article>
+
+      <article class="md:pl-10" aria-labelledby="customers-title">
+        <p class="eyebrow"><%= t("landing.customers_label") %></p>
+        <h2 id="customers-title" class="display-2 mt-5 text-h3 md:text-[2.25rem]"><%= t("landing.customers_title") %></h2>
+        <p class="mt-4 text-pretty"><%= t("landing.customers_description") %></p>
+        <p class="mt-4">
+          <a class="link-mono" href="#">
+            <%= t("landing.customers_cta") %>
+            <%= icon "arrow-right", variant: "regular", class: "size-3.5 ml-2" %>
+          </a>
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <%# ═════════════════════════════════════════════════════════════════════════
+      CLOSING CALL — ruled top and bottom like a colophon
+      ═════════════════════════════════════════════════════════════════════════ %>
+  <section class="spread pb-16 md:pb-24" aria-labelledby="cta-title">
+    <div class="cta-band">
+      <h2 id="cta-title" class="display-2 press"><%= t("landing.cta_title") %></h2>
+      <span class="leader leader-fine transform-none self-center" aria-hidden="true"></span>
+      <a class="btn-wine shrink-0" href="#"><%= t("landing.cta_restaurant") %></a>
+    </div>
+
+    <p class="note measure mt-4"><%= t("landing.cta_subtitle") %></p>
+  </section>
+</main>
 
 <%# ═══════════════════════════════════════════════════════════════════════════
-    HOW IT WORKS
+    FOOTER — the running foot: wordmark, colophon line, locale switcher
     ═══════════════════════════════════════════════════════════════════════════ %>
-<section class="landing-section py-32 md:py-40 bg-base-200/50">
-  <div class="max-w-5xl mx-auto">
-    <div class="text-center mb-20">
-      <p class="font-body text-xs uppercase tracking-[0.2em] text-primary/60 mb-4"><%= t("landing.how_label") %></p>
-      <h2 class="font-display text-4xl md:text-5xl font-light"><%= t("landing.how_title") %></h2>
+<footer class="site-foot">
+  <div class="site-foot-inner">
+    <div>
+      <a class="wordmark wordmark-paper" href="<%= root_path %>">aperto<b>.wine</b></a>
+      <small class="mono-micro mt-2 block">&copy; <%= Date.current.year %> aperto.wine &middot; <%= t("landing.footer_rights") %></small>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-12 md:gap-8">
-      <% t("landing.steps").each_with_index do |step, i| %>
-        <div class="text-center md:text-left">
-          <span class="inline-block font-display text-6xl font-light text-primary/20 mb-4"><%= "%02d" % (i + 1) %></span>
-          <h3 class="font-display text-xl font-medium mb-3"><%= step[:title] %></h3>
-          <p class="text-base-content/50 text-sm leading-relaxed"><%= step[:description] %></p>
-        </div>
+    <ul class="flex items-center gap-3">
+      <% %i[en it].each do |locale| %>
+        <li>
+          <%= link_to locale.to_s.upcase, root_path(locale: locale), class: "link-mono", lang: locale,
+                      aria: { current: ("true" if I18n.locale == locale) } %>
+        </li>
       <% end %>
-    </div>
-  </div>
-</section>
-
-<%# ═══════════════════════════════════════════════════════════════════════════
-    FOR RESTAURANTS
-    ═══════════════════════════════════════════════════════════════════════════ %>
-<section class="landing-section py-32 md:py-40">
-  <div class="max-w-5xl mx-auto">
-    <div class="grid md:grid-cols-5 gap-16">
-      <div class="md:col-span-2">
-        <p class="font-body text-xs uppercase tracking-[0.2em] text-primary/60 mb-4"><%= t("landing.restaurants_label") %></p>
-        <h2 class="font-display text-3xl md:text-4xl font-light leading-tight mb-6"><%= t("landing.restaurants_title") %></h2>
-        <p class="text-base-content/60 leading-relaxed mb-8"><%= t("landing.restaurants_description") %></p>
-        <a href="#" class="btn-wine"><%= t("landing.restaurants_cta") %></a>
-      </div>
-
-      <div class="md:col-span-3">
-        <div class="grid grid-cols-2 gap-4">
-          <% t("landing.restaurant_features").each do |feature| %>
-            <div class="p-5 rounded-lg border border-base-content/5 bg-base-100">
-              <div class="flex items-center gap-3 mb-2">
-                <%= icon feature[:icon], variant: "regular", css: "size-5 text-primary/70" %>
-                <span class="font-body text-sm font-medium"><%= feature[:title] %></span>
-              </div>
-              <p class="text-xs text-base-content/50 leading-relaxed"><%= feature[:description] %></p>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# ═══════════════════════════════════════════════════════════════════════════
-    FOR CUSTOMERS
-    ═══════════════════════════════════════════════════════════════════════════ %>
-<section class="landing-section py-32 md:py-40 bg-base-200/50">
-  <div class="max-w-5xl mx-auto">
-    <div class="grid md:grid-cols-5 gap-16">
-      <div class="md:col-span-3 order-2 md:order-1">
-        <div class="grid grid-cols-2 gap-4">
-          <% t("landing.customer_features").each do |feature| %>
-            <div class="p-5 rounded-lg border border-base-content/5 bg-base-100">
-              <div class="flex items-center gap-3 mb-2">
-                <%= icon feature[:icon], variant: "regular", css: "size-5 text-secondary/80" %>
-                <span class="font-body text-sm font-medium"><%= feature[:title] %></span>
-              </div>
-              <p class="text-xs text-base-content/50 leading-relaxed"><%= feature[:description] %></p>
-            </div>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="md:col-span-2 order-1 md:order-2">
-        <p class="font-body text-xs uppercase tracking-[0.2em] text-secondary/70 mb-4"><%= t("landing.customers_label") %></p>
-        <h2 class="font-display text-3xl md:text-4xl font-light leading-tight mb-6"><%= t("landing.customers_title") %></h2>
-        <p class="text-base-content/60 leading-relaxed mb-8"><%= t("landing.customers_description") %></p>
-        <a href="#" class="btn-wine-outline"><%= t("landing.customers_cta") %></a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# ═══════════════════════════════════════════════════════════════════════════
-    FINAL CTA
-    ═══════════════════════════════════════════════════════════════════════════ %>
-<section class="landing-section py-32 md:py-40">
-  <div class="max-w-3xl mx-auto text-center">
-    <div class="divider-wine mb-12"></div>
-    <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-8"><%= t("landing.cta_title") %></h2>
-    <p class="text-base-content/50 text-lg mb-12 max-w-xl mx-auto"><%= t("landing.cta_subtitle") %></p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="#" class="btn-wine btn-lg"><%= t("landing.cta_restaurant") %></a>
-      <a href="#" class="btn-wine-outline btn-lg"><%= t("landing.cta_customer") %></a>
-    </div>
-  </div>
-</section>
-
-<%# ═══════════════════════════════════════════════════════════════════════════
-    FOOTER
-    ═══════════════════════════════════════════════════════════════════════════ %>
-<footer class="landing-section py-12 border-t border-base-content/5">
-  <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-    <div class="flex items-center gap-2">
-      <span class="font-display text-lg font-semibold text-primary">aperto.wine</span>
-    </div>
-
-    <p class="text-xs text-base-content/40">&copy; <%= Date.current.year %> aperto.wine. <%= t("landing.footer_rights") %></p>
-
-    <div class="flex items-center gap-4">
-      <a href="<%= root_path(locale: :en) %>" class="text-xs uppercase tracking-wider <%= I18n.locale == :en ? 'text-primary font-medium' : 'text-base-content/40 hover:text-base-content/70' %>">EN</a>
-      <a href="<%= root_path(locale: :it) %>" class="text-xs uppercase tracking-wider <%= I18n.locale == :it ? 'text-primary font-medium' : 'text-base-content/40 hover:text-base-content/70' %>">IT</a>
-    </div>
+    </ul>
   </div>
 </footer>
