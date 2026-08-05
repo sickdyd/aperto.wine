@@ -18,6 +18,8 @@ en:
     guest: "Guest"
     flash_notice: "Notice"
     flash_error: "Error"
+    # Accessible name for the icon-only close button on every flash toast.
+    flash_dismiss: "Dismiss message"
   auth:
     sign_in: "Sign In"
     sign_up: "Create Account"

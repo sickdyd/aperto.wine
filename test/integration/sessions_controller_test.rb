@@ -56,11 +56,29 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   # --- Flash layout (Task 5, Part E regression fix) ---
 
-  test "invalid credentials render exactly one flash, sized to the sign-in form" do
+  # The flash used to be rendered both by this view and by the layout. It is
+  # now the layout's alone, and it floats: the band belongs to the fixed
+  # `.toast-stack`, never to the form column it is reporting on.
+  test "invalid credentials render exactly one flash, floating over the form" do
     post sign_in_path, params: { email: "nobody@example.com", password: "wrongpassword" }
     assert_response :unprocessable_entity
     assert_select "[role='alert']", 1
-    assert_select "div.max-w-sm [role='alert']", 1
-    assert_no_match "max-w-2xl", response.body
+    assert_select "div.toast-stack [role='alert']", 1
+    assert_select "div.max-w-sm [role='alert']", 0
+  end
+
+  # An ERB comment ends at the FIRST `%>`, so one written inside `<%#  %>`
+  # closes the comment early and spills the rest of the prose onto the page as
+  # markup. The flash partials carry long explanatory comments, and every
+  # existing assertion still passed while a paragraph of them rendered across
+  # the masthead — the band was intact, the leak was simply elsewhere. The
+  # stray terminator is the tell.
+  test "the flash partials do not leak their own comments onto the page" do
+    post sign_in_path, params: { email: "nobody@example.com", password: "wrongpassword" }
+
+    assert_response :unprocessable_entity
+    refute_includes response.body, "%>",
+      "a stray ERB terminator reached the page — a comment in one of the " \
+      "flash partials is closing early and spilling its prose into the markup"
   end
 end

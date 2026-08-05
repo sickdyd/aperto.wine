@@ -1,27 +1,27 @@
-<%# The owner flash band. #flash-messages must exist on every render, empty or
-    not — owner/wine_list_items replaces it by id from a Turbo Stream, and a
-    missing target is a silently dropped message.
+<%# The owner flash. #flash-messages must exist on every render, empty or not —
+    owner/wine_list_items replaces it by id from a Turbo Stream, and a missing
+    target is a silently dropped message. It is the Turbo target and nothing
+    else: no styling, no fixed positioning of its own, so when there is no
+    flash it is an empty div that occupies no height.
 
-    Success and error are told apart three ways, so the message still reads
-    when the ground does not: a different icon, a mono caps label, and only
-    then the colour. `role="alert"` is kept on both — it is a live region, and
-    it takes no focus. %>
+    The band inside it is the same one the public shell renders, floating in
+    the same `.toast-stack` — see shared/_flash_band. %>
 <div id="flash-messages">
   <% if notice || alert %>
-    <div class="mx-auto mt-4 flex w-full max-w-6xl flex-col gap-2 px-4 sm:px-6 lg:px-8">
+    <div class="toast-stack">
       <% if notice %>
-        <div role="alert" class="alert alert-success flex items-center gap-3">
-          <%= icon "check-circle", class: "size-4 shrink-0" %>
-          <span class="mono-label shrink-0"><%= t("shared.flash_notice") %></span>
-          <span class="min-w-0"><%= notice %></span>
-        </div>
+        <%= render "shared/flash_band",
+                   variant: "alert-success",
+                   icon_name: "check-circle",
+                   label: t("shared.flash_notice"),
+                   message: notice %>
       <% end %>
       <% if alert %>
-        <div role="alert" class="alert alert-error flex items-center gap-3">
-          <%= icon "warning", class: "size-4 shrink-0" %>
-          <span class="mono-label shrink-0"><%= t("shared.flash_error") %></span>
-          <span class="min-w-0"><%= alert %></span>
-        </div>
+        <%= render "shared/flash_band",
+                   variant: "alert-error",
+                   icon_name: "warning",
+                   label: t("shared.flash_error"),
+                   message: alert %>
       <% end %>
     </div>
   <% end %>

@@ -1,4 +1,18 @@
 module ApplicationHelper
+  # Long enough to read a sentence twice, short enough that a stale toast is
+  # not still floating over the next page.
+  FLASH_TOAST_TIMEOUT_MS = 6_000
+
+  # How long a floating flash band waits before dismissing itself, in
+  # milliseconds; 0 means "never, wait for the close button".
+  #
+  # Zero under test is deliberate: a band that removes itself on a timer races
+  # every system test that asserts on flash copy, and the failure looks like a
+  # flake rather than like a timeout.
+  def flash_toast_timeout_ms
+    Rails.env.test? ? 0 : FLASH_TOAST_TIMEOUT_MS
+  end
+
   def format_cents(cents)
     return nil unless cents&.positive?
 

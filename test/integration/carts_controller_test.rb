@@ -128,12 +128,12 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
 
   # --- Flash layout (Task 5, Part E regression fix) ---
 
-  test "the cart page's error flash renders exactly once, at the page's own width" do
+  test "the cart page's error flash renders exactly once, in the floating stack" do
     post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 60, quantity: 1 }
     follow_redirect!
 
     assert_select "[role='alert']", 1
-    assert_select "div.max-w-2xl [role='alert']", 1
+    assert_select "div.toast-stack [role='alert']", 1
   end
 
   test "a missing wine_id fails cleanly, not with a 500" do
