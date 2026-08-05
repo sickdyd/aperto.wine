@@ -334,6 +334,32 @@ class LedgerThemeTest < ActiveSupport::TestCase
       "default and the requested size/tint is discarded. Use class:."
   end
 
+
+  # A grouped selector is a single unit: `.btn-wine, .btn-wine-outline, ... { }`
+  # carries the LAYOUT for every variant, while the per-variant rules below it
+  # only set colour. Deleting the group leaves each variant's name still
+  # defined — so a test that merely asserts ".btn-wine exists" passes while
+  # every button in the app renders with its icon on a separate line and its
+  # label overflowing the block. That shipped once; this asserts the layout
+  # itself, not just the name.
+  BUTTON_VARIANTS = %w[btn-wine btn-wine-outline btn-wine-quiet btn-wine-deep].freeze
+
+  test "every button variant inherits the shared layout base" do
+    base = @css[/^\s*\.btn-wine,\n(?:\s*\.[a-z-]+,\n)*\s*\.[a-z-]+\s*\{[^}]*\}/m]
+    assert base, "the grouped .btn-wine* base rule is missing — variants would " \
+      "keep their colours but lose flex layout, padding and type"
+
+    BUTTON_VARIANTS.each do |variant|
+      assert_match(/\.#{variant}[,\s]/, base, ".#{variant} must be in the shared base group")
+    end
+
+    assert_match(/@apply btn\b/, base,
+      "the base pulls daisyUI's .btn for the inline-flex box and icon alignment")
+    assert_match(/min-height:\s*46px/, base, "buttons hold the 44px target floor")
+    assert_match(/text-transform:\s*uppercase/, base)
+    assert_match(/font-family:\s*var\(--font-mono\)/, base)
+  end
+
   test "the pour is decorative, self-contained and animation lives in the stylesheet" do
     partial = POUR_PARTIAL.read
 

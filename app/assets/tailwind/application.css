@@ -605,7 +605,36 @@
     margin-inline: auto;
   }
 
-  
+  /* ═════════════════════════════════════════════════════════════════════════
+     6. BUTTONS — printed blocks. One base, four variants; no radius, no
+        shadow, mono and uppercase. The `.btn-wine*` names are load-bearing
+        across the views and the test suite: restyled, never renamed.
+
+        This base rule carries the LAYOUT for every variant — `@apply btn`
+        supplies the inline-flex box and icon alignment. Without it the icon
+        drops onto its own line and the label overflows the block, so treat
+        the grouped selector as a unit.
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  .btn-wine,
+  .btn-wine-outline,
+  .btn-wine-quiet,
+  .btn-wine-deep {
+    @apply btn shadow-none;
+    min-height: 46px;
+    height: auto;
+    padding-inline: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    white-space: nowrap;
+    border: 1.5px solid var(--color-ox-2);
+    background-color: transparent;
+    color: var(--color-ox-2);
+  }
+
   /* The primary action: oxblood block, paper type. */
   .btn-wine {
     background-color: var(--color-ox-2);
