@@ -256,6 +256,45 @@ Add `cart.errors.invalid_serving` to both locale files.
 
 Depends on Tasks 1 and 2.
 
+### Post-rebase amendments (read these first — they override the text below)
+
+The branch was rebased onto `origin/main` after Task 2, picking up #66 ("slug URLs
+for menus, with one published wine list per restaurant"). What changed for this
+task:
+
+- **`WineList.active` is now `WineList.published`,** and a restaurant has at most
+  one published list (enforced by a partial unique index). `MenusController#show`
+  sets `@wine_lists = [ @wine_list ].compact` — deliberately "a collection of
+  one" so the view and `MenusHelper` did not have to learn about publishing.
+  `renderable_wine_lists` and `menu_nav_sections` are unchanged and still take a
+  collection of lists. **Do not restructure the view around a single list** —
+  keep the existing loop.
+- **Public routes take slugs.** `_wine_row.html.erb` already posts to
+  `cart_items_path(restaurant_slug: restaurant.slug)`. Keep that shape; do not
+  reintroduce `restaurant_id:`. Owner routes are still id-based — that is correct,
+  not an inconsistency to fix.
+- **The add buttons must now post `serving`.** Task 2 made `serving` a required
+  argument of `Cart#add`. A missing param defaults to `"glass"` in the
+  controller, but that default exists only to protect browser tabs opened before
+  the deploy — freshly rendered markup must state its serving explicitly, and the
+  bottle button obviously must.
+- **The bottle size label already exists: `shared.serving.bottle`,** added by
+  Task 2, interpolating `size:`, rendering "Bottle 750 ml" / "Bottiglia 750 ml".
+  **Reuse it** — do not invent a second bottle label. (`test/i18n_test.rb` fails
+  on unused keys, so a duplicate is a live hazard, and the cart and the menu
+  must agree on wording.)
+- **Task 1 left `_wine_row.html.erb` on `wine.glasses_available?`** at three
+  points (the `wine-soldout` class, the unavailable tag, and the add-controls
+  guard) because nothing rendered a bottle yet, so the widened `available?` would
+  have dropped the sold-out tag while offering no way to buy. That intermediate
+  state ends here: the row must now reason per serving — glass controls gated on
+  `glasses_available?`, bottle controls on `bottle_available?`, and the
+  sold-out tag shown only when `available?` is false (neither serving offered).
+- **`app/views/owner/wine_lists/_member_item.html.erb` is in scope.** Task 1 also
+  switched it to `glasses_available?`. Once bottles are orderable, an owner's
+  list builder that labels a bottle-only wine "unavailable" is wrong for the same
+  reason the menu would be. Use the widened `available?` there.
+
 ### `app/views/menus/_wine_row.html.erb`
 
 The row keeps its shape: colour dot, name, leader dots, right-aligned prices.
@@ -349,6 +388,30 @@ the English.
 ## Task 4 — menu filter chips
 
 Depends on Task 3.
+
+### Post-rebase amendments (read these first — they override the text below)
+
+- **`.chip` already exists** in `app/assets/tailwind/application.css` (search for
+  "A chip: an inline filter or jump target"), carrying the ledger treatment and a
+  44px `min-height`. **Reuse it rather than adding a new class** — the project's
+  CSS rule is to extend a base style, not clone a variant under a new name. Its
+  active state currently keys off `.chip[aria-current]` because today's only user
+  is the section-nav jump anchors. Extend that selector to include
+  `.chip[aria-pressed="true"]` and correct the comment, which currently claims a
+  chip is "never a button". A filter chip genuinely is a button, and
+  `aria-pressed` is the correct ARIA for a toggle — `aria-current` is not.
+- **One published wine list per restaurant** now (see Task 3's amendments), so the
+  chip row sits above a single list's colour sections rather than several lists.
+  This does not change the design: facets are still derived from the wines
+  actually rendered, and `renderable_wine_lists` still returns a collection.
+- **The facet-extraction helper belongs in `MenusHelper`,** alongside the existing
+  `renderable_wine_lists` and `menu_nav_sections`, and should take the same
+  `rendered_lists` structure those produce so all three agree on their input.
+- **The serving facet is now meaningful** in a way it wasn't when the plan was
+  written: Task 3 renders both bottle and glass prices, so "by the glass" / "by
+  the bottle" filters on genuinely visible distinctions. Derive it from
+  `Wine#glasses_available?` / `#bottle_available?` rather than from price columns
+  directly.
 
 Extend the existing client-side filter rather than adding an endpoint. The menu
 already renders every wine, `list_filter_controller.js` already hides items and
