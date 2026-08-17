@@ -310,6 +310,94 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_match ERB::Util.html_escape(@gavi.name), response.body
   end
 
+  # --- stock that fell away under a cart that was already valid (Task 4) ---
+  #
+  # Every case here is the same shape: a line the cart happily accepted, whose
+  # wine then lost glasses to somebody else's order. The wine is still on the
+  # menu and still has a price, so the line is *not* dropped — it is merely
+  # too large, and the diner fixes it with the stepper the line already has.
+
+  test "a line whose wine lost stock after it was added is flagged rather than dropped" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    assert_match ERB::Util.html_escape(I18n.t("cart.stock_shortfall_notice")), response.body
+    assert_no_match I18n.t("cart.dropped_items_notice"), response.body
+    # Normal treatment kept: the line still carries the control that fixes it.
+    assert_select "select#cart_item_#{@barolo.id}_125_quantity", 1
+  end
+
+  test "the shortfall banner is an alert, and a different one from the dropped-items band" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_select "[role='alert'].alert-info", 1
+    assert_select "[role='alert'].alert-warning", 0
+  end
+
+  test "the shortfall note names what is left and is associated with that line's quantity control" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_id: @osteria)
+    note_id = "cart_item_#{@barolo.id}_125_stock"
+    assert_select "p##{note_id}", text: I18n.t("cart.stock_shortfall", count: 2)
+    assert_select "select#cart_item_#{@barolo.id}_125_quantity[aria-describedby=?]", note_id
+  end
+
+  # One wine at two glass sizes draws on one pool of glasses, so both lines are
+  # over stock together and the note states the wine's remaining total on each
+  # — it is a fact about the wine, not about the row.
+  test "the same wine at two glass sizes flags both of its lines" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 100, quantity: 2 }
+    @barolo.update!(available_glasses: 3)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    [ 125, 100 ].each do |size|
+      assert_select "p#cart_item_#{@barolo.id}_#{size}_stock", text: I18n.t("cart.stock_shortfall", count: 3)
+    end
+  end
+
+  test "the submit control is withheld while a line exceeds stock, without falling back to the empty state" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 0
+    assert_no_match I18n.t("cart.empty"), response.body
+    assert_match ERB::Util.html_escape(@barolo.name), response.body
+  end
+
+  # The same gate covers the older blocker: a dropped line aborts the whole
+  # placement in PlaceOrder, so offering a submit that can only fail is worse
+  # than withholding it until the line is gone.
+  test "the submit control is withheld while a dropped line still needs removing" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
+    @barolo.update!(active: false)
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 0
+  end
+
+  test "lowering the quantity to what is left brings the submit control back" do
+    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+    patch cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
+
+    get cart_path(restaurant_id: @osteria)
+    assert_response :success
+    assert_no_match ERB::Util.html_escape(I18n.t("cart.stock_shortfall_notice")), response.body
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 1
+  end
+
   private
 
   def cart_for(restaurant)

@@ -193,4 +193,70 @@ class WineOrderingTest < ApplicationSystemTestCase
     assert_text I18n.t("orders.status.statuses.pending"), wait: 5
     assert_text gavi.name
   end
+
+  # --- stock falling away under a cart that was already valid (Task 4) ---
+  #
+  # The wine stays on the menu and keeps its price, so nothing is dropped:
+  # the line is only too large, and the stepper it already carries is the
+  # whole recovery path.
+
+  test "a diner lowers an over-stock line and then places the order" do
+    restaurant = restaurants(:osteria)
+    barolo = wines(:barolo)
+
+    visit menu_path(id: restaurant)
+    add_to_cart(barolo, 125)
+    go_to_cart
+    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+
+    within(find("li", text: barolo.name)) do
+      select "3", from: "cart_item_#{barolo.id}_125_quantity"
+      click_button I18n.t("cart.update_quantity")
+    end
+    assert_text format_price(barolo.price_for_glass(125) * 3), wait: 5
+
+    # Somebody else's order takes the glasses out from under the cart.
+    barolo.update!(available_glasses: 2)
+    visit cart_path(restaurant_id: restaurant)
+
+    assert_text I18n.t("cart.stock_shortfall_notice"), wait: 5
+    assert_text I18n.t("cart.stock_shortfall", count: 2)
+
+    within(find("li", text: barolo.name)) do
+      select "2", from: "cart_item_#{barolo.id}_125_quantity"
+      click_button I18n.t("cart.update_quantity")
+    end
+
+    assert_no_text I18n.t("cart.stock_shortfall_notice"), wait: 5
+    click_button I18n.t("orders.form.submit")
+
+    assert_text I18n.t("orders.status.statuses.pending"), wait: 5
+    assert_text barolo.name
+    assert_text format_price(barolo.price_for_glass(125) * 2)
+  end
+
+  test "the submit control is gone while a line exceeds what is left" do
+    restaurant = restaurants(:osteria)
+    barolo = wines(:barolo)
+
+    visit menu_path(id: restaurant)
+    add_to_cart(barolo, 125)
+    go_to_cart
+    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+
+    within(find("li", text: barolo.name)) do
+      select "3", from: "cart_item_#{barolo.id}_125_quantity"
+      click_button I18n.t("cart.update_quantity")
+    end
+    assert_text format_price(barolo.price_for_glass(125) * 3), wait: 5
+
+    barolo.update!(available_glasses: 2)
+    visit cart_path(restaurant_id: restaurant)
+
+    assert_text I18n.t("cart.stock_shortfall_notice"), wait: 5
+    assert_no_button I18n.t("orders.form.submit")
+    # Not the empty state either — the line is still there to be fixed.
+    assert_no_text I18n.t("cart.empty")
+    assert_text barolo.name
+  end
 end

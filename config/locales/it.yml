@@ -527,6 +527,10 @@ it:
     empty: "Il tuo carrello è vuoto."
     browse_menu: "Sfoglia la carta dei vini"
     dropped_items_notice: "Alcuni vini nel carrello non sono più disponibili e devono essere rimossi prima di poter ordinare."
+    stock_shortfall_notice: "Uno o più vini superano la disponibilità rimasta — riduci la quantità per ordinare."
+    stock_shortfall:
+      one: "È rimasto 1 solo calice di questo vino — riduci la quantità per ordinare."
+      other: "Sono rimasti solo %{count} calici di questo vino — riduci la quantità per ordinare."
     glass_size_label: "Formato"
     unit_price_label: "Prezzo"
     subtotal_label: "Totale parziale"
