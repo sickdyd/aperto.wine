@@ -188,7 +188,11 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   # --- insufficient stock ---
 
   test "a cart quantity beyond available stock is refused and the diner sees a flash" do
-    add_barolo_to_cart(quantity: @barolo.available_glasses + 1)
+    add_barolo_to_cart(quantity: 5)
+    # Cart#add itself now refuses a quantity beyond stock (Cart's convenience
+    # guard), so the only way to reach this flash is a line that was fine
+    # when added and fell short of stock only afterward.
+    @barolo.update!(available_glasses: 4)
 
     assert_no_difference "Order.count" do
       post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }

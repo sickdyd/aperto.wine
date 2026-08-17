@@ -176,7 +176,11 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a line short of stock aborts the whole placement and reserves nothing" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: @barolo.available_glasses + 1)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 5)
+    # Cart#add itself now refuses a quantity beyond stock (Cart's convenience
+    # guard), so the only way to reach PlaceOrder's own lock-checked guard is
+    # a line that was fine when added and fell short only afterward.
+    @barolo.update!(available_glasses: 4)
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
       result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
@@ -185,7 +189,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
       assert_equal :insufficient_stock, result.error
       assert_nil result.order
     end
-    assert_equal 10, @barolo.reload.available_glasses
+    assert_equal 4, @barolo.reload.available_glasses
   end
 
   # The lock check must run against the running total for a wine, not each
