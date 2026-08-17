@@ -198,8 +198,16 @@ class PlaceOrderTest < ActiveSupport::TestCase
   # per-line comparison against the pre-loop snapshot would let this through.
   test "two lines for the same wine at different glass sizes are checked against their combined quantity" do
     cart = cart_for(@osteria)
+    # Cart#add itself now aggregates a wine's stock across glass sizes (its
+    # own convenience guard — see Cart#over_stock_wine_ids), so building
+    # this cart needs generous stock at add-time. The assertion under test
+    # is that PlaceOrder's own lock-checked guard catches the combined
+    # total once stock falls back before checkout, independent of Cart's
+    # guard.
+    @barolo.update!(available_glasses: 12)
     cart.add(wine_id: @barolo.id, glass_size_ml: 100, quantity: 6)
     cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 6)
+    @barolo.update!(available_glasses: 10)
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
       result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
