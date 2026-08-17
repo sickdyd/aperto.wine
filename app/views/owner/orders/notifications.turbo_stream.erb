@@ -1,0 +1,21 @@
+<%# The answer to one poll. Every target here is addressed by id and every one
+    of them may be absent from the page the stream lands on — a stream with no
+    target is dropped silently, which is the right outcome: the owner navigated
+    away mid-flight, and the page they landed on rendered its own badge anyway.
+
+    Both badges are restated, not just the visible one: which of the two a
+    viewport shows is a CSS question the server has no business guessing at.
+
+    Oldest first, so the newest order ends up nearest the bottom edge of the
+    stack, which is where the eye already is. %>
+<% Owner::OrdersHelper::BADGE_IDS.each_value do |badge_id| %>
+  <%= turbo_stream.replace badge_id do %>
+    <%= render "owner/orders/badge", id: badge_id, count: @pending_count %>
+  <% end %>
+<% end %>
+
+<% @new_orders.reverse_each do |order| %>
+  <%= turbo_stream.append "owner-toast-stack" do %>
+    <%= render "owner/orders/notification", restaurant: @restaurant, order: order %>
+  <% end %>
+<% end %>
