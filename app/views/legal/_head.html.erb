@@ -1,0 +1,10 @@
+<%# The document's head. The date is not decoration: a legal document with no
+    version date is one nobody can rely on, and one nobody can prove was in
+    force when a diner placed an order. %>
+<header class="legal-head">
+  <p class="eyebrow"><%= eyebrow %></p>
+  <h1 class="display-2 mt-3"><%= title %></h1>
+  <time class="legal-updated" datetime="<%= updated_on.iso8601 %>">
+    <%= t("legal.updated_on", date: l(updated_on, format: :long)) %>
+  </time>
+</header>

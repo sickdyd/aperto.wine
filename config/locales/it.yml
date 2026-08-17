@@ -602,6 +602,48 @@ it:
       empty: "Nessun ordine inviato da questo dispositivo."
       retention: "Ordini inviati da questo dispositivo, conservati per 24 ore."
       view_order: "Ordine del %{time}"
+  # I due documenti legali. Qui vive solo la cornice — titoli, etichette, gli
+  # avvisi che li richiamano. Il testo dei documenti sta nei template con
+  # suffisso di lingua (app/views/legal/privacy.it.html.erb): è prosa lunga, le
+  # cui frasi non sono stringhe riutilizzabili, e sommergerebbe i file di lingua.
+  legal:
+    nav:
+      privacy: "Privacy"
+      terms: "Termini"
+      # Nome accessibile della navigazione a piè di ciascun documento.
+      label: "Documenti legali"
+    eyebrow:
+      privacy: "Protezione dei dati"
+      terms: "Condizioni d'uso"
+    back_to_site: "Torna ad aperto.wine"
+    updated_on: "Ultimo aggiornamento %{date}"
+    privacy:
+      title: "Informativa privacy"
+      meta_description: "Come aperto.wine tratta i dati di ospiti e ristoratori, e chi è titolare di che cosa."
+    terms:
+      title: "Termini e condizioni"
+      meta_description: "I termini di aperto.wine: il rapporto sul vino è tra ospite e ristorante, noi siamo l'intermediario tecnico."
+    # Il blocco di identità del gestore — D.Lgs. 70/2003 art. 7 e DSA artt. 30–31.
+    identity:
+      heading: "Informazioni legali"
+      name: "Gestore"
+      address: "Sede legale"
+      email: "Email"
+      phone: "Telefono"
+      vat_number: "Partita IVA"
+      rea_number: "Numero REA"
+      # Mostrato al posto di un campo che il deploy non ha ancora impostato:
+      # volutamente visibile, perché un blocco a metà passa inosservato.
+      pending: "Da completare"
+    subprocessors:
+      name: "Fornitore"
+      role: "Che cosa fa"
+      location: "Dove"
+    # L'art. 13 GDPR vuole l'informativa dove i dati sono raccolti: per questo
+    # i due avvisi stanno sul modulo d'ordine e su quello di registrazione, non
+    # solo nel piè di pagina.
+    order_notice_html: "Inviando l'ordine il tuo nome e il tavolo vengono comunicati al ristorante, che decide come gestirlo — vedi l'%{privacy} e i %{terms}."
+    signup_notice_html: "Creando un account accetti i %{terms} e l'%{privacy}, compresa la nomina di aperto.wine a responsabile del trattamento dei dati dei tuoi ospiti."
   pwa:
     # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
     description: "aperto.wine — vino al calice, per scelta."

@@ -605,6 +605,49 @@ en:
       empty: "No orders placed from this device yet."
       retention: "Orders placed on this device, kept for 24 hours."
       view_order: "Order of %{time}"
+  # The two legal documents. Only the chrome lives here — titles, labels, the
+  # notices that link to them. The prose itself sits in locale-suffixed
+  # templates (app/views/legal/privacy.en.html.erb), because a legal document is
+  # long-form text whose paragraphs are not reusable strings and would bury both
+  # locale files.
+  legal:
+    nav:
+      privacy: "Privacy"
+      terms: "Terms"
+      # Accessible name for the in-document navigation at the foot of each page.
+      label: "Legal documents"
+    eyebrow:
+      privacy: "Data protection"
+      terms: "Terms of use"
+    back_to_site: "Back to aperto.wine"
+    updated_on: "Last updated %{date}"
+    privacy:
+      title: "Privacy Notice"
+      meta_description: "How aperto.wine handles the data of diners and restaurateurs, and who is the controller of what."
+    terms:
+      title: "Terms of Service"
+      meta_description: "The terms of aperto.wine: the wine contract is between diner and restaurant; we are the technical intermediary."
+    # The operator identity block — D.Lgs. 70/2003 art. 7 and DSA arts. 30–31.
+    identity:
+      heading: "Legal information"
+      name: "Operator"
+      address: "Registered office"
+      email: "Email"
+      phone: "Telephone"
+      vat_number: "VAT number"
+      rea_number: "REA number"
+      # Shown in place of a field the deployment has not set yet: deliberately
+      # visible, because a half-filled identity block ships unnoticed.
+      pending: "To be completed"
+    subprocessors:
+      name: "Provider"
+      role: "What it does"
+      location: "Where"
+    # GDPR art. 13 wants the notice available where the data is collected, so
+    # these two sit on the order form and the sign-up form rather than only in
+    # the footer.
+    order_notice_html: "Sending this order shares your name and table with the restaurant, which decides how the order is handled — see the %{privacy} and the %{terms}."
+    signup_notice_html: "Creating an account means accepting the %{terms} and the %{privacy}, including the appointment of aperto.wine as processor of your guests' data."
   pwa:
     # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
     description: "aperto.wine — wine by the glass, by choice."

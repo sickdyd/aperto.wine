@@ -1,0 +1,202 @@
+<% content_for :title, "#{t('legal.terms.title')} · #{t('app_name')}" %>
+<% content_for :description, t("legal.terms.meta_description") %>
+
+<main id="main" class="spread py-12">
+  <%= render "legal/head",
+        eyebrow: t("legal.eyebrow.terms"),
+        title: t("legal.terms.title"),
+        updated_on: LegalController::LAST_UPDATED %>
+
+  <article class="legal-doc">
+    <p class="lede">
+      Questi termini regolano l'uso di aperto.wine, il servizio che permette a un
+      ristorante di pubblicare la propria carta dei vini e a chi siede al tavolo
+      di consultarla e inviare un ordine. Sono divisi in due parti: quella per
+      gli ospiti e quella per i ristoratori.
+    </p>
+
+    <h2>Che cos'è aperto.wine</h2>
+    <p>
+      aperto.wine è un servizio tecnico. Non vendiamo vino, non lo deteniamo,
+      non lo serviamo e non incassiamo pagamenti. Ogni carta dei vini è
+      pubblicata dal ristorante che la gestisce, sotto la propria
+      responsabilità; noi mettiamo a disposizione lo strumento con cui la
+      pubblica e riceve gli ordini.
+    </p>
+
+    <h2>Per gli ospiti</h2>
+    <h3>Il contratto è con il ristorante</h3>
+    <p>
+      Inviando un ordine si manifesta una richiesta <strong>al ristorante</strong>:
+      il rapporto relativo al vino nasce e si esaurisce tra l'ospite e il
+      ristorante. aperto.wine è soltanto l'<strong>intermediario tecnico</strong>
+      che trasmette la richiesta e non è parte di quel rapporto.
+    </p>
+    <h3>L'ordine è una richiesta, non una conferma</h3>
+    <p>
+      Il ristorante può accettare, modificare in accordo con il tavolo o
+      rifiutare un ordine — per esempio se una bottiglia è appena terminata.
+      Disponibilità, annate, formati e prezzi mostrati nel menu sono indicati dal
+      ristorante e possono essere corretti in sala. Il pagamento avviene al
+      tavolo, con i mezzi accettati dal locale: nessun pagamento passa da
+      aperto.wine.
+    </p>
+    <h3>Bevande alcoliche e minori</h3>
+    <p>
+      La somministrazione di bevande alcoliche ai minori di <strong>18 anni</strong>
+      è vietata dall'art. 14-ter della legge 125/2001. La verifica spetta al
+      personale del ristorante, che può chiedere un
+      <strong>documento</strong> di identità prima di servire, e può rifiutare la
+      somministrazione. Consultare o inviare un ordine da questo servizio non
+      sostituisce quella verifica e non dà diritto a essere servito.
+    </p>
+    <h3>Allergeni e informazioni sui prodotti</h3>
+    <p>
+      Le informazioni su vini, ingredienti e allergeni — solfiti compresi — sono
+      inserite e aggiornate dal ristorante, che ne è responsabile come operatore
+      del settore alimentare ai sensi del Reg. (UE) 1169/2011 e del D.Lgs.
+      231/2017. In caso di allergie o intolleranze <strong>chiedere sempre al
+      personale di sala</strong> prima di ordinare: aperto.wine non verifica né
+      garantisce quei dati.
+    </p>
+    <h3>Uso corretto del servizio</h3>
+    <p>
+      Il menu e l'invio di un ordine sono liberi e non richiedono registrazione.
+      È vietato usare il servizio per inviare ordini falsi o automatizzati,
+      tentare di accedere a dati di altri tavoli o di altri locali, o
+      interferire con il funzionamento del servizio.
+    </p>
+
+    <h2>Per i ristoratori</h2>
+    <h3>Account e uso del servizio</h3>
+    <p>
+      L'account è personale del titolare o di chi è da lui autorizzato; le
+      credenziali vanno custodite e ogni attività svolta con esse è imputata
+      all'account. Concediamo un diritto d'uso del servizio non esclusivo, non
+      trasferibile e revocabile, limitato alla gestione della propria attività.
+    </p>
+    <h3>Responsabilità dei contenuti</h3>
+    <p>
+      Il ristoratore è responsabile dell'esattezza di ciò che pubblica: nomi e
+      produttori dei vini, annate, prezzi, formati, disponibilità, informazioni
+      su allergeni e solfiti, dati del locale. È altresì responsabile del
+      rispetto delle norme che regolano la propria attività — licenze di
+      somministrazione, informazioni sugli alimenti, divieto di somministrazione
+      ai minori, obblighi fiscali.
+    </p>
+    <h3>Disponibilità, sospensione e recesso</h3>
+    <p>
+      Ci impegniamo a mantenere il servizio funzionante ma non garantiamo la
+      continuità assoluta: manutenzioni, guasti dei fornitori e cause di forza
+      maggiore possono interromperlo. Possiamo sospendere un account in caso di
+      uso in violazione di questi termini o di legge, dandone avviso quando
+      possibile. Il ristoratore può cessare l'uso in qualsiasi momento; alla
+      chiusura, i dati vengono cancellati o restituiti secondo le sue istruzioni.
+    </p>
+
+    <h2>Nomina a responsabile del trattamento (art. 28 GDPR)</h2>
+    <p>
+      Per i dati personali degli ospiti — ordini, tavoli, nome indicato — il
+      ristoratore è <strong>titolare del trattamento</strong> e aperto.wine è
+      <strong>responsabile</strong>. Accettando questi termini le parti
+      concludono l'accordo previsto dall'art. 28 GDPR, alle condizioni che
+      seguono.
+    </p>
+    <ol>
+      <li>
+        <strong>Oggetto, durata, natura e finalità.</strong> Il trattamento
+        consiste nella raccolta, conservazione e messa a disposizione dei dati
+        degli ordini e dei tavoli, per la sola finalità di erogare il servizio,
+        per tutta la durata del rapporto.
+      </li>
+      <li>
+        <strong>Categorie di dati e di interessati.</strong> Dati di
+        identificazione minimi (il nome indicato dall'ospite), dati dell'ordine
+        e del tavolo, dati tecnici di connessione; interessati: gli ospiti del
+        locale e il personale a cui il titolare dà accesso.
+      </li>
+      <li>
+        <strong>Istruzioni documentate.</strong> Trattiamo i dati solo su
+        istruzione del titolare e non per finalità proprie. Se riteniamo che
+        un'istruzione violi la normativa, lo segnaliamo.
+      </li>
+      <li>
+        <strong>Riservatezza.</strong> Chi accede ai dati presso di noi è
+        autorizzato e vincolato alla riservatezza.
+      </li>
+      <li>
+        <strong>Sicurezza (art. 32).</strong> Adottiamo misure tecniche e
+        organizzative adeguate: cifratura in transito, credenziali conservate
+        come hash, separazione dei dati per locale, accessi minimi, backup
+        gestiti dal fornitore di hosting.
+      </li>
+      <li>
+        <strong>Sub-responsabili.</strong> Il titolare autorizza in via generale
+        i sub-responsabili elencati nell'<%= link_to "informativa privacy", privacy_path %>.
+        Ogni aggiunta o sostituzione viene comunicata con congruo preavviso; il
+        titolare può opporsi e, in tal caso, recedere dal servizio.
+      </li>
+      <li>
+        <strong>Assistenza.</strong> Assistiamo il titolare nel rispondere alle
+        richieste degli interessati (artt. 15–22) e nell'adempimento degli
+        obblighi di cui agli artt. 32–36, incluse le notifiche di violazione: le
+        segnaliamo senza ingiustificato ritardo dopo esserne venuti a conoscenza.
+      </li>
+      <li>
+        <strong>Cancellazione o restituzione.</strong> Alla cessazione del
+        rapporto cancelliamo i dati o li restituiamo, secondo l'istruzione del
+        titolare, salvo obblighi di conservazione di legge.
+      </li>
+      <li>
+        <strong>Verifiche.</strong> Mettiamo a disposizione le informazioni
+        necessarie a dimostrare il rispetto di questi obblighi e consentiamo
+        verifiche, con modalità e tempi concordati.
+      </li>
+      <li>
+        <strong>Trasferimenti.</strong> Il trattamento avviene nell'Unione
+        europea; eventuali trasferimenti extra-UE avverranno solo con le
+        garanzie del Capo V GDPR e previa informazione al titolare.
+      </li>
+    </ol>
+
+    <h2>Proprietà intellettuale</h2>
+    <p>
+      Il software, il nome e la grafica di aperto.wine restano di titolarità del
+      gestore. I contenuti caricati dal ristoratore restano suoi: ci autorizza a
+      ospitarli e a mostrarli sul menu pubblico per il tempo necessario a
+      erogare il servizio. I dati degli indirizzi provengono da OpenStreetMap
+      (© OpenStreetMap contributors, licenza ODbL).
+    </p>
+
+    <h2>Limitazione di responsabilità</h2>
+    <p>
+      Non rispondiamo di quanto pubblicato o servito dal ristorante, né della
+      qualità, delle informazioni o della disponibilità dei prodotti. Nei limiti
+      consentiti dalla legge, la nostra responsabilità verso il ristoratore è
+      limitata ai danni diretti e prevedibili. Nulla in questi termini limita i
+      diritti inderogabili riconosciuti ai consumatori.
+    </p>
+
+    <h2>Modifiche ai termini</h2>
+    <p>
+      Possiamo aggiornare questi termini: la data in testa alla pagina indica la
+      versione in vigore. Le modifiche rilevanti per i ristoratori sono
+      comunicate con preavviso; proseguire nell'uso del servizio dopo
+      l'aggiornamento vale come accettazione.
+    </p>
+
+    <h2>Legge applicabile e foro</h2>
+    <p>
+      Si applica la legge italiana. Per i rapporti con i ristoratori è competente
+      il foro del luogo in cui il gestore ha sede. Per gli ospiti che agiscono
+      come consumatori resta ferma la competenza inderogabile del giudice del
+      luogo di residenza o domicilio elettivo, ai sensi del Codice del consumo.
+    </p>
+
+    <%= render "legal/operator_identity" %>
+  </article>
+
+  <%= render "legal/foot",
+        other_document_path: privacy_path,
+        other_document_label: t("legal.privacy.title") %>
+</main>

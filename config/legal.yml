@@ -1,0 +1,17 @@
+# Operator identity for the legal pages — see LegalOperator.
+#
+# Every value here is meant to be public, but it is *deployment* information:
+# a fork or a staging copy must not publish the production entity's details, so
+# nothing is committed. Set LEGAL_* in the environment (render.yaml declares
+# them with sync: false) and the block fills itself in; leave one unset and the
+# pages say so in plain sight.
+#
+# .to_json quotes each value for YAML and turns an unset variable into `null`,
+# which keeps addresses with commas and colons from breaking the parse.
+shared:
+  name: <%= ENV["LEGAL_NAME"].to_json %>
+  address: <%= ENV["LEGAL_ADDRESS"].to_json %>
+  email: <%= ENV["LEGAL_EMAIL"].to_json %>
+  phone: <%= ENV["LEGAL_PHONE"].to_json %>
+  vat_number: <%= ENV["LEGAL_VAT_NUMBER"].to_json %>
+  rea_number: <%= ENV["LEGAL_REA_NUMBER"].to_json %>

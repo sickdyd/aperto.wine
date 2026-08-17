@@ -1,0 +1,27 @@
+<%# Who is behind the service — D.Lgs. 70/2003 art. 7, and the same block the
+    DSA (arts. 30–31) has the app stores publish on the listing.
+
+    The labels are looked up one literal key at a time rather than
+    interpolated from the field name: i18n-tasks reads these files statically,
+    and a t("legal.identity.#{field}") would leave every one of them looking
+    unused to the drift guard. %>
+<% labels = {
+     name: t("legal.identity.name"),
+     address: t("legal.identity.address"),
+     email: t("legal.identity.email"),
+     phone: t("legal.identity.phone"),
+     vat_number: t("legal.identity.vat_number"),
+     rea_number: t("legal.identity.rea_number")
+   } %>
+
+<h2 id="legal-information"><%= t("legal.identity.heading") %></h2>
+
+<dl class="mt-5">
+  <% LegalOperator::FIELDS.each do |field| %>
+    <div class="leader-row mt-2">
+      <dt class="mono-micro leader-label"><%= labels.fetch(field) %></dt>
+      <span class="leader" aria-hidden="true"></span>
+      <dd class="leader-value"><%= legal_operator_value(field) %></dd>
+    </div>
+  <% end %>
+</dl>

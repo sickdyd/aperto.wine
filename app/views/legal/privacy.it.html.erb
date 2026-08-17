@@ -1,0 +1,250 @@
+<% content_for :title, "#{t('legal.privacy.title')} · #{t('app_name')}" %>
+<% content_for :description, t("legal.privacy.meta_description") %>
+
+<main id="main" class="spread py-12">
+  <%= render "legal/head",
+        eyebrow: t("legal.eyebrow.privacy"),
+        title: t("legal.privacy.title"),
+        updated_on: LegalController::LAST_UPDATED %>
+
+  <article class="legal-doc">
+    <p class="lede">
+      Questa informativa spiega quali dati personali sono trattati quando si usa
+      aperto.wine — sia come ospite che inquadra il QR di un tavolo, sia come
+      ristoratore che gestisce la propria carta dei vini — ai sensi degli
+      articoli 13 e 14 del Regolamento (UE) 2016/679 (GDPR).
+    </p>
+
+    <h2>Due ruoli distinti</h2>
+    <p>
+      aperto.wine è un servizio tecnico che i ristoranti usano per pubblicare la
+      propria carta dei vini e ricevere gli ordini dei tavoli. Questo produce due
+      situazioni diverse, ed è importante distinguerle perché cambiano
+      l'interlocutore a cui rivolgersi:
+    </p>
+    <ul>
+      <li>
+        <strong>Dati degli ordini e dei tavoli.</strong> Il <strong>ristorante è
+        il titolare del trattamento</strong>: decide di raccoglierli, li usa per
+        servire il tavolo e ne stabilisce la conservazione. aperto.wine agisce
+        come <strong>responsabile del trattamento</strong> (art. 28 GDPR),
+        cioè tratta quei dati soltanto per conto del ristorante e secondo le sue
+        istruzioni. Le clausole di questa nomina sono nei
+        <%= link_to "Termini e condizioni", terms_path %>.
+      </li>
+      <li>
+        <strong>Account dei ristoratori.</strong> Qui il titolare del trattamento
+        è il gestore di aperto.wine, indicato più sotto: l'account serve a
+        erogare il servizio a chi lo sottoscrive.
+      </li>
+    </ul>
+
+    <h2>Cosa raccogliamo, lato ospite</h2>
+    <p>
+      Per consultare una carta dei vini non serve registrarsi, non serve
+      un'app e non viene chiesto nulla. I dati compaiono solo se si invia un
+      ordine:
+    </p>
+    <ul>
+      <li>
+        <strong>il nome che si indica</strong> per farsi riconoscere al tavolo —
+        un nome di fantasia va benissimo, il campo serve al personale di sala e
+        non viene verificato;
+      </li>
+      <li>
+        <strong>il tavolo</strong> da cui si ordina, ricavato dal QR inquadrato,
+        e le <strong>voci dell'ordine</strong> con le relative quantità;
+      </li>
+      <li>
+        <strong>il carrello in corso</strong>, che resta nella sessione del
+        browser e non viene mai salvato come ordine finché non si invia;
+      </li>
+      <li>
+        <strong>un cookie tecnico firmato della durata di 24 ore</strong>, che
+        contiene solo i codici degli ordini inviati da quel dispositivo e serve
+        a mostrarne lo stato a chi li ha inviati;
+      </li>
+      <li>
+        <strong>i log tecnici del server</strong> (indirizzo IP, data e ora,
+        pagina richiesta), generati automaticamente e usati per sicurezza e
+        diagnostica.
+      </li>
+    </ul>
+    <p class="note">
+      Non chiediamo email, telefono, dati di pagamento né dati di localizzazione.
+      Il pagamento avviene al tavolo, fuori da questo servizio.
+    </p>
+
+    <h2>Cosa raccogliamo, lato ristoratore</h2>
+    <ul>
+      <li>
+        <strong>Dati dell'account:</strong> nome, indirizzo email e password
+        (conservata solo come hash, mai in chiaro).
+      </li>
+      <li>
+        <strong>Dati del locale:</strong> nome, indirizzo, contatti pubblicati
+        sul menu, tavoli e codici QR generati.
+      </li>
+      <li>
+        <strong>Contenuti inseriti:</strong> vini, prezzi, annate, note di
+        degustazione, liste e ordini ricevuti.
+      </li>
+    </ul>
+
+    <h2>Perché li trattiamo, e con quale base giuridica</h2>
+    <ul>
+      <li>
+        <strong>Erogare il servizio</strong> — mostrare il menu, tenere il
+        carrello, trasmettere l'ordine al locale, gestire l'account:
+        esecuzione di un contratto o di misure precontrattuali
+        (art. 6.1.b GDPR).
+      </li>
+      <li>
+        <strong>Sicurezza del servizio</strong> — prevenire abusi e ordini
+        automatizzati, mantenere log tecnici: legittimo interesse
+        (art. 6.1.f GDPR).
+      </li>
+      <li>
+        <strong>Adempimenti di legge</strong> — quando una norma impone di
+        conservare o comunicare dati: art. 6.1.c GDPR.
+      </li>
+    </ul>
+    <p>
+      Non svolgiamo profilazione, non prendiamo decisioni automatizzate sugli
+      interessati e non cediamo dati a terzi per finalità di marketing.
+    </p>
+
+    <h2>Cookie e tecnologie simili</h2>
+    <p>
+      aperto.wine usa <strong>soltanto cookie e memorie tecniche</strong>:
+      il cookie di sessione necessario a far funzionare la navigazione, il
+      carrello in sessione, il cookie firmato di 24 ore che ricorda gli ordini
+      inviati dal dispositivo e la preferenza di lingua. Nessuno di questi serve
+      a profilare o a tracciare le persone tra siti diversi.
+    </p>
+    <p>
+      Non usiamo strumenti di analisi statistica di terze parti, pixel
+      pubblicitari, social plugin né alcuna forma di tracciamento pubblicitario.
+      Per questo non compare alcun banner di consenso: secondo le Linee guida
+      del Garante del 10 giugno 2021, i soli strumenti tecnici non lo
+      richiedono. Se in futuro introdurremo strumenti non tecnici, chiederemo il
+      consenso <em>prima</em> di installarli, con la possibilità di rifiutare
+      con la stessa facilità con cui si accetta.
+    </p>
+
+    <h2>A chi comunichiamo i dati</h2>
+    <p>
+      I dati non vengono venduti né diffusi. Sono accessibili al personale del
+      ristorante di riferimento e ai fornitori che ci aiutano a erogare il
+      servizio, nominati responsabili del trattamento e vincolati per contratto:
+    </p>
+    <div class="overflow-x-auto mt-4">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("legal.subprocessors.name") %></th>
+            <th scope="col"><%= t("legal.subprocessors.role") %></th>
+            <th scope="col"><%= t("legal.subprocessors.location") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Render Services, Inc.</td>
+            <td>Hosting dell'applicazione e del database</td>
+            <td>Frankfurt, Germania (UE)</td>
+          </tr>
+          <tr>
+            <td>Komoot GmbH — Photon</td>
+            <td>
+              Suggerimenti di indirizzo nell'area di gestione, su dati
+              OpenStreetMap. Riceve solo il testo digitato dal ristoratore nel
+              campo indirizzo: nessun dato degli ospiti o degli ordini.
+            </td>
+            <td>Germania (UE)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Alla data di questa informativa <strong>non è attivo alcun fornitore di
+      posta elettronica</strong>: il servizio non invia email. Prima di inviarne
+      una aggiorneremo questo elenco. Le mappe e i suggerimenti di indirizzo
+      derivano da dati OpenStreetMap, © OpenStreetMap contributors.
+    </p>
+
+    <h2>Dove sono conservati i dati</h2>
+    <p>
+      Applicazione e database sono ospitati nella regione di Frankfurt
+      (Germania), all'interno dell'Unione europea. Non effettuiamo trasferimenti
+      di dati personali verso paesi terzi. Se ciò dovesse cambiare, adotteremo
+      una delle garanzie previste dal Capo V del GDPR e aggiorneremo questa
+      informativa.
+    </p>
+
+    <h2>Per quanto tempo</h2>
+    <ul>
+      <li>
+        <strong>Ordini e dati del tavolo:</strong> per il tempo deciso dal
+        ristorante, che ne è titolare, e in ogni caso non oltre la cessazione
+        del suo rapporto con aperto.wine; alla chiusura dell'account i dati
+        vengono cancellati o restituiti secondo le sue istruzioni.
+      </li>
+      <li><strong>Cookie degli ordini del dispositivo:</strong> 24 ore.</li>
+      <li>
+        <strong>Carrello:</strong> per la durata della sessione del browser.
+      </li>
+      <li>
+        <strong>Account del ristoratore e contenuti:</strong> finché l'account
+        è attivo, e per il tempo successivo strettamente necessario ad
+        adempimenti di legge.
+      </li>
+      <li>
+        <strong>Log tecnici:</strong> per il tempo necessario alla sicurezza e
+        alla diagnostica del servizio.
+      </li>
+    </ul>
+
+    <h2>I diritti dell'interessato</h2>
+    <p>
+      Chi è interessato può chiedere in ogni momento l'accesso ai propri dati,
+      la rettifica, la cancellazione, la limitazione del trattamento, la
+      portabilità e può opporsi al trattamento basato sul legittimo interesse
+      (artt. 15–22 GDPR).
+    </p>
+    <p>
+      <strong>A chi rivolgersi:</strong> per i dati di un ordine o di un tavolo
+      la richiesta va indirizzata al <strong>ristorante</strong>, che ne è
+      titolare — noi lo assistiamo nel darvi seguito. Per l'account di un
+      ristoratore, o se non si sa a chi rivolgersi, si può scrivere
+      all'indirizzo indicato nelle informazioni legali qui sotto.
+    </p>
+    <p>
+      Resta sempre possibile proporre reclamo al
+      <strong>Garante per la protezione dei dati personali</strong>
+      (Piazza Venezia 11, 00187 Roma —
+      <a href="https://www.garanteprivacy.it" rel="noopener noreferrer">garanteprivacy.it</a>)
+      o ricorso all'autorità giudiziaria.
+    </p>
+
+    <h2>Minori</h2>
+    <p>
+      Il servizio riguarda bevande alcoliche e non è destinato ai minori di 18
+      anni. Non raccogliamo intenzionalmente dati di minori. La verifica
+      dell'età di chi consuma resta in capo al ristorante, che vi provvede al
+      tavolo come previsto dall'art. 14-ter della legge 125/2001.
+    </p>
+
+    <h2>Modifiche</h2>
+    <p>
+      Questa informativa può essere aggiornata: la data in testa alla pagina
+      indica l'ultima versione. Le modifiche sostanziali che riguardano i
+      ristoratori vengono comunicate anche via account.
+    </p>
+
+    <%= render "legal/operator_identity" %>
+  </article>
+
+  <%= render "legal/foot",
+        other_document_path: terms_path,
+        other_document_label: t("legal.terms.title") %>
+</main>

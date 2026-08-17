@@ -97,6 +97,15 @@
             <%= f.text_field :contact_reference, tabindex: -1, autocomplete: "off" %>
           </div>
 
+          <%# GDPR art. 13 asks for the notice *where* the data is collected, and
+              this form is the only place a diner hands anything over. Kept above
+              the button, not below it: after the button it is read too late. %>
+          <p class="note mt-6">
+            <%= t("legal.order_notice_html",
+                  privacy: link_to(t("legal.privacy.title"), privacy_path),
+                  terms: link_to(t("legal.terms.title"), terms_path)) %>
+          </p>
+
           <div class="form-actions">
             <button type="submit" class="btn-wine w-full"><%= t("orders.form.submit") %></button>
           </div>

@@ -138,7 +138,12 @@
       <small class="mono-micro mt-2 block">&copy; <%= Date.current.year %> aperto.wine &middot; <%= t("landing.footer_rights") %></small>
     </div>
 
-    <ul class="flex items-center gap-3">
+    <ul class="flex flex-wrap items-center gap-3">
+      <%# The legal documents sit alongside the locale switcher rather than in a
+          second row: the running foot is the one place on the site every reader
+          knows to look for them. %>
+      <li><%= link_to t("legal.nav.privacy"), privacy_path, class: "link-mono" %></li>
+      <li><%= link_to t("legal.nav.terms"), terms_path, class: "link-mono" %></li>
       <% %i[en it].each do |locale| %>
         <li>
           <%= link_to locale.to_s.upcase, root_path(locale: locale), class: "link-mono", lang: locale,

@@ -1,0 +1,200 @@
+<% content_for :title, "#{t('legal.terms.title')} · #{t('app_name')}" %>
+<% content_for :description, t("legal.terms.meta_description") %>
+
+<main id="main" class="spread py-12">
+  <%= render "legal/head",
+        eyebrow: t("legal.eyebrow.terms"),
+        title: t("legal.terms.title"),
+        updated_on: LegalController::LAST_UPDATED %>
+
+  <article class="legal-doc">
+    <p class="lede">
+      These terms govern the use of aperto.wine, the service that lets a
+      restaurant publish its wine list and lets whoever is at the table read it
+      and send an order. They come in two parts: one for guests, one for
+      restaurateurs.
+    </p>
+
+    <h2>What aperto.wine is</h2>
+    <p>
+      aperto.wine is a technical service. We do not sell wine, hold it, serve it
+      or take payment for it. Every wine list is published by the restaurant
+      that maintains it, on its own responsibility; we provide the tool it uses
+      to publish that list and receive orders.
+    </p>
+
+    <h2>For guests</h2>
+    <h3>The contract is with the restaurant</h3>
+    <p>
+      Sending an order places a request <strong>with the restaurant</strong>: the
+      arrangement about the wine is between the guest and the restaurant, and
+      begins and ends there. aperto.wine is only the <strong>technical
+      intermediary</strong> that carries the request, and is not a party to it.
+    </p>
+    <h3>An order is a request, not a confirmation</h3>
+    <p>
+      The restaurant may accept an order, adjust it with the table, or decline it
+      — for instance when a bottle has just run out. Availability, vintages,
+      formats and prices shown on the menu are stated by the restaurant and may
+      be corrected in the dining room. Payment happens at the table by whatever
+      means the venue accepts: no payment passes through aperto.wine.
+    </p>
+    <h3>Alcohol and minors</h3>
+    <p>
+      Serving alcoholic drinks to anyone under <strong>18</strong> is prohibited
+      by Article 14-ter of Italian Law 125/2001. The check belongs to the
+      restaurant's staff, who may ask for identification before serving and may
+      refuse to serve. Reading the list or sending an order through this service
+      is not a substitute for that check and confers no right to be served.
+    </p>
+    <h3>Allergens and product information</h3>
+    <p>
+      Information about wines, ingredients and allergens — sulphites included —
+      is entered and kept up to date by the restaurant, which is responsible for
+      it as the food business operator under Reg. (EU) 1169/2011 and Italian
+      Legislative Decree 231/2017. If you have an allergy or intolerance,
+      <strong>always ask the dining room staff</strong> before ordering:
+      aperto.wine neither verifies nor warrants that data.
+    </p>
+    <h3>Proper use of the service</h3>
+    <p>
+      The menu and order sending are open and require no account. You must not
+      use the service to send false or automated orders, to attempt to reach the
+      data of other tables or other venues, or to interfere with how the service
+      runs.
+    </p>
+
+    <h2>For restaurateurs</h2>
+    <h3>Account and use of the service</h3>
+    <p>
+      The account belongs to the proprietor or to whoever they authorise;
+      credentials must be kept safe and everything done with them is attributed
+      to the account. We grant a non-exclusive, non-transferable, revocable right
+      to use the service for running your own business.
+    </p>
+    <h3>Responsibility for content</h3>
+    <p>
+      The restaurateur is responsible for the accuracy of what they publish: wine
+      and producer names, vintages, prices, formats, availability, allergen and
+      sulphite information, venue details. They are equally responsible for
+      complying with the rules governing their business — licences to serve,
+      food information duties, the prohibition on serving minors, tax
+      obligations.
+    </p>
+    <h3>Availability, suspension and withdrawal</h3>
+    <p>
+      We work to keep the service running but do not guarantee uninterrupted
+      availability: maintenance, provider failures and force majeure can
+      interrupt it. We may suspend an account used in breach of these terms or
+      of the law, giving notice where possible. The restaurateur may stop using
+      the service at any time; on closure, data is deleted or returned on their
+      instructions.
+    </p>
+
+    <h2>Appointment as processor (Article 28 GDPR)</h2>
+    <p>
+      For guests' personal data — orders, tables, the name given — the
+      restaurateur is the <strong>controller</strong> and aperto.wine is the
+      <strong>processor</strong>. By accepting these terms the parties enter into
+      the agreement required by Article 28 GDPR, on the following conditions.
+    </p>
+    <ol>
+      <li>
+        <strong>Subject matter, duration, nature and purpose.</strong> The
+        processing consists of collecting, storing and making available order
+        and table data, for the sole purpose of providing the service, for the
+        duration of the relationship.
+      </li>
+      <li>
+        <strong>Categories of data and data subjects.</strong> Minimal
+        identifying data (the name a guest gives), order and table data,
+        technical connection data; data subjects: the venue's guests and the
+        staff the controller grants access to.
+      </li>
+      <li>
+        <strong>Documented instructions.</strong> We process the data only on the
+        controller's instructions and never for our own purposes. If we believe
+        an instruction infringes data protection law, we say so.
+      </li>
+      <li>
+        <strong>Confidentiality.</strong> Anyone on our side with access to the
+        data is authorised and bound by confidentiality.
+      </li>
+      <li>
+        <strong>Security (Article 32).</strong> We maintain appropriate technical
+        and organisational measures: encryption in transit, credentials stored as
+        hashes, per-venue separation of data, least-privilege access, and backups
+        managed by the hosting provider.
+      </li>
+      <li>
+        <strong>Sub-processors.</strong> The controller gives general
+        authorisation for the sub-processors listed in the
+        <%= link_to "privacy notice", privacy_path %>. Any addition or
+        replacement is announced with reasonable notice; the controller may
+        object and, in that case, terminate the service.
+      </li>
+      <li>
+        <strong>Assistance.</strong> We assist the controller in answering data
+        subject requests (Arts. 15–22) and in meeting the obligations in
+        Arts. 32–36, including breach notification: we report breaches to the
+        controller without undue delay after becoming aware of them.
+      </li>
+      <li>
+        <strong>Deletion or return.</strong> When the relationship ends we delete
+        the data or return it, as the controller instructs, save where retention
+        is required by law.
+      </li>
+      <li>
+        <strong>Audits.</strong> We make available the information needed to
+        demonstrate compliance with these obligations and allow audits, at times
+        and in a manner agreed between the parties.
+      </li>
+      <li>
+        <strong>Transfers.</strong> Processing takes place in the European Union;
+        any transfer outside the EU will occur only under the safeguards in
+        Chapter V GDPR and after informing the controller.
+      </li>
+    </ol>
+
+    <h2>Intellectual property</h2>
+    <p>
+      The software, name and design of aperto.wine remain the operator's. Content
+      uploaded by the restaurateur remains theirs: they authorise us to host it
+      and show it on the public menu for as long as providing the service
+      requires. Address data comes from OpenStreetMap (© OpenStreetMap
+      contributors, ODbL licence).
+    </p>
+
+    <h2>Limitation of liability</h2>
+    <p>
+      We are not answerable for what the restaurant publishes or serves, nor for
+      the quality, information or availability of the products. To the extent the
+      law allows, our liability towards the restaurateur is limited to direct and
+      foreseeable loss. Nothing in these terms limits the mandatory rights of
+      consumers.
+    </p>
+
+    <h2>Changes to these terms</h2>
+    <p>
+      We may update these terms; the date at the top of the page marks the
+      version in force. Changes material to restaurateurs are announced in
+      advance, and continuing to use the service after an update counts as
+      acceptance.
+    </p>
+
+    <h2>Governing law and jurisdiction</h2>
+    <p>
+      Italian law applies. For relationships with restaurateurs the courts of the
+      place where the operator has its registered office have jurisdiction. For
+      guests acting as consumers, the mandatory jurisdiction of the courts where
+      they reside or are domiciled remains unaffected, under the Italian
+      Consumer Code.
+    </p>
+
+    <%= render "legal/operator_identity" %>
+  </article>
+
+  <%= render "legal/foot",
+        other_document_path: privacy_path,
+        other_document_label: t("legal.privacy.title") %>
+</main>

@@ -13,6 +13,16 @@ Rails.application.routes.draw do
     get "sign_up", to: "registrations#new", as: :sign_up
     post "sign_up", to: "registrations#create"
 
+    # Legal documents — public and unauthenticated: the informativa privacy
+    # (GDPR art. 13) and the terms, which also carry the operator identity
+    # D.Lgs. 70/2003 art. 7 requires the service to publish. The slugs stay in
+    # English in both locales; the surrounding "(:locale)" scope is what makes
+    # /it/privacy and /privacy the same document in two languages. Both names
+    # are in Restaurant::RESERVED_SLUGS — the catch-all slug route below could
+    # never reach a restaurant that claimed one.
+    get "privacy", to: "legal#privacy", as: :privacy
+    get "terms",   to: "legal#terms",   as: :terms
+
     # Legacy numeric menu URL. QR codes printed before slugs existed point
     # here, so it has to keep resolving — it redirects to the restaurant's
     # slug. The digits-only constraint keeps it from swallowing slugs.
