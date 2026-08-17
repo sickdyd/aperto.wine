@@ -29,28 +29,4 @@ class CartItemTest < ActiveSupport::TestCase
 
     assert_equal wines(:gavi).price_for_glass(125) * 3, item.subtotal_cents
   end
-
-  # --- exceeds_stock? ---
-
-  test "exceeds_stock? is false when quantity is within the wine's available_glasses" do
-    item = CartItem.new(wine: wines(:gavi), glass_size_ml: 125, quantity: 7)
-
-    assert_not item.exceeds_stock?
-  end
-
-  test "exceeds_stock? is true when quantity exceeds the wine's available_glasses" do
-    item = CartItem.new(wine: wines(:gavi), glass_size_ml: 125, quantity: 8)
-
-    assert item.exceeds_stock?
-  end
-
-  test "exceeds_stock? reflects a stock change on the underlying wine" do
-    wine = wines(:gavi)
-    item = CartItem.new(wine: wine, glass_size_ml: 125, quantity: 7)
-    assert_not item.exceeds_stock?
-
-    wine.update!(available_glasses: 3)
-
-    assert item.exceeds_stock?
-  end
 end
