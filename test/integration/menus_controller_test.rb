@@ -402,6 +402,30 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     assert_nil barolo_li.at_css(".wine-axes")
   end
 
+  test "an axis set to zero still renders its row, distinct from an axis left unset" do
+    wine = wines(:bottle_only_wine)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    doc = Nokogiri::HTML(response.body)
+    wine_li = doc.at_css("li[data-search-terms*='cellar reserve magnum']")
+    assert_not_nil wine_li
+
+    # sweetness: 0 (see test/fixtures/wines.yml) — the row renders, its sr-only
+    # text reads "0 of 5", and every pip is unfilled.
+    assert_match I18n.t("menu.axis_reading", axis: I18n.t("shared.tasting_axes.sweetness"), value: 0, max: 5),
+      wine_li.to_html
+    sweetness_row = wine_li.css(".wine-axis").find { |row| row.text.include?(I18n.t("shared.tasting_axes.sweetness")) }
+    assert_not_nil sweetness_row
+    assert_equal 0, sweetness_row.css(".wine-axis-pip-filled").size
+    assert_equal 5, sweetness_row.css(".wine-axis-pip").size
+
+    # body/tannins/acidity are left nil on this wine — no row for any of them.
+    assert_no_match I18n.t("shared.tasting_axes.body"), wine_li.to_html
+    assert_no_match I18n.t("shared.tasting_axes.tannins"), wine_li.to_html
+    assert_no_match I18n.t("shared.tasting_axes.acidity"), wine_li.to_html
+  end
+
   test "food pairings and aromas render as comma-joined lines when present" do
     wine = wines(:full_character_wine)
     get published_menu_path(restaurants(:osteria))

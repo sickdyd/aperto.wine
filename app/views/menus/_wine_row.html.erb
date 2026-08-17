@@ -34,7 +34,7 @@
   meta << wine.style if wine.style.present?
   note = wine.short_description.presence || wine.description
   certifications = Wine::CERTIFICATION_LABELS.select { |cert| wine.public_send(:"#{cert}?") }
-  axes = [ :body, :tannins, :acidity, :sweetness ].filter_map do |attr|
+  axes = Wine::TASTING_DISPLAY_ORDER.filter_map do |attr|
     value = wine.public_send(attr)
     [ attr, value ] unless value.nil?
   end

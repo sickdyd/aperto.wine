@@ -158,6 +158,11 @@ full_character_wine:
 # glasses renders orderable rather than sold out" (Task 1 widened
 # Wine#available? for exactly this case). Colour is sparkling, distinct from
 # both the red/white groups and full_character_wine's rose.
+#
+# sweetness: 0 (not nil) while the other three axes are left unset — proves
+# an axis explicitly at the bottom of the scale still renders its row, its
+# all-unfilled pips, and its sr-only reading, distinct from an axis that was
+# simply never entered.
 bottle_only_wine:
   restaurant: osteria
   name: Cellar Reserve Magnum
@@ -167,3 +172,4 @@ bottle_only_wine:
   available_glasses: 0
   position: 102
   active: true
+  sweetness: 0

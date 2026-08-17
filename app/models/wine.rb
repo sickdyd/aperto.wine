@@ -11,6 +11,11 @@ class Wine < ApplicationRecord
   SERVINGS = %w[glass bottle].freeze
   TASTING_SCALE = (0..5).freeze
   TASTING_ATTRIBUTES = %i[tannins acidity sweetness body].freeze
+  # Display order for the four axes — deliberately different from
+  # TASTING_ATTRIBUTES above, which groups them for validation only. Menu row
+  # and owner form both read this one constant, so a future reorder is a
+  # single edit rather than two that can silently disagree.
+  TASTING_DISPLAY_ORDER = %i[body tannins acidity sweetness].freeze
   CERTIFICATION_LABELS = %i[organic natural_wine vegan biodynamic].freeze
   IMAGE_CONTENT_TYPES = %w[image/jpeg image/png image/webp].freeze
   MAX_IMAGE_BYTES = 5.megabytes

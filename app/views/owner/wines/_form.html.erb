@@ -195,7 +195,7 @@
         pip-run labels (shared.tasting_axes) — same word, admin and diner
         surface alike. %>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <% [ :body, :tannins, :acidity, :sweetness ].each do |axis| %>
+      <% Wine::TASTING_DISPLAY_ORDER.each do |axis| %>
         <div class="field">
           <%= f.label axis, t("shared.tasting_axes.#{axis}"), class: "field-label" %>
           <%= f.number_field axis, min: Wine::TASTING_SCALE.min, max: Wine::TASTING_SCALE.max, step: 1,
