@@ -5,6 +5,18 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     @osteria = restaurants(:osteria)
     @barolo = wines(:barolo)
     @customer = users(:customer)
+    @table = restaurant_tables(:sala_t1)
+    scan_table
+  end
+
+  # Placement is refused without a table (:table_required), and a
+  # /t/:table_token visit is the only thing that puts one in the session (see
+  # CustomerScoped#remember_table) — which is also how every real diner
+  # arrives, by scanning the QR on the table they are sitting at. Every test
+  # below therefore starts from a scanned table; reset! discards the cookie
+  # jar, so anything that starts a fresh session scans again.
+  def scan_table(table = @table)
+    get table_menu_path(table_token: table.token)
   end
 
   def add_barolo_to_cart(quantity: 1)
@@ -54,22 +66,49 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   # --- create: table ---
 
   test "ordering with a table records it" do
-    table = restaurant_tables(:sala_t1)
-    get table_menu_path(table_token: table.token)
     add_barolo_to_cart
 
     post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
 
-    assert_equal table, last_order.restaurant_table
+    assert_equal @table, last_order.restaurant_table
   end
 
-  test "ordering from /menu/:id records no table" do
+  # An order reserves its glasses the moment it is placed, so it has to belong
+  # to somebody actually sitting in the restaurant. Without this, one visitor
+  # who found the slug URL could reserve the whole cellar from anywhere and
+  # only an owner cancelling each order would give it back.
+  test "a diner who never scanned a table cannot place an order" do
+    reset! # discard setup's scan: this diner arrived at the bare /menu/:id URL
     get published_menu_path(@osteria)
     add_barolo_to_cart
+    available_before = @barolo.available_glasses
 
-    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
+    assert_no_difference "Order.count" do
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
+    end
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+    # Refusing must cost nothing: no reservation is taken and the cart is left
+    # standing, so the same order goes through once the diner scans.
+    assert_equal available_before, @barolo.reload.available_glasses
 
-    assert_nil last_order.restaurant_table
+    follow_redirect!
+    assert_match ERB::Util.html_escape(I18n.t("orders.errors.table_required")), response.body
+  end
+
+  # A retired token resolves to no table at all (CustomerScoped#current_table
+  # re-validates on every read), so it must be refused exactly like never
+  # having scanned — not quietly accepted as a tableless order.
+  test "a retired table's token does not satisfy the table requirement" do
+    reset!
+    scan_table(restaurant_tables(:retired_table))
+    add_barolo_to_cart
+
+    assert_no_difference "Order.count" do
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
+    end
+
+    follow_redirect!
+    assert_match ERB::Util.html_escape(I18n.t("orders.errors.table_required")), response.body
   end
 
   # --- strong params ---
@@ -144,19 +183,22 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   # request) all succeed, and the next one — still a brand-new session —
   # is the one that trips.
   test "the IP rate limit trips across distinct sessions, closing the session-only bypass" do
-    # Stock now reserves one glass per order placed (Task 2). This loop
-    # places IP_RATE_LIMIT orders of one glass each, then one more beyond
-    # that to trip the limiter — so the wine needs at least IP_RATE_LIMIT+1
-    # glasses on hand. Exactly IP_RATE_LIMIT would let the loop empty the
-    # wine, leaving the final "this trips the limit" request with nothing
-    # to add to its cart: it would 404/no-op on :wine_unavailable instead of
-    # reaching the rate limiter, making assert_no_difference "Order.count"
-    # trivially true for the wrong reason.
-    @barolo.update!(available_glasses: OrdersController::IP_RATE_LIMIT + 1)
+    # Stock now reserves one glass per order placed (Task 2). This loop places
+    # IP_RATE_LIMIT orders, then one more beyond that to trip the limiter, so
+    # the wine has to outlast all of them: if it ran dry the final request
+    # would fail on :wine_unavailable before ever reaching the limiter, and
+    # assert_no_difference "Order.count" would pass for the wrong reason.
+    #
+    # Doubled rather than IP_RATE_LIMIT+1, which is the exact headroom for
+    # add_barolo_to_cart's current default of one glass per order and nothing
+    # more — raising that default would empty the wine and the failure would
+    # read as a broken rate limiter rather than a thin fixture.
+    @barolo.update!(available_glasses: OrdersController::IP_RATE_LIMIT * 2)
 
     assert_difference "Order.count", OrdersController::IP_RATE_LIMIT do
       OrdersController::IP_RATE_LIMIT.times do
         reset!
+        scan_table
         add_barolo_to_cart
         post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
         assert_response :redirect
@@ -165,6 +207,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     end
 
     reset!
+    scan_table
     add_barolo_to_cart
     assert_no_difference "Order.count" do
       post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
@@ -227,6 +270,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     first_order = last_order
 
     reset!
+    scan_table
 
     add_barolo_to_cart
     post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Second Diner" }

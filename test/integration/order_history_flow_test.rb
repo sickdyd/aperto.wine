@@ -16,7 +16,16 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
     post cart_items_path(restaurant_slug: restaurant.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: quantity }
   end
 
+  # Placement is refused without a table (:table_required), and only a
+  # /t/:table_token visit puts one in the session (CustomerScoped#remember_table).
+  # Scanning is how a real diner arrives anyway, so it belongs in the helper
+  # rather than in each test.
+  def table_for(restaurant)
+    restaurant_tables(restaurant == @trattoria ? :trattoria_t1 : :sala_t1)
+  end
+
   def place_order(restaurant: @osteria, guest_name: "Jane")
+    get table_menu_path(table_token: table_for(restaurant).token)
     add_barolo_to_cart(restaurant: restaurant)
     post orders_path(restaurant_slug: restaurant.slug), params: { guest_name: guest_name }
     Order.order(:created_at).last

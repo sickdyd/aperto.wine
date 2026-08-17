@@ -26,6 +26,15 @@ class PlaceOrder
   #   :insufficient_stock - a locked re-check at placement found a line's
   #                         quantity exceeds the wine's available_glasses.
   #                         No order is placed and nothing is reserved.
+  #   :table_required     - no table was resolved for this session. Placing an
+  #                         order now reserves stock, and this surface is
+  #                         unauthenticated and reachable from a bare slug
+  #                         URL, so without this one visitor who never set
+  #                         foot in the restaurant could reserve the whole
+  #                         cellar and only an owner cancelling each order
+  #                         would give it back. Scanning a table QR is the
+  #                         one thing that ties a placement to somebody
+  #                         actually sitting there.
   #
   # `dropped_items` is only ever populated alongside :items_unavailable —
   # the Cart::DroppedItem list that caused the abort, so the caller can tell
@@ -77,6 +86,14 @@ class PlaceOrder
   end
 
   def call
+    # First of every guard, and deliberately ahead of the cart ones: it is a
+    # fact about the request rather than about the cart, and no advice about
+    # the cart is actionable for a diner who cannot order at all. The cart
+    # page withholds the submit control in this state (see carts/show), so
+    # reaching here without a table means a request that never rendered that
+    # page — but the service is the boundary that has to hold, not the view.
+    return failure(:table_required) if table.nil?
+
     # Cart#items/#dropped_items are loaded together from one live query (see
     # Cart#load_cart_data), so reading them here *is* the "re-read every
     # line against live wine state" the order-placement rule requires. Any
@@ -131,8 +148,14 @@ class PlaceOrder
     ActiveRecord::Base.transaction do
       reserve_stock!
 
+      # stock_reserved is stamped in the same transaction as the decrement
+      # above, so an order can never exist claiming a reservation it does not
+      # hold (or holding one it does not claim). Order#cancel! reads it to
+      # decide whether releasing is owed — see the stock_reserved migration
+      # for the legacy orders that make the flag necessary.
       order = restaurant.orders.create!(
         status: :pending, restaurant_table: table, customer: customer, guest_name: guest_name,
+        stock_reserved: true,
         location_status: location.status, distance_meters: location.distance_meters,
         location_accuracy_meters: location.accuracy_meters
       )
@@ -151,7 +174,11 @@ class PlaceOrder
   # be assumed already done by the caller.
   def reserve_stock!
     wine_ids = cart.items.map { |item| item.wine.id }.uniq
-    locked_wines = Wine.where(id: wine_ids).order(:id).lock.index_by(&:id)
+    # Scoped through the restaurant even though the ids can only have come
+    # from this restaurant's own cart: the statement that takes the locks and
+    # spends the stock is where the tenant boundary is worth stating outright,
+    # rather than inherited from an argument three objects away.
+    locked_wines = restaurant.wines.where(id: wine_ids).order(:id).lock.index_by(&:id)
 
     cart.items.each do |item|
       wine = locked_wines[item.wine.id]

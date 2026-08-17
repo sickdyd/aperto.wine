@@ -22,7 +22,16 @@
         <%# The page's one ink stamp — the table this bill belongs to. %>
         <p class="mt-5"><span class="stamp"><%= t("cart.table_context", table: @table.name) %></span></p>
       <% else %>
-        <p class="note mt-4"><%= t("cart.no_table_context") %></p>
+        <%# No longer a quiet aside. Placing an order now reserves the glasses
+            (see PlaceOrder), so an order has to belong to somebody actually
+            sitting at a table — and this is the reason the submit control at
+            the foot of the page is missing. It is said here, where the stamp
+            would otherwise be, so a diner learns it while building the order
+            rather than after trying to send it. %>
+        <div role="alert" class="alert alert-warning flex items-start gap-3 mt-5">
+          <%= icon "warning", class: "size-4 shrink-0 mt-1" %>
+          <span class="min-w-0"><%= t("cart.no_table_context") %></span>
+        </div>
       <% end %>
     </header>
 
@@ -92,8 +101,12 @@
           paired with items.any? rather than replacing it: "nothing here yet"
           and "something here is blocked" are different pages. A blocked cart
           gets neither the form nor the empty state — the band above and the
-          notes on the lines are what it has to say. %>
-      <% if items.any? && @cart.orderable? %>
+          notes on the lines are what it has to say. @table is the third
+          blocker and behaves the same way: PlaceOrder refuses a tableless
+          placement outright (:table_required), so offering a control that can
+          only fail would be worse than withholding it and saying why in the
+          letterhead. %>
+      <% if items.any? && @cart.orderable? && @table %>
         <hr class="rule-section mt-6">
 
         <%= form_with url: orders_path(restaurant_slug: @restaurant.slug), method: :post, class: "form-section mt-8" do |f| %>

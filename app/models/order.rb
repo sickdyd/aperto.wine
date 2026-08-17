@@ -50,10 +50,25 @@ class Order < ApplicationRecord
     update!(total_amount_cents: order_items.sum { |item| item.unit_price_cents * item.quantity })
   end
 
+  # The status guards below both read `self`'s status *after* `lock!`, never
+  # before. That ordering is the whole point: the in-memory attribute was
+  # loaded by the controller before this transaction opened, so two concurrent
+  # requests over the same order (two staff tabs, a Turbo retry) would both
+  # find it `pending` and both run the body — releasing the same reservation
+  # twice, or approving an order that no longer holds one. `lock!` reloads
+  # under `SELECT ... FOR UPDATE`, so the second caller reads what the first
+  # committed and falls out at the guard.
+  #
+  # The lock is on the `orders` row, which no placement ever takes (PlaceOrder
+  # locks `wines`), so it introduces no lock-ordering risk of its own.
+  #
+  # Both return true when they did the work and false when the guard turned
+  # them away — Owner::OrdersController tells the owner which happened.
   def approve!
-    return false unless pending?
-
     transaction do
+      lock!
+      next false unless pending?
+
       update!(status: :approved)
       order_items.includes(:wine).each do |item|
         wine = item.wine
@@ -62,21 +77,34 @@ class Order < ApplicationRecord
         bottle = wine.wine_bottles.find_by(status: :sealed)
         bottle&.open! if wine.wine_bottles.where(status: :open).none?
       end
+      true
     end
   end
 
   def cancel!
-    return false unless pending? || approved?
-
     transaction do
-      update!(status: :cancelled)
-      # Release the reservation held since placement. Ordered by wine_id —
-      # PlaceOrder locks wines in id order when reserving, so a cancel and a
-      # placement touching the same two wines must acquire their row locks
-      # in that same order too, or Postgres can deadlock one of them.
+      lock!
+      next false unless pending? || approved?
+
+      # Release only what this order actually holds. Orders placed before
+      # reservation moved to placement never took a decrement while pending
+      # (the old code took it at approve!), so an unconditional release would
+      # invent glasses on their first cancel — see the stock_reserved
+      # migration. Clearing the flag in the same UPDATE as the status means a
+      # second release is impossible even if the lock above were ever lost.
+      release = stock_reserved?
+      update!(status: :cancelled, stock_reserved: false)
+      next true unless release
+
+      # Ordered by wine_id so two cancels racing over two orders that share
+      # the same pair of wines take their row locks in the same sequence and
+      # cannot deadlock each other. (A cancel cannot deadlock against a
+      # placement: placement takes every wine lock it needs and then waits on
+      # nothing a cancel holds.)
       order_items.includes(:wine).order(:wine_id).each do |item|
         item.wine.increment!(:available_glasses, item.quantity)
       end
+      true
     end
   end
 end

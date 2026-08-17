@@ -135,6 +135,57 @@ module Owner
       assert_response :unprocessable_entity
     end
 
+    # --- optimistic locking on available_glasses ---
+    #
+    # available_glasses is a live reservation counter now: diners spend it
+    # while the owner's form sits open, but the form edits it as an absolute
+    # number seeded when the page was rendered. Without a version check, an
+    # owner who opened the form at 10, watched four glasses get reserved, and
+    # then saved an unrelated typo fix would write 10 straight back and
+    # resurrect the four reserved glasses. Minutes-long window, not a race.
+
+    test "the edit form carries the version it was rendered from" do
+      sign_in_as @owner
+      get edit_owner_restaurant_wine_path(restaurant_id: @restaurant, id: @wine)
+
+      assert_select "input[type=hidden][name='wine[lock_version]'][value=?]", @wine.lock_version.to_s
+    end
+
+    test "a save carrying a stale version neither wins nor is silently dropped" do
+      sign_in_as @owner
+      stale_version = @wine.lock_version
+      # What a diner's placement does to the row while the form sits open.
+      @wine.decrement!(:available_glasses, 4)
+      glasses_now = @wine.reload.available_glasses
+
+      patch owner_restaurant_wine_path(restaurant_id: @restaurant, id: @wine), params: {
+        wine: { name: "Barolo Riserva DOCG", available_glasses: glasses_now + 4, lock_version: stale_version }
+      }
+
+      assert_response :conflict
+      # The reserved glasses are not resurrected, and the edit that rode along
+      # with them is not applied either.
+      assert_equal glasses_now, @wine.reload.available_glasses
+      assert_equal "Barolo Riserva", @wine.name
+      # The owner is told what happened and shown the figure they were wrong
+      # about, rather than left believing the save went through.
+      assert_match ERB::Util.html_escape(I18n.t("owner.wines.stale_update", glasses: glasses_now)), response.body
+      assert_select "input[name='wine[available_glasses]'][value=?]", glasses_now.to_s
+    end
+
+    test "a save carrying the current version still goes through" do
+      sign_in_as @owner
+      @wine.decrement!(:available_glasses, 4)
+      current = @wine.reload
+
+      patch owner_restaurant_wine_path(restaurant_id: @restaurant, id: @wine), params: {
+        wine: { name: "Barolo Riserva DOCG", lock_version: current.lock_version }
+      }
+
+      assert_redirected_to owner_restaurant_wines_path(restaurant_id: @restaurant)
+      assert_equal "Barolo Riserva DOCG", @wine.reload.name
+    end
+
     # --- DESTROY ---
 
     test "DELETE /owner/restaurants/:id/wines/:id destroys wine and redirects" do

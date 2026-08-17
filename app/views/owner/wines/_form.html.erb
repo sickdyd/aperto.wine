@@ -11,6 +11,15 @@
     </div>
   <% end %>
 
+  <%# The version this form was rendered from. Diners move available_glasses
+      while the page sits open (PlaceOrder reserves at placement), so a save
+      that carries a stale version has to be refused rather than allowed to
+      write the old number back — see Owner::WinesController#update. A new
+      record has no concurrent editor to disagree with. %>
+  <% if wine.persisted? %>
+    <%= f.hidden_field :lock_version %>
+  <% end %>
+
   <%# Basic info %>
   <fieldset class="form-section">
     <legend class="form-section-title"><%= t("owner.wines.form.basic_info") %></legend>

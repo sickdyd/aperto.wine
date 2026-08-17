@@ -1,7 +1,13 @@
+# stock_reserved is true on every order here that is still live (pending or
+# approved): under the current code an order takes its glasses at placement,
+# so a fixture that says "pending" and holds no reservation would be a legacy
+# row, not a normal one. Tests that want the legacy shape build it explicitly
+# — the column default (false) is exactly that row.
 pending_order:
   restaurant: osteria
   customer: customer
   status: 0
+  stock_reserved: true
   total_amount_cents: 3600
   public_token: pending_order_fixture_token_abc123
 
@@ -9,6 +15,7 @@ approved_order:
   restaurant: osteria
   customer: customer
   status: 1
+  stock_reserved: true
   total_amount_cents: 1800
   public_token: approved_order_fixture_token_def456
 
@@ -17,6 +24,7 @@ guest_order:
   customer:
   guest_name: Jane Diner
   status: 0
+  stock_reserved: true
   total_amount_cents: 900
   public_token: guest_order_fixture_token_ghi789
 
@@ -25,5 +33,6 @@ inactive_restaurant_order:
   customer:
   guest_name: Ghost Diner
   status: 0
+  stock_reserved: true
   total_amount_cents: 500
   public_token: inactive_restaurant_order_token_jkl012

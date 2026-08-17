@@ -150,6 +150,11 @@ it:
       created: "Vino aggiunto con successo."
       updated: "Vino aggiornato con successo."
       deleted: "Vino rimosso."
+      # Mostrato quando il salvataggio porta un lock_version ormai superato:
+      # in pratica, i clienti hanno impegnato dei calici mentre il modulo era
+      # aperto. Indica il valore attuale, perché è quello su cui la copia del
+      # ristoratore sbagliava e quello su cui deve decidere.
+      stale_update: "Questo vino è cambiato mentre lo stavi modificando — ora sono disponibili %{glasses} calici. Le tue modifiche non sono state salvate: controlla i valori attuali e riprova."
       confirm_delete: "Sei sicuro di voler rimuovere questo vino?"
       glasses_available: "calici"
       empty_title: "Nessun vino"
@@ -339,6 +344,12 @@ it:
       cancel_order: "Annulla Ordine"
       approved: "Ordine approvato. Apri la bottiglia se necessario."
       cancelled: "Ordine annullato."
+      # La transizione è stata rifiutata perché l'ordine era già cambiato —
+      # un'altra scheda, un altro membro dello staff o una richiesta ripetuta.
+      # Dire "approvato" qui lascerebbe leggere uno stato che l'elenco qui
+      # sotto sta per smentire.
+      approve_failed: "Quell'ordine non è più in attesa, quindi non è stato approvato. L'elenco qui sotto mostra il suo stato attuale."
+      cancel_failed: "Quell'ordine non può più essere annullato. L'elenco qui sotto mostra il suo stato attuale."
       confirm_cancel: "Sei sicuro di voler annullare questo ordine?"
       empty_title: "Nessun ordine"
       empty_description: "Gli ordini appariranno qui quando i clienti li effettueranno."
@@ -537,7 +548,11 @@ it:
     back_to_menu: "Torna al menu"
     item_added: "Aggiunto al carrello."
     table_context: "Ordinazione per %{table}"
-    no_table_context: "Nessun tavolo selezionato — l'ordine arriverà allo staff senza indicazione del tavolo."
+    # Un blocco, non una nota: l'ordine impegna le disponibilità nel momento in
+    # cui viene inviato, quindi deve appartenere a un tavolo occupato. Dice di
+    # proposito la stessa cosa di orders.errors.table_required — questo prima
+    # dell'invio, quello se una richiesta arriva comunque al servizio.
+    no_table_context: "Nessun tavolo selezionato — inquadra il QR code del tuo tavolo per inviare un ordine."
     empty: "Il tuo carrello è vuoto."
     browse_menu: "Sfoglia la carta dei vini"
     dropped_items_notice: "Alcuni vini nel carrello non sono più disponibili e devono essere rimossi prima di poter ordinare."
@@ -578,6 +593,10 @@ it:
       empty_cart: "Il tuo carrello è vuoto."
       items_unavailable: "Alcuni vini nel carrello non sono più disponibili. Controlla il carrello prima di ordinare."
       insufficient_stock: "Alcuni vini nel carrello non sono più disponibili nella quantità richiesta. Controlla il carrello prima di ordinare."
+      # La pagina del carrello nasconde già il pulsante di invio in questo caso
+      # e dice la stessa cosa (cart.no_table_context) — questo è ciò che
+      # riceve una richiesta che quella pagina non l'ha mai vista.
+      table_required: "Inquadra il QR code del tuo tavolo per inviare un ordine."
       # Non indica di quanto il cliente sia fuori dal raggio: vedi il commento
       # in en.yml — una distanza nel messaggio permetterebbe di risalire per
       # tentativi alle coordinate e al raggio del ristorante.

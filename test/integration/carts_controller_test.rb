@@ -11,6 +11,17 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     @unlisted = wines(:unlisted_wine)
   end
 
+  # Attaches a table to the session the way a diner does, by scanning its QR.
+  # Not in setup: several tests below are *about* the tableless state and have
+  # to arrive at the bare /menu/:id URL instead. Everything that asserts on
+  # the submit control or counts the page's alert bands scans first, because
+  # a tableless cart now carries a blocking band of its own and withholds the
+  # form — assertions about the stock gate would otherwise pass on the table
+  # gate's evidence.
+  def scan_table(table = restaurant_tables(:sala_t1))
+    get table_menu_path(table_token: table.token)
+  end
+
   # --- add_item ---
 
   test "adding an item shows it on the cart page" do
@@ -136,6 +147,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- Flash layout (Task 5, Part E regression fix) ---
 
   test "the cart page's error flash renders exactly once, in the floating stack" do
+    scan_table
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 60, quantity: 1 }
     follow_redirect!
 
@@ -230,6 +242,33 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match I18n.t("cart.no_table_context"), response.body
+  end
+
+  # PlaceOrder refuses a tableless placement outright, so the page must not
+  # offer a control that can only fail — and must say why where the diner
+  # reads it while building the order, not after trying to send it.
+  test "a tableless cart withholds the submit control and says why" do
+    get published_menu_path(@osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 0
+    assert_match ERB::Util.html_escape(I18n.t("cart.no_table_context")), response.body
+    # Not the empty state either — the order is built, it just has nowhere to go.
+    assert_no_match I18n.t("cart.empty"), response.body
+    assert_match @barolo.name, response.body
+  end
+
+  test "scanning a table brings the submit control back to a cart built without one" do
+    get published_menu_path(@osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    scan_table
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 1
+    assert_no_match ERB::Util.html_escape(I18n.t("cart.no_table_context")), response.body
   end
 
   test "a retired table's token attaches no table to the cart" do
@@ -330,6 +369,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the shortfall banner is an alert, and a different one from the dropped-items band" do
+    scan_table
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
 
@@ -364,6 +404,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the submit control is withheld while a line exceeds stock, without falling back to the empty state" do
+    scan_table
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
 
@@ -378,6 +419,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # placement in PlaceOrder, so offering a submit that can only fail is worse
   # than withholding it until the line is gone.
   test "the submit control is withheld while a dropped line still needs removing" do
+    scan_table
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
     @barolo.update!(active: false)
@@ -388,6 +430,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "lowering the quantity to what is left brings the submit control back" do
+    scan_table
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
     patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }

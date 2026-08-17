@@ -177,6 +177,30 @@ module Owner
       assert_equal "approved", @pending_order.reload.status
     end
 
+    test "PATCH approve on pending order flashes success" do
+      sign_in_as @owner
+      patch approve_owner_restaurant_order_path(restaurant_id: @restaurant, id: @pending_order)
+
+      assert_equal I18n.t("owner.orders.approved"), flash[:notice]
+      assert_nil flash[:alert]
+    end
+
+    # A second tab, a second member of staff, or a retried request. The
+    # transition is refused, and saying "approved" anyway would leave the
+    # owner reading a status the board is about to contradict — which is
+    # exactly the confusion the guard exists to prevent.
+    test "PATCH approve on an order that already moved on says so, rather than claiming success" do
+      sign_in_as @owner
+      @pending_order.cancel!
+
+      patch approve_owner_restaurant_order_path(restaurant_id: @restaurant, id: @pending_order)
+
+      assert_redirected_to owner_restaurant_orders_path(restaurant_id: @restaurant)
+      assert_equal I18n.t("owner.orders.approve_failed"), flash[:alert]
+      assert_nil flash[:notice]
+      assert_equal "cancelled", @pending_order.reload.status
+    end
+
     test "PATCH approve requires authentication" do
       patch approve_owner_restaurant_order_path(restaurant_id: @restaurant, id: @pending_order)
       assert_redirected_to sign_in_path
@@ -196,6 +220,22 @@ module Owner
       patch cancel_owner_restaurant_order_path(restaurant_id: @restaurant, id: @approved_order)
       assert_redirected_to owner_restaurant_orders_path(restaurant_id: @restaurant)
       assert_equal "cancelled", @approved_order.reload.status
+    end
+
+    # The release side of the same problem: a second cancel must not flash a
+    # success the owner would read as a second lot of glasses coming back.
+    test "PATCH cancel on an already cancelled order says so, and releases nothing further" do
+      sign_in_as @owner
+      wine = wines(:barolo)
+      @pending_order.cancel!
+      glasses_after_first = wine.reload.available_glasses
+
+      patch cancel_owner_restaurant_order_path(restaurant_id: @restaurant, id: @pending_order)
+
+      assert_redirected_to owner_restaurant_orders_path(restaurant_id: @restaurant)
+      assert_equal I18n.t("owner.orders.cancel_failed"), flash[:alert]
+      assert_nil flash[:notice]
+      assert_equal glasses_after_first, wine.reload.available_glasses
     end
 
     test "PATCH cancel requires authentication" do

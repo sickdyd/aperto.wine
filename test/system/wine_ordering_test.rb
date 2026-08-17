@@ -116,8 +116,13 @@ class WineOrderingTest < ApplicationSystemTestCase
     end
   end
 
-  test "a diner can order without ever scanning a table, via /menu/:id" do
+  # Placing an order reserves the glasses, so it has to belong to somebody
+  # actually sitting at a table. A diner who reached the menu from the bare
+  # slug URL has to learn that on the cart page, while the order is still
+  # being built — not by pressing a button that can only fail.
+  test "a diner who never scanned a table is told so on the cart, and gets no submit control" do
     restaurant = restaurants(:osteria)
+    table = restaurant_tables(:sala_t1)
     barolo = wines(:barolo)
 
     visit restaurant_menu_path(restaurant_slug: restaurant.slug)
@@ -127,10 +132,21 @@ class WineOrderingTest < ApplicationSystemTestCase
     go_to_cart
     assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
+    assert_text I18n.t("cart.no_table_context"), wait: 5
+    assert_no_button I18n.t("orders.form.submit")
+    # The cart itself survives, so scanning is all that is left to do.
+    assert_text barolo.name
+
+    # Scanning the table QR from the same browser, then coming back: the same
+    # cart is now orderable and the order carries the table.
+    visit table_menu_path(table_token: table.token)
+    go_to_cart
+    assert_no_text I18n.t("cart.no_table_context"), wait: 5
+
     click_button I18n.t("orders.form.submit")
 
     assert_text I18n.t("orders.status.statuses.pending"), wait: 5
-    assert_text I18n.t("orders.status.no_table")
+    assert_text table.name
   end
 
   test "an order a guest places is visible and approvable by the restaurant's owner" do
@@ -138,7 +154,10 @@ class WineOrderingTest < ApplicationSystemTestCase
     barolo = wines(:barolo)
     owner = users(:owner)
 
-    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
+    # Arrives by scanning the table QR — placement is refused without a table
+    # (PlaceOrder's :table_required), and this is how a diner reaches the menu
+    # in the restaurant anyway.
+    visit table_menu_path(table_token: restaurant_tables(:sala_t1).token)
     add_to_cart(barolo, 100)
     assert_current_path published_menu_path(restaurant), wait: 5
 
@@ -172,7 +191,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     barolo = wines(:barolo)
     gavi = wines(:gavi)
 
-    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
+    visit table_menu_path(table_token: restaurant_tables(:sala_t1).token)
     add_to_cart(barolo, 125)
     add_to_cart(gavi, 100)
     go_to_cart
@@ -204,7 +223,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     barolo = wines(:barolo)
 
-    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
+    visit table_menu_path(table_token: restaurant_tables(:sala_t1).token)
     add_to_cart(barolo, 125)
     go_to_cart
     assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
@@ -239,7 +258,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     barolo = wines(:barolo)
 
-    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
+    visit table_menu_path(table_token: restaurant_tables(:sala_t1).token)
     add_to_cart(barolo, 125)
     go_to_cart
     assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
