@@ -134,13 +134,39 @@ class OrderTest < ActiveSupport::TestCase
     assert order.reload.approved?
   end
 
-  test "approve! decrements available_glasses for each item" do
+  test "approve! does not move available_glasses" do
     order = orders(:pending_order)
     wine  = wines(:barolo)
     glasses_before = wine.available_glasses # 10
     order.approve!
-    # item quantity = 2
-    assert_equal glasses_before - 2, wine.reload.available_glasses
+    assert_equal glasses_before, wine.reload.available_glasses
+  end
+
+  test "approve! does nothing unless the order is pending" do
+    order = orders(:approved_order)
+    wine  = wines(:gavi)
+    glasses_before = wine.available_glasses
+    bottles_open_before = wine.wine_bottles.where(status: :open).count
+
+    result = order.approve!
+
+    assert_equal false, result
+    assert order.reload.approved?
+    assert_equal glasses_before, wine.reload.available_glasses
+    assert_equal bottles_open_before, wine.wine_bottles.where(status: :open).count
+  end
+
+  test "approve! twice only opens one bottle and never moves stock" do
+    order = orders(:pending_order)
+    wine  = wines(:barolo)
+    glasses_before = wine.available_glasses
+
+    order.approve!
+    second_result = order.approve!
+
+    assert_equal false, second_result
+    assert_equal glasses_before, wine.reload.available_glasses
+    assert_equal 1, wine.wine_bottles.where(status: :open).count
   end
 
   test "approve! opens a sealed bottle when no open bottle exists" do
@@ -179,12 +205,13 @@ class OrderTest < ActiveSupport::TestCase
     assert order.reload.cancelled?
   end
 
-  test "cancel! from pending does not restore glasses" do
+  test "cancel! from pending restores glasses" do
     order = orders(:pending_order)
     wine  = wines(:barolo)
     glasses_before = wine.available_glasses
     order.cancel!
-    assert_equal glasses_before, wine.reload.available_glasses
+    # pending_barolo_glass: quantity 2
+    assert_equal glasses_before + 2, wine.reload.available_glasses
   end
 
   test "cancel! from approved restores glasses" do
@@ -194,6 +221,36 @@ class OrderTest < ActiveSupport::TestCase
     order.cancel!
     # approved_gavi_glass: quantity 2
     assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
+  test "cancel! twice restores once" do
+    order = orders(:pending_order)
+    wine  = wines(:barolo)
+    glasses_before = wine.available_glasses
+
+    order.cancel!
+    second_result = order.cancel!
+
+    assert_equal false, second_result
+    assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
+  test "cancel! from completed restores nothing" do
+    order = Order.create!(valid_attributes.merge(status: :completed))
+    wine  = wines(:barolo)
+    order.order_items.create!(
+      wine: wine,
+      glass_size_ml: 100,
+      quantity: 2,
+      unit_price_cents: 1800
+    )
+    glasses_before = wine.available_glasses
+
+    result = order.cancel!
+
+    assert_equal false, result
+    assert order.reload.completed?
+    assert_equal glasses_before, wine.reload.available_glasses
   end
 
   # --- public_token ---

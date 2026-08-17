@@ -18,11 +18,12 @@ class Order < ApplicationRecord
   end
 
   def approve!
+    return false unless pending?
+
     transaction do
       update!(status: :approved)
       order_items.includes(:wine).each do |item|
         wine = item.wine
-        wine.decrement!(:available_glasses, item.quantity)
 
         # Open a bottle if needed
         bottle = wine.wine_bottles.find_by(status: :sealed)
@@ -32,13 +33,13 @@ class Order < ApplicationRecord
   end
 
   def cancel!
+    return false unless pending? || approved?
+
     transaction do
       update!(status: :cancelled)
-      # Restore glasses if order was previously approved
-      if status_previously_was == "approved"
-        order_items.each do |item|
-          item.wine.increment!(:available_glasses, item.quantity)
-        end
+      # Release the reservation held since placement
+      order_items.each do |item|
+        item.wine.increment!(:available_glasses, item.quantity)
       end
     end
   end
