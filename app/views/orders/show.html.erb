@@ -86,10 +86,16 @@
             <p class="wine-meta"><%= meta %></p>
           <% end %>
 
+          <%# A bottle line has no glass_size_ml to label — its own word
+              already says what it is, mirroring carts/_cart_item. %>
           <p class="price-size mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 pl-[var(--indent)]">
             <span>
-              <%= t("orders.status.glass_size") %>
-              <span class="num text-ox-3"><%= item.glass_size_ml %> ml</span>
+              <% if item.bottle? %>
+                <span class="num text-ox-3"><%= t("shared.serving.bottle", size: item.wine.bottle_size_ml) %></span>
+              <% else %>
+                <%= t("orders.status.glass_size") %>
+                <span class="num text-ox-3"><%= item.glass_size_ml %> ml</span>
+              <% end %>
             </span>
             <span>
               <%= t("orders.status.quantity") %>

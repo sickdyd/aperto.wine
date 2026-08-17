@@ -61,7 +61,12 @@
           <span class="leader-value"><%= format_cents(item.subtotal_cents) || "—" %></span>
         </div>
         <p class="mono-micro mt-1 pl-6">
-          <%= item.glass_size_ml %>ml · <%= format_cents(item.unit_price_cents) || "—" %> ×<%= item.quantity %>
+          <% if item.bottle? %>
+            <%= t("shared.serving.bottle", size: item.wine.bottle_size_ml) %>
+          <% else %>
+            <%= item.glass_size_ml %>ml
+          <% end %>
+          · <%= format_cents(item.unit_price_cents) || "—" %> ×<%= item.quantity %>
         </p>
       </li>
     <% end %>
