@@ -27,6 +27,19 @@ en:
       # bare "750 ml": next to a glass pour's "125 ml" in the same column, a
       # bare size reads as a very large pour, not a different serving.
       bottle: "Bottle %{size} ml"
+    # Shared between the diner-facing menu row (a pip run's visible label and
+    # its screen-reader text equivalent) and the owner form's field labels —
+    # one word for the same idea on both surfaces, mirroring shared.serving.
+    certifications:
+      organic: "Organic"
+      natural_wine: "Natural wine"
+      vegan: "Vegan"
+      biodynamic: "Biodynamic"
+    tasting_axes:
+      body: "Body"
+      tannins: "Tannins"
+      acidity: "Acidity"
+      sweetness: "Sweetness"
   auth:
     sign_in: "Sign In"
     sign_up: "Create Account"
@@ -203,6 +216,16 @@ en:
         suggested: "Suggested"
         position: "Sort Order"
         active_label: "Wine is available for order"
+        character: "Character & Tasting"
+        abv: "ABV"
+        style: "Style"
+        short_description: "Short Description"
+        aromas: "Aromas"
+        aromas_placeholder: "e.g. cherry, vanilla, leather"
+        aromas_hint: "Comma-separated. Leave blank if none apply."
+        food_pairings: "Food Pairings"
+        food_pairings_placeholder: "e.g. red meat, aged cheese"
+        food_pairings_hint: "Comma-separated. Leave blank if none apply."
       autofill:
         aria_label: Wine name with autocomplete suggestions
     wine_lists:
@@ -536,6 +559,16 @@ en:
     empty: "No wines available at the moment."
     powered_by: "Powered by"
     add_to_cart: "Add %{wine}, %{size} ml"
+    # %{bottle_label} is shared.serving.bottle already rendered — reused
+    # rather than a second bottle wording (see shared.serving.bottle).
+    add_to_cart_bottle: "Add %{wine}, %{bottle_label}"
+    abv: "%{value}% vol"
+    # The screen-reader equivalent for a tasting axis's pip run — the pips
+    # themselves are aria-hidden, so this is the only place the reading is
+    # actually announced, e.g. "Body 4 of 5".
+    axis_reading: "%{axis} %{value} of %{max}"
+    food_pairings_label: "Pairs with"
+    aromas_label: "Aromas"
     cart_bar:
       item_count:
         one: "1 item"

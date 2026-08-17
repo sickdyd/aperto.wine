@@ -17,6 +17,14 @@ class WineOrderingTest < ApplicationSystemTestCase
     find("button[aria-label='#{label}']").click
   end
 
+  # Clicks the bottle add-to-cart control for one wine — the bottle
+  # equivalent of #add_to_cart above. See menus/_wine_row: its aria-label
+  # names the wine and reuses shared.serving.bottle for the serving half.
+  def add_bottle_to_cart(wine)
+    bottle_label = I18n.t("shared.serving.bottle", size: wine.bottle_size_ml)
+    find("button[aria-label='#{I18n.t("menu.add_to_cart_bottle", wine: wine.name, bottle_label: bottle_label)}']").click
+  end
+
   # A successful add redirects back to the menu (final review finding 3),
   # so getting to the cart page from there is always a deliberate extra
   # step via the sticky bar's link.
@@ -192,5 +200,29 @@ class WineOrderingTest < ApplicationSystemTestCase
     click_button I18n.t("orders.form.submit")
     assert_text I18n.t("orders.status.statuses.pending"), wait: 5
     assert_text gavi.name
+  end
+
+  # --- Bottle serving (Task 3) ---
+
+  test "a diner adds a bottle to the cart from the menu and sees it in the cart and on the placed order" do
+    restaurant = restaurants(:osteria)
+    barolo = wines(:barolo)
+    bottle_label = I18n.t("shared.serving.bottle", size: barolo.bottle_size_ml)
+
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
+    add_bottle_to_cart(barolo)
+    assert_current_path published_menu_path(restaurant), wait: 5
+
+    go_to_cart
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
+    assert_recased_text bottle_label, wait: 5
+    assert_text format_price(barolo.price_bottle_cents)
+
+    click_button I18n.t("orders.form.submit")
+
+    assert_text I18n.t("orders.status.statuses.pending"), wait: 5
+    assert_text barolo.name
+    assert_recased_text bottle_label
+    assert_text format_price(barolo.price_bottle_cents)
   end
 end

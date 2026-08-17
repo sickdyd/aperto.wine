@@ -282,10 +282,154 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     get published_menu_path(restaurants(:osteria))
     assert_response :success
 
-    # barolo has 75/100/125ml priced, 150ml explicitly zeroed out
+    # barolo has 75/100/125ml priced, 150ml explicitly zeroed out, plus a
+    # bottle price — 4 controls total.
     assert_select "form[action=?][method=post] input[name='wine_id'][value=?]",
-      cart_items_path(restaurant_slug: restaurants(:osteria).slug), wines(:barolo).id.to_s, 3
+      cart_items_path(restaurant_slug: restaurants(:osteria).slug), wines(:barolo).id.to_s, 4
     assert_select "button[aria-label=?]", I18n.t("menu.add_to_cart", wine: wines(:barolo).name, size: 125)
+  end
+
+  # --- Bottle serving (Task 3) ---
+
+  test "a wine with a bottle price renders a bottle price row and add control" do
+    barolo = wines(:barolo)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    bottle_label = I18n.t("shared.serving.bottle", size: barolo.bottle_size_ml)
+    assert_match bottle_label, response.body
+    assert_match ApplicationController.helpers.format_cents(barolo.price_bottle_cents), response.body
+    assert_select "button[aria-label=?]",
+      I18n.t("menu.add_to_cart_bottle", wine: barolo.name, bottle_label: bottle_label)
+  end
+
+  test "a wine's bottle add control posts serving=bottle and no glass_size_ml" do
+    barolo = wines(:barolo)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    bottle_label = I18n.t("shared.serving.bottle", size: barolo.bottle_size_ml)
+    aria_label = I18n.t("menu.add_to_cart_bottle", wine: barolo.name, bottle_label: bottle_label)
+
+    doc = Nokogiri::HTML(response.body)
+    button = doc.at_css("button[aria-label='#{aria_label}']")
+    assert_not_nil button
+    form = button.at_xpath("ancestor::form")
+    assert_not_nil form
+    assert_equal barolo.id.to_s, form.at_css("input[name='wine_id']")["value"]
+    assert_equal "bottle", form.at_css("input[name='serving']")["value"]
+    assert_nil form.at_css("input[name='glass_size_ml']")
+  end
+
+  test "a wine with bottles but no glasses renders orderable rather than sold out" do
+    wine = wines(:bottle_only_wine)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    assert_match wine.name, response.body
+    bottle_label = I18n.t("shared.serving.bottle", size: wine.bottle_size_ml)
+    assert_select "button[aria-label=?]",
+      I18n.t("menu.add_to_cart_bottle", wine: wine.name, bottle_label: bottle_label)
+    assert_no_match I18n.t("menu.add_to_cart", wine: wine.name, size: 75), response.body
+  end
+
+  # --- Character data (Task 3) ---
+
+  test "short_description replaces description as the row's note when present" do
+    wine = wines(:full_character_wine)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    assert_match wine.short_description, response.body
+    assert_no_match "should replace", response.body # the fixture's description text
+  end
+
+  test "certifications render as mono labels when set, and only the ones that are true" do
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    assert_select "span.wine-cert", text: I18n.t("shared.certifications.organic")
+    assert_select "span.wine-cert", text: I18n.t("shared.certifications.natural_wine")
+    # vegan and biodynamic are both false on this wine, and no other fixture
+    # sets them true, so their labels must not appear anywhere on the page.
+    assert_no_match I18n.t("shared.certifications.vegan"), response.body
+    assert_no_match I18n.t("shared.certifications.biodynamic"), response.body
+  end
+
+  test "abv renders via the menu.abv locale key when present" do
+    wine = wines(:full_character_wine)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    assert_match I18n.t("menu.abv", value: "12.5"), response.body
+  end
+
+  test "abv is absent from the markup when not set" do
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    # barolo has no abv set — its own row must not carry the abv chip, even
+    # though full_character_wine's abv renders elsewhere on the same page.
+    doc = Nokogiri::HTML(response.body)
+    barolo_li = doc.at_css("li[data-search-terms*='barolo']")
+    assert_not_nil barolo_li
+    assert_no_match "% vol", barolo_li.to_html
+  end
+
+  test "tasting axes render a pip run with a screen-reader text equivalent" do
+    wine = wines(:full_character_wine)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    # body: 3, tannins: 2, acidity: 4, sweetness: 1 — see test/fixtures/wines.yml
+    assert_match I18n.t("menu.axis_reading", axis: I18n.t("shared.tasting_axes.body"), value: 3, max: 5), response.body
+    assert_match I18n.t("menu.axis_reading", axis: I18n.t("shared.tasting_axes.tannins"), value: 2, max: 5), response.body
+    assert_match I18n.t("menu.axis_reading", axis: I18n.t("shared.tasting_axes.acidity"), value: 4, max: 5), response.body
+    assert_match I18n.t("menu.axis_reading", axis: I18n.t("shared.tasting_axes.sweetness"), value: 1, max: 5), response.body
+    assert_select "span.wine-axis-pip.wine-axis-pip-filled", minimum: 1
+  end
+
+  test "tasting axes are absent from the markup for a wine with none set" do
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    # barolo has none of the four axes set — its own row must render no
+    # .wine-axes block at all, even though full_character_wine's axes render
+    # elsewhere on the same page.
+    doc = Nokogiri::HTML(response.body)
+    barolo_li = doc.at_css("li[data-search-terms*='barolo']")
+    assert_not_nil barolo_li
+    assert_nil barolo_li.at_css(".wine-axes")
+  end
+
+  test "food pairings and aromas render as comma-joined lines when present" do
+    wine = wines(:full_character_wine)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    assert_match I18n.t("menu.food_pairings_label"), response.body
+    assert_match wine.food_pairings.join(", "), response.body
+    assert_match I18n.t("menu.aromas_label"), response.body
+    assert_match wine.aromas.join(", "), response.body
+  end
+
+  test "food pairings and aromas are absent from the markup when not set" do
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+    # barolo has neither set — its own row must not carry either label.
+    doc = Nokogiri::HTML(response.body)
+    barolo_li = doc.at_css("li[data-search-terms*='barolo']")
+    assert_not_nil barolo_li
+    assert_no_match I18n.t("menu.food_pairings_label"), barolo_li.to_html
+    assert_no_match I18n.t("menu.aromas_label"), barolo_li.to_html
+  end
+
+  test "style renders as part of the meta line" do
+    wine = wines(:full_character_wine)
+    get published_menu_path(restaurants(:osteria))
+    assert_response :success
+
+    assert_select "p.wine-meta", text: /#{Regexp.escape(wine.style)}/
   end
 
   test "a sold-out wine renders no add-to-cart control" do

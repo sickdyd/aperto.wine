@@ -25,6 +25,20 @@ it:
       # mostra una riga bottiglia (carrello, e il menu quando arriverà il
       # Task 3) — %{size} è il bottle_size_ml del vino.
       bottle: "Bottiglia %{size} ml"
+    # Condiviso tra la riga del menu (l'etichetta visibile di una serie di
+    # pallini e il suo equivalente testuale per lettori di schermo) e le
+    # etichette del form del gestore — la stessa parola per la stessa idea
+    # su entrambe le superfici, come shared.serving.
+    certifications:
+      organic: "Biologico"
+      natural_wine: "Vino naturale"
+      vegan: "Vegano"
+      biodynamic: "Biodinamico"
+    tasting_axes:
+      body: "Corpo"
+      tannins: "Tannini"
+      acidity: "Acidità"
+      sweetness: "Dolcezza"
   auth:
     sign_in: "Accedi"
     sign_up: "Crea Account"
@@ -201,6 +215,16 @@ it:
         suggested: "Suggeriti"
         position: "Ordinamento"
         active_label: "Il vino è disponibile per l'ordine"
+        character: "Carattere e Degustazione"
+        abv: "Gradazione Alcolica"
+        style: "Stile"
+        short_description: "Descrizione Breve"
+        aromas: "Aromi"
+        aromas_placeholder: "es. ciliegia, vaniglia, cuoio"
+        aromas_hint: "Separati da virgola. Lascia vuoto se non applicabile."
+        food_pairings: "Abbinamenti Gastronomici"
+        food_pairings_placeholder: "es. carne rossa, formaggi stagionati"
+        food_pairings_hint: "Separati da virgola. Lascia vuoto se non applicabile."
       autofill:
         aria_label: Nome del vino con suggerimenti automatici
     wine_lists:
@@ -532,6 +556,11 @@ it:
     empty: "Nessun vino disponibile al momento."
     powered_by: "Offerto da"
     add_to_cart: "Aggiungi %{wine}, %{size} ml"
+    add_to_cart_bottle: "Aggiungi %{wine}, %{bottle_label}"
+    abv: "%{value}% vol"
+    axis_reading: "%{axis} %{value} su %{max}"
+    food_pairings_label: "Si abbina con"
+    aromas_label: "Aromi"
     cart_bar:
       item_count:
         one: "1 vino"
