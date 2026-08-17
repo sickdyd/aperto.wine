@@ -34,7 +34,10 @@
                  class="link-mono shrink-0 justify-start gap-2"
                  aria-label="<%= t("orders.history.view_order", time: l(order.created_at, format: :short)) %>">
                 <%= icon "receipt", class: "size-3.5 shrink-0" %>
-                <%= l(order.created_at, format: :short) %>
+                <time datetime="<%= order.created_at.iso8601 %>"
+                      title="<%= l(order.created_at, format: :long) %>">
+                  <%= l(order.created_at, format: :short) %>
+                </time>
               </a>
               <span class="leader" aria-hidden="true"></span>
               <span class="leader-value">

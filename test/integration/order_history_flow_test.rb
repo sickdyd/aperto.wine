@@ -81,6 +81,9 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
 
     get orders_path(restaurant_id: @osteria)
     assert_response :success
+    # Not just a 200 — the index renders for any number of reasons. This is
+    # the assertion that the history is genuinely still empty.
+    assert_match I18n.t("orders.history.empty"), response.body
   end
 
   test "a garbage order_tokens cookie does not break the index" do
@@ -88,6 +91,7 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
 
     get orders_path(restaurant_id: @osteria)
     assert_response :success
+    assert_match I18n.t("orders.history.empty"), response.body
   end
 
   test "the index does not 429 under repeated GETs, unlike create" do
@@ -119,7 +123,7 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
     get menu_path(id: @osteria)
     assert_response :success
     assert_match history_link, response.body
-    assert_match I18n.t("orders.history.link"), response.body
+    assert_match I18n.t("orders.history.title"), response.body
   end
 
   test "a device that ordered at A sees no history link on B's menu" do

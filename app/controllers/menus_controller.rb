@@ -7,7 +7,10 @@ class MenusController < ApplicationController
   # database once the cookie actually has tokens for this restaurant — see
   # OrderHistory), so a first-time visitor with no order_tokens cookie
   # costs the menu, the hottest page in the app, nothing extra.
-  before_action :set_order_history
+  # only: :show, like set_cart below it — CustomerScoped's callbacks are
+  # opt-in per action, and a blanket declaration here would quietly stop
+  # being true the moment this controller grows a second action.
+  before_action :set_order_history, only: :show
   before_action :set_cart, only: :show
 
   def show

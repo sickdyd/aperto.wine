@@ -45,13 +45,18 @@ class OrderHistory
     # one that falls off.
     reordered = { restaurant_key => updated_tokens }.merge(current.except(restaurant_key))
     write(reordered.first(MAX_RESTAURANTS).to_h)
+    reset_memos
   end
 
   # Array<String>, newest first. Parses the cookie defensively: anything
   # malformed — absent, tampered, not JSON, not a Hash, this restaurant's
   # value not an Array of Strings — yields [], never an exception.
+  #
+  # Memoized because #orders reads it three times (once to test for empty,
+  # twice inside #resolve_orders) and each read re-parses and re-verifies
+  # the cookie's HMAC.
   def tokens
-    restaurant_tokens(parsed_cookie)
+    @tokens ||= restaurant_tokens(parsed_cookie)
   end
 
   # Array<Order>, newest first. One query, scoped through restaurant.orders
@@ -77,8 +82,20 @@ class OrderHistory
     restaurant.id.to_s
   end
 
+  # Both memos, not just @orders: #orders is derived from #tokens, so a read
+  # after a write would otherwise serve the pre-write list. Cart#persist ends
+  # the same way, clearing its own loaded flag for the same reason.
+  def reset_memos
+    @tokens = nil
+    @orders = nil
+  end
+
+  # No eager loads: every caller reads only created_at, total_amount_cents,
+  # status and public_token (see orders/index), or just #size / #any?. An
+  # includes() here would put a second query on the menu — the hottest page
+  # in the app — for every device that has ordered.
   def resolve_orders
-    found = restaurant.orders.where(public_token: tokens).includes(:restaurant_table).index_by(&:public_token)
+    found = restaurant.orders.where(public_token: tokens).index_by(&:public_token)
     tokens.filter_map { |token| found[token] }
   end
 
@@ -99,6 +116,10 @@ class OrderHistory
   # JSON, or valid JSON that isn't a Hash.
   def parsed_cookie
     raw = cookies.signed[COOKIE_NAME]
+    # is_a?(String) as well as blank?: JSON.parse raises TypeError, which the
+    # rescue below does not catch, on anything that isn't a String — and a
+    # jar holding a value written as a Hash would hand back exactly that.
+    return {} unless raw.is_a?(String)
     return {} if raw.blank?
 
     parsed = JSON.parse(raw)
