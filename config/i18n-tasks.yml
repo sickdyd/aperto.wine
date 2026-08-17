@@ -32,6 +32,12 @@ ignore_unused:
   # Reached only by interpolation, e.g. t("owner.wines.colors.#{wine.color}") —
   # the scanner cannot enumerate the dynamic final segment.
   - "owner.wines.colors.*"
+  # Reached only by interpolation, e.g. t("shared.certifications.#{cert}") and
+  # t("shared.tasting_axes.#{attr}") — both looped over a fixed set of
+  # attributes in menus/_wine_row and owner/wines/_form, so the scanner
+  # cannot enumerate the dynamic final segment.
+  - "shared.certifications.*"
+  - "shared.tasting_axes.*"
   - "owner.orders.statuses.*"
   - "owner.tables.bulk.patterns.*"
   - "orders.status.hints.*"

@@ -41,6 +41,63 @@ class OrderItemTest < ActiveSupport::TestCase
     end
   end
 
+  test "glass serving with nil glass_size_ml is invalid" do
+    item = OrderItem.new(valid_attributes.merge(serving: :glass, glass_size_ml: nil))
+    assert_not item.valid?
+    assert item.errors.of_kind?(:glass_size_ml, :inclusion)
+  end
+
+  test "bottle serving with nil glass_size_ml is valid" do
+    item = OrderItem.new(valid_attributes.merge(serving: :bottle, glass_size_ml: nil))
+    assert item.valid?
+  end
+
+  test "bottle serving with a glass_size_ml present is invalid" do
+    item = OrderItem.new(valid_attributes.merge(serving: :bottle, glass_size_ml: 100))
+    assert_not item.valid?
+    assert item.errors.of_kind?(:glass_size_ml, :present)
+  end
+
+  # --- serving enum ---
+
+  # This guards Wine::SERVINGS' ORDER, not just its contents. The enum is
+  # derived from Wine::SERVINGS by index (see OrderItem's `enum :serving`),
+  # so a reorder — e.g. "bottle" before "glass" to match the menu row's
+  # display order — silently renumbers every existing OrderItem: every
+  # historical serving = 0 row (today, all real glass pours) would
+  # reinterpret as a bottle, with no error anywhere. Do not delete this as a
+  # "redundant" re-test of Rails' enum macro; it is the only thing that
+  # fails if that reorder happens. See Wine::SERVINGS' append-only note.
+  test "serving enum values are pinned to Wine::SERVINGS' order" do
+    assert_equal 0, OrderItem.servings[:glass]
+    assert_equal 1, OrderItem.servings[:bottle]
+  end
+
+  test "serving defaults to glass" do
+    item = OrderItem.new(valid_attributes)
+    assert item.glass?
+  end
+
+  # --- DB check constraint ---
+  # The Ruby validations above are mirrored by a DB check constraint so an
+  # inconsistent row can't be persisted by a path that bypasses validations
+  # (bulk update, raw SQL). Insert around the model validations and assert
+  # the database itself rejects it.
+
+  test "database rejects a glass row with no glass_size_ml, bypassing validations" do
+    item = OrderItem.create!(valid_attributes)
+    assert_raises(ActiveRecord::StatementInvalid) do
+      item.update_column(:glass_size_ml, nil)
+    end
+  end
+
+  test "database rejects a bottle row with a glass_size_ml, bypassing validations" do
+    item = OrderItem.create!(valid_attributes.merge(serving: :bottle, glass_size_ml: nil))
+    assert_raises(ActiveRecord::StatementInvalid) do
+      item.update_column(:glass_size_ml, 100)
+    end
+  end
+
   test "requires quantity greater than 0" do
     item = OrderItem.new(valid_attributes.merge(quantity: 0))
     assert_not item.valid?

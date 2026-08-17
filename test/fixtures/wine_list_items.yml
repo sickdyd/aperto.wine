@@ -16,6 +16,17 @@ osteria_sold_out:
   wine: sold_out_wine
   position: 3
 
+# Task 3 fixtures — see test/fixtures/wines.yml for why each exists.
+osteria_full_character:
+  wine_list: osteria_list
+  wine: full_character_wine
+  position: 4
+
+osteria_bottle_only:
+  wine_list: osteria_list
+  wine: bottle_only_wine
+  position: 5
+
 summer_barolo:
   wine_list: summer
   wine: barolo

@@ -1,30 +1,57 @@
 <%#
   One wine, set as a line of the ledger: a colour dot, the name, leader dots
   running across the gap, and the pour prices right-aligned against them.
-  Producer/grape/vintage/region and the tasting note hang underneath, indented
-  past the dot column. Ordering is a separate, deliberate affordance below.
+  Producer/grape/vintage/region/style and the tasting note hang underneath,
+  indented past the dot column, followed — only when present — by
+  certifications, ABV, the tasting axes, food pairings, and aromas. Ordering
+  is a separate, deliberate affordance below.
   Locals:
     wine               - the Wine to render (required)
     restaurant         - the owning Restaurant, for the add-to-cart route (required)
     unavailable_label  - tag text when the wine isn't pourable
                          (defaults to the flat-menu "Sold out" wording)
+    facet_values       - this wine's { facet_name => "value1 value2" } entry
+                         from MenusHelper#menu_filter_facets, stamped onto
+                         data-facet-<name> for list_filter_controller.js to
+                         read (defaults to none, so a caller with no filter
+                         chips renders exactly as before)
+  This row reasons per serving: glass controls gate on
+  Wine#glasses_available?, bottle controls on #bottle_available?, and the
+  sold-out tag shows only when #available? is false — neither serving
+  offered.
 %>
 <% unavailable_label = local_assigns.fetch(:unavailable_label) { t("shared.sold_out") } %>
+<% facet_values = local_assigns.fetch(:facet_values) { {} } %>
 <% open_bottle = wine.wine_bottles.find { |b| b.status == "open" } %>
-<%# Priced pours, in ascending size order — the price block and the add
-    controls below are two views of this one list, never computed twice. %>
-<% pours = Wine::GLASS_SIZES.map { |size| [ size, wine.price_for_glass(size) ] }
-                            .select { |_size, price| price&.positive? } %>
+<%# Priced servings, bottle first (a printed card lists the bottle price
+    first), then priced pours in ascending size order — the price block and
+    the add controls below are two views of this one pair of lists, never
+    computed twice. %>
+<% bottle_price = wine.bottle_available? ? wine.price_bottle_cents : nil %>
+<% glass_pours = wine.glasses_available? ?
+     Wine::GLASS_SIZES.map { |size| [ size, wine.price_for_glass(size) ] }.select { |_size, price| price&.positive? } :
+     [] %>
 <%
   meta = []
   meta << wine.producer if wine.producer.present?
   meta << wine.grape_variety if wine.grape_variety.present?
   meta << tag.span(wine.vintage_year, class: "wine-vintage") if wine.vintage_year.present?
   meta << wine.region if wine.region.present?
+  meta << wine.style if wine.style.present?
+  note = wine.short_description.presence || wine.description
+  certifications = Wine::CERTIFICATION_LABELS.select { |cert| wine.public_send(:"#{cert}?") }
+  axes = Wine::TASTING_DISPLAY_ORDER.filter_map do |attr|
+    value = wine.public_send(attr)
+    [ attr, value ] unless value.nil?
+  end
 %>
 <li class="<%= class_names("wine-soldout" => !wine.available?) %>"
     data-list-filter-target="item"
-    data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.vintage_year, wine.region].compact_blank.join(" ").downcase %>">
+    data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.vintage_year, wine.region, wine.style, *wine.food_pairings, *wine.aromas].compact_blank.join(" ").downcase %>"
+    <% if facet_values["color"] %>data-facet-color="<%= facet_values["color"] %>"<% end %>
+    <% if facet_values["serving"] %>data-facet-serving="<%= facet_values["serving"] %>"<% end %>
+    <% if facet_values["certification"] %>data-facet-certification="<%= facet_values["certification"] %>"<% end %>
+    <% if facet_values["price-band"] %>data-facet-price-band="<%= facet_values["price-band"] %>"<% end %>>
   <div class="wine-head">
     <%= wine_color_dot(wine.color) %>
     <span class="wine-name"><%= wine.name %></span>
@@ -36,9 +63,12 @@
           that wide would crowd the wine's own name off a 390px sheet. Capped
           and allowed to wrap, it sets over two short lines instead. %>
       <span class="tag-out max-w-28 shrink whitespace-normal text-right"><%= unavailable_label %></span>
-    <% elsif pours.any? %>
+    <% elsif bottle_price || glass_pours.any? %>
       <div class="price-grid">
-        <% pours.each do |size, price| %>
+        <% if bottle_price %>
+          <span class="price-size"><%= t("shared.serving.bottle", size: wine.bottle_size_ml) %></span><span class="price-amount"><%= format_cents(bottle_price) %></span>
+        <% end %>
+        <% glass_pours.each do |size, price| %>
           <span class="price-size"><%= size %> ml</span><span class="price-amount"><%= format_cents(price) %></span>
         <% end %>
       </div>
@@ -49,8 +79,54 @@
     <p class="wine-meta"><%= safe_join(meta, " · ") %></p>
   <% end %>
 
-  <% if wine.description.present? %>
-    <p class="wine-note"><%= wine.description %></p>
+  <% if note.present? %>
+    <p class="wine-note"><%= note %></p>
+  <% end %>
+
+  <% if certifications.any? || wine.abv.present? %>
+    <div class="wine-certs">
+      <% certifications.each do |cert| %>
+        <span class="wine-cert"><%= t("shared.certifications.#{cert}") %></span>
+      <% end %>
+      <% if wine.abv.present? %>
+        <span class="wine-cert"><%= t("menu.abv", value: number_with_precision(wine.abv, precision: 1, strip_insignificant_zeros: true)) %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# The tasting axes: a label, a leader, and a 0-5 pip run in the ledger
+      idiom — no radius, no shadow, colour only from the oxblood ramp. Each
+      pip run carries a screen-reader-only text equivalent ("Body 4 of 5")
+      right beside it, so the reading is never conveyed by shape alone. %>
+  <% if axes.any? %>
+    <div class="wine-axes">
+      <% axes.each do |attr, value| %>
+        <div class="leader-row wine-axis">
+          <span class="wine-axis-label"><%= t("shared.tasting_axes.#{attr}") %></span>
+          <span class="leader" aria-hidden="true"></span>
+          <span class="wine-axis-pips" aria-hidden="true">
+            <% (1..Wine::TASTING_SCALE.max).each do |i| %>
+              <% if i <= value %>
+                <span class="wine-axis-pip wine-axis-pip-filled"></span>
+              <% else %>
+                <span class="wine-axis-pip"></span>
+              <% end %>
+            <% end %>
+          </span>
+          <span class="sr-only">
+            <%= t("menu.axis_reading", axis: t("shared.tasting_axes.#{attr}"), value: value, max: Wine::TASTING_SCALE.max) %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if wine.food_pairings.any? %>
+    <p class="wine-pairings"><span class="mono-micro"><%= t("menu.food_pairings_label") %></span> <%= wine.food_pairings.join(", ") %></p>
+  <% end %>
+
+  <% if wine.aromas.any? %>
+    <p class="wine-pairings"><span class="mono-micro"><%= t("menu.aromas_label") %></span> <%= wine.aromas.join(", ") %></p>
   <% end %>
 
   <% if open_bottle&.opened_at %>
@@ -60,19 +136,31 @@
     </p>
   <% end %>
 
-  <%# One add control per priced pour, indented to the same hanging column as
-      the meta so it reads as part of this wine rather than the next. The
-      prices themselves stay printed above — these say only *which* pour, so
-      nothing is stated twice. The aria-label carries the wine name so a
-      screen-reader user moving button-to-button hears "Add Barolo, 125 ml"
-      instead of "Add" repeated once per size (see Task 3's identical fix for
-      quantity buttons). min-h-11/min-w-11 hold the 44x44 CSS px WCAG 2.1 AA
-      tap target, and gap-2 the 8px between them. %>
-  <% if wine.available? && pours.any? %>
+  <%# One add control per offered serving, bottle first, indented to the same
+      hanging column as the meta so it reads as part of this wine rather than
+      the next. The prices themselves stay printed above — these say only
+      *which* serving, so nothing is stated twice. The aria-label carries the
+      wine name and the serving so a screen-reader user moving button-to-
+      button hears "Add Barolo, 125 ml" / "Add Barolo, Bottle 750 ml" instead
+      of "Add" repeated once per control. min-h-11/min-w-11 hold the 44x44
+      CSS px WCAG 2.1 AA tap target, and gap-2 the 8px between them. Every
+      control states its serving explicitly — Cart#add requires it, and the
+      controller's missing-param default exists only to protect stale,
+      already-rendered browser tabs, not freshly rendered markup. %>
+  <% if bottle_price || glass_pours.any? %>
     <div class="mt-3 flex flex-wrap gap-2 pl-[var(--indent)]">
-      <% pours.each do |size, _price| %>
+      <% if bottle_price %>
         <%= button_to cart_items_path(restaurant_slug: restaurant.slug), method: :post,
-              params: { wine_id: wine.id, glass_size_ml: size, quantity: 1 },
+              params: { wine_id: wine.id, serving: "bottle", quantity: 1 },
+              class: "btn-wine-outline min-h-11 min-w-11 gap-1.5 px-3",
+              "aria-label": t("menu.add_to_cart_bottle", wine: wine.name, bottle_label: t("shared.serving.bottle", size: wine.bottle_size_ml)) do %>
+          <%= icon "plus", class: "size-3 shrink-0", "aria-hidden": "true" %>
+          <span aria-hidden="true"><%= t("shared.serving.bottle", size: wine.bottle_size_ml) %></span>
+        <% end %>
+      <% end %>
+      <% glass_pours.each do |size, _price| %>
+        <%= button_to cart_items_path(restaurant_slug: restaurant.slug), method: :post,
+              params: { wine_id: wine.id, serving: "glass", glass_size_ml: size, quantity: 1 },
               class: "btn-wine-outline min-h-11 min-w-11 gap-1.5 px-3",
               "aria-label": t("menu.add_to_cart", wine: wine.name, size: size) do %>
           <%= icon "plus", class: "size-3 shrink-0", "aria-hidden": "true" %>

@@ -70,6 +70,13 @@ module Owner
         :price_bottle_cents, :price_75ml_cents, :price_100ml_cents,
         :price_125ml_cents, :price_150ml_cents,
         :available_glasses, :position, :active,
+        :abv, :style, :short_description,
+        :body, :tannins, :acidity, :sweetness,
+        :organic, :natural_wine, :vegan, :biodynamic,
+        # The _list writers split/join a comma-separated string onto the
+        # array columns — the arrays themselves (:aromas, :food_pairings)
+        # are deliberately never permitted here (see Wine#aromas_list=).
+        :aromas_list, :food_pairings_list,
         # Rails compares this against the stored column and raises
         # StaleObjectError when they disagree; it is never written from it.
         :lock_version

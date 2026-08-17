@@ -69,5 +69,22 @@ module Owner
       assert_text color_heading(:red), wait: 5
       assert_no_text color_heading(:white)
     end
+
+    # list_filter_controller.js is shared with the public menu, which renders
+    # a "facet" chip target this page never does. This guards that the
+    # controller's facet-matching stays a no-op with none present, so a
+    # future change to the shared facet logic can't silently break text-only
+    # filtering here without this test explaining why it mattered.
+    test "text filtering still works on a page with no facet chips (shared list_filter_controller regression)" do
+      sign_in_as_owner
+      visit_wines
+
+      assert_no_selector "[data-list-filter-target~='facet']"
+
+      fill_in I18n.t("owner.shared.filter.placeholder"), with: "Barolo"
+
+      assert_text "Barolo Riserva", wait: 5
+      assert_no_text "Gavi di Gavi"
+    end
   end
 end

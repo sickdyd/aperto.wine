@@ -12,9 +12,10 @@ class PlaceOrder
   #                         added, or everything was already removed)
   #   :items_unavailable  - one or more lines failed the live re-check (the
   #                         wine disappeared, went unavailable, or lost its
-  #                         price for that glass size) since being added.
-  #                         No order is placed; the cart is left untouched
-  #                         so the diner sees exactly which lines dropped.
+  #                         price for that serving — a glass size or a whole
+  #                         bottle) since being added. No order is placed;
+  #                         the cart is left untouched so the diner sees
+  #                         exactly which lines dropped.
   #   :order_invalid      - the order or one of its lines failed to save for
   #                         a reason not caught above (defensive: nothing
   #                         in the current model surface should reach this).
@@ -172,6 +173,17 @@ class PlaceOrder
   # ruled out 0-glass wines; this is the only check for a line whose
   # quantity exceeds what's left, and it must run here, under the lock, not
   # be assumed already done by the caller.
+  #
+  # **Only glass lines reserve.** There is no bottle stock column: a
+  # positive price_bottle_cents is the entirety of what "bottle available"
+  # means (Wine#bottle_available?), and a wine is deliberately still
+  # bottle-orderable with zero glasses left. So a bottle line decrements
+  # nothing and is never refused for want of glasses. Bottle wines are still
+  # locked and still checked for existence, though — that guard is about the
+  # row having vanished under the read, not about stock, and skipping it
+  # would turn a deleted-wine race on a bottle-only cart back into the FK
+  # violation WineGoneAtLock exists to prevent. Cart#over_stock_wine_ids
+  # draws exactly the same line, unlocked.
   def reserve_stock!
     wine_ids = cart.items.map { |item| item.wine.id }.uniq
     # Scoped through the restaurant even though the ids can only have come
@@ -183,6 +195,8 @@ class PlaceOrder
     cart.items.each do |item|
       wine = locked_wines[item.wine.id]
       raise WineGoneAtLock if wine.nil?
+      next unless item.serving == "glass"
+
       raise InsufficientStock if wine.available_glasses < item.quantity
 
       # Same in-memory wine object across a diner's lines for the same
@@ -199,6 +213,7 @@ class PlaceOrder
   def create_order_item!(order, item)
     order.order_items.create!(
       wine: item.wine,
+      serving: item.serving,
       glass_size_ml: item.glass_size_ml,
       quantity: item.quantity,
       unit_price_cents: item.unit_price_cents

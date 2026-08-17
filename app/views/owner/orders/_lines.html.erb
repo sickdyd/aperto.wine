@@ -6,7 +6,13 @@
     <li>
       <span class="font-mono text-ox-3 num"><%= item.quantity %>&times;</span>
       <%= item.wine.name %>
-      <span class="mono-micro"><%= item.glass_size_ml %>ml</span>
+      <span class="mono-micro">
+        <% if item.bottle? %>
+          <%= t("shared.serving.bottle", size: item.wine.bottle_size_ml) %>
+        <% else %>
+          <%= item.glass_size_ml %>ml
+        <% end %>
+      </span>
     </li>
   <% end %>
 </ul>

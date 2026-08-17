@@ -21,7 +21,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "places a guest order and snapshots the current price" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
     original_price = @barolo.price_for_glass(125)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
@@ -41,7 +41,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a later price change never rewrites the placed order" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
     original_price = @barolo.price_for_glass(125)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
@@ -56,6 +56,54 @@ class PlaceOrderTest < ActiveSupport::TestCase
     assert_equal original_price, order.order_items.first.reload.unit_price_cents
   end
 
+  test "a mixed bottle and glass cart produces order items with the right serving and snapshotted prices" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
+    original_bottle_price = @barolo.price_bottle_cents
+    original_glass_price = @barolo.price_for_glass(125)
+
+    # A table, because placement reserves stock and is refused without one
+    # (:table_required) — see the guard test below.
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    order = result.order
+    assert_equal 2, order.order_items.count
+
+    bottle_item = order.order_items.find(&:bottle?)
+    assert_equal @barolo, bottle_item.wine
+    assert_nil bottle_item.glass_size_ml
+    assert_equal 1, bottle_item.quantity
+    assert_equal original_bottle_price, bottle_item.unit_price_cents
+
+    glass_item = order.order_items.find(&:glass?)
+    assert_equal @barolo, glass_item.wine
+    assert_equal 125, glass_item.glass_size_ml
+    assert_equal 2, glass_item.quantity
+    assert_equal original_glass_price, glass_item.unit_price_cents
+  end
+
+  test "a bottle that lost its price after being added aborts the whole placement" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 1)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 1)
+    @barolo.update!(price_bottle_cents: 0)
+
+    # A table, so the answer is about the cart. The table guard runs ahead of
+    # the cart guards (see PlaceOrder), so without one this would report
+    # :table_required and never exercise the dropped-bottle path at all.
+    assert_no_difference [ "Order.count", "OrderItem.count" ] do
+      result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: nil)
+
+      assert_not result.success?
+      assert_equal :items_unavailable, result.error
+      assert_equal 1, result.dropped_items.size
+      assert_equal @barolo.id, result.dropped_items.first.wine_id
+      assert_equal "bottle", result.dropped_items.first.serving
+    end
+  end
+
   test "an empty cart is refused" do
     cart = cart_for(@osteria)
 
@@ -68,8 +116,8 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a wine that went unavailable after being added aborts the whole order and reports it" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
-    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 1)
     @gavi.update!(available_glasses: 0)
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
@@ -84,8 +132,8 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "an aborted order reports which items dropped, not just a bare symbol" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
-    cart.add(wine_id: @gavi.id, glass_size_ml: 100, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 1)
     @gavi.update!(available_glasses: 0)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: nil)
@@ -98,7 +146,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a successful order reports no dropped items" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
 
@@ -110,8 +158,8 @@ class PlaceOrderTest < ActiveSupport::TestCase
     session = {}
     osteria_cart = cart_for(@osteria, session: session)
     trattoria_cart = cart_for(@trattoria, session: session)
-    osteria_cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
-    trattoria_cart.add(wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1)
+    osteria_cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
+    trattoria_cart.add(wine_id: @franciacorta.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: osteria_cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
 
@@ -122,7 +170,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a signed-in customer's order records the customer and no guest name" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: @customer, guest_name: nil)
 
@@ -133,7 +181,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "the table is attached when present" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
 
@@ -147,7 +195,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
   # cancelling each order would give it back.
   test "a placement with no table is refused and creates nothing" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
     available_before = @barolo.available_glasses
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
@@ -182,7 +230,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
     # defensive :order_invalid branch documented on Result: proof the
     # transaction rolls back cleanly rather than leaving a partial order
     # behind.
-    invalid_item = CartItem.new(wine: @barolo, glass_size_ml: 125, quantity: 0)
+    invalid_item = CartItem.new(wine: @barolo, serving: "glass", glass_size_ml: 125, quantity: 0)
     fake_cart = Struct.new(:items, :dropped_items).new([ invalid_item ], [])
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
@@ -195,7 +243,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "stock is decremented by the line quantity at placement" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
     available_before = @barolo.available_glasses
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
@@ -208,7 +256,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
   # took the decrement and did not say so would have its glasses stranded.
   test "an order that reserved stock is flagged as holding it" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
 
@@ -218,7 +266,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a line short of stock aborts the whole placement and reserves nothing" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 5)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 5)
     # Cart#add itself now refuses a quantity beyond stock (Cart's convenience
     # guard), so the only way to reach PlaceOrder's own lock-checked guard is
     # a line that was fine when added and fell short only afterward.
@@ -247,8 +295,8 @@ class PlaceOrderTest < ActiveSupport::TestCase
     # total once stock falls back before checkout, independent of Cart's
     # guard.
     @barolo.update!(available_glasses: 12)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 100, quantity: 6)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 6)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 6)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 6)
     @barolo.update!(available_glasses: 10)
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
@@ -258,6 +306,74 @@ class PlaceOrderTest < ActiveSupport::TestCase
       assert_equal :insufficient_stock, result.error
     end
     assert_equal 10, @barolo.reload.available_glasses
+  end
+
+  # --- bottles reserve nothing ---
+  #
+  # There is no bottle stock column: a positive price_bottle_cents is the
+  # whole of what "bottle available" means (Wine#bottle_available?), and a
+  # wine is deliberately still bottle-orderable with zero glasses left. So a
+  # bottle line takes no decrement and is never refused for want of glasses.
+
+  test "a bottle line decrements no glasses" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 3)
+    available_before = @barolo.available_glasses
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    assert_equal available_before, @barolo.reload.available_glasses
+  end
+
+  test "a bottle line is placed even when the wine has no glasses left at all" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 2)
+    @barolo.update!(available_glasses: 0)
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    assert_equal 0, @barolo.reload.available_glasses
+    assert_equal 2, result.order.order_items.sole.quantity
+  end
+
+  # A mixed cart's glass line spends exactly its own quantity — the bottle
+  # line sitting beside it neither adds to the draw nor shields it.
+  test "in a mixed cart only the glass line's quantity is reserved" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 4)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
+    available_before = @barolo.available_glasses
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    assert_equal available_before - 2, @barolo.reload.available_glasses
+  end
+
+  # The existence guard is about the row having vanished under the read, not
+  # about stock, so it still covers a bottle-only cart — without it this race
+  # comes back as an FK violation from order_items.create!, i.e. a 500.
+  test "a wine deleted under a bottle-only cart fails cleanly, not with a 500" do
+    # The fixture prices franciacorta by the glass only, and a bottle price
+    # is exactly what makes a wine bottle-orderable (Wine#bottle_available?).
+    # franciacorta is used here for the same reason as the glass-side test
+    # below: no order_items fixture references it, so the FK lets it delete.
+    @franciacorta.update!(price_bottle_cents: 6000)
+    cart = cart_for(@trattoria)
+    cart.add(wine_id: @franciacorta.id, serving: "bottle", quantity: 1)
+    cart.items
+
+    @franciacorta.destroy!
+
+    assert_no_difference [ "Order.count", "OrderItem.count" ] do
+      result = PlaceOrder.call(cart: cart, restaurant: @trattoria, table: @trattoria_table,
+                               customer: nil, guest_name: "Jane")
+
+      assert_not result.success?
+      assert_equal :items_unavailable, result.error
+    end
   end
 
   # Cart#items is read once at the top of #call and memoized; the locked
@@ -271,7 +387,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
   # constraint doesn't block the delete.
   test "a wine deleted between the cart's read and the locked re-check fails cleanly, not with a 500" do
     cart = cart_for(@trattoria)
-    cart.add(wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @franciacorta.id, serving: "glass", glass_size_ml: 125, quantity: 1)
     cart.items
 
     @franciacorta.destroy!
@@ -287,7 +403,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "calculate_total! is applied so the order total reflects its items" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
     expected_total = @barolo.price_for_glass(125) * 2
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
@@ -326,7 +442,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a disabled geofence records no location claim even when a good fix is supplied" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: 12)
 
@@ -340,7 +456,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
   test "an in-range fix is stamped onto the order" do
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: 12)
 
@@ -356,7 +472,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
     # device that simply cannot get a fix) must not cost a real order.
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
 
@@ -370,7 +486,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
   test "a fix too imprecise to judge places the order and records the accuracy but no distance" do
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
     too_wide = Geofence::MAX_ACCURACY_METERS + 1
 
     result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: too_wide)
@@ -387,7 +503,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
     # retry the order they already built rather than rebuild it from scratch.
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
       result = place_at(cart, @osteria, point_at(@osteria, 4000), accuracy: 12)

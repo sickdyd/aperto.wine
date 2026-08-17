@@ -108,6 +108,102 @@ module Owner
       assert_select "#wine_region[aria-invalid]", false
     end
 
+    # --- Character & tasting fields (Task 3) ---
+
+    test "POST with character fields creates a wine with them all set" do
+      sign_in_as @owner
+      post owner_restaurant_wines_path(restaurant_id: @restaurant), params: {
+        wine: {
+          name: "Etna Rosso",
+          color: "red",
+          bottle_size_ml: 750,
+          available_glasses: 4,
+          price_125ml_cents: 1200,
+          abv: 13.5,
+          style: "Volcanic",
+          short_description: "A smoky red from the mountain's north slope.",
+          body: 3, tannins: 4, acidity: 4, sweetness: 1,
+          organic: "1", natural_wine: "0", vegan: "1", biodynamic: "0",
+          aromas_list: "smoke, red cherry,  , plum",
+          food_pairings_list: "grilled lamb, aged pecorino"
+        }
+      }
+      created = Wine.find_by(name: "Etna Rosso")
+      assert_not_nil created
+      assert_in_delta 13.5, created.abv, 0.01
+      assert_equal "Volcanic", created.style
+      assert_equal "A smoky red from the mountain's north slope.", created.short_description
+      assert_equal 3, created.body
+      assert_equal 4, created.tannins
+      assert_equal 4, created.acidity
+      assert_equal 1, created.sweetness
+      assert created.organic?
+      assert_not created.natural_wine?
+      assert created.vegan?
+      assert_not created.biodynamic?
+      assert_equal [ "smoke", "red cherry", "plum" ], created.aromas
+      assert_equal [ "grilled lamb", "aged pecorino" ], created.food_pairings
+    end
+
+    test "POST with an aromas_list left blank submits with no error and an empty aromas array" do
+      sign_in_as @owner
+      assert_difference "Wine.count", 1 do
+        post owner_restaurant_wines_path(restaurant_id: @restaurant), params: {
+          wine: {
+            name: "Blank Aromas Wine",
+            color: "white",
+            bottle_size_ml: 750,
+            available_glasses: 2,
+            price_100ml_cents: 900,
+            aromas_list: "",
+            food_pairings_list: ""
+          }
+        }
+      end
+      created = Wine.find_by(name: "Blank Aromas Wine")
+      assert_equal [], created.aromas
+      assert_equal [], created.food_pairings
+      assert_redirected_to owner_restaurant_wines_path(restaurant_id: @restaurant)
+    end
+
+    test "PATCH updates character fields on an existing wine" do
+      sign_in_as @owner
+      patch owner_restaurant_wine_path(restaurant_id: @restaurant, id: @wine), params: {
+        wine: {
+          abv: 14.2,
+          style: "Traditional",
+          short_description: "Updated tasting note.",
+          body: 5, tannins: 5, acidity: 3, sweetness: 0,
+          organic: "1", natural_wine: "1", vegan: "0", biodynamic: "1",
+          aromas_list: "tar, rose",
+          food_pairings_list: "braised short rib"
+        }
+      }
+      assert_redirected_to owner_restaurant_wines_path(restaurant_id: @restaurant)
+      @wine.reload
+      assert_in_delta 14.2, @wine.abv, 0.01
+      assert_equal "Traditional", @wine.style
+      assert_equal "Updated tasting note.", @wine.short_description
+      assert_equal [ 5, 5, 3, 0 ], [ @wine.body, @wine.tannins, @wine.acidity, @wine.sweetness ]
+      assert @wine.organic?
+      assert @wine.natural_wine?
+      assert_not @wine.vegan?
+      assert @wine.biodynamic?
+      assert_equal [ "tar", "rose" ], @wine.aromas
+      assert_equal [ "braised short rib" ], @wine.food_pairings
+    end
+
+    test "the raw aromas/food_pairings array attributes are not mass-assignable" do
+      sign_in_as @owner
+      patch owner_restaurant_wine_path(restaurant_id: @restaurant, id: @wine), params: {
+        wine: { name: @wine.name, aromas: [ "smuggled" ], food_pairings: [ "smuggled" ] }
+      }
+      assert_redirected_to owner_restaurant_wines_path(restaurant_id: @restaurant)
+      @wine.reload
+      assert_equal [], @wine.aromas
+      assert_equal [], @wine.food_pairings
+    end
+
     # --- EDIT ---
 
     test "GET /owner/restaurants/:id/wines/:id/edit as owner renders edit form" do

@@ -17,6 +17,14 @@ class WineOrderingTest < ApplicationSystemTestCase
     find("button[aria-label='#{label}']").click
   end
 
+  # Clicks the bottle add-to-cart control for one wine — the bottle
+  # equivalent of #add_to_cart above. See menus/_wine_row: its aria-label
+  # names the wine and reuses shared.serving.bottle for the serving half.
+  def add_bottle_to_cart(wine)
+    bottle_label = I18n.t("shared.serving.bottle", size: wine.bottle_size_ml)
+    find("button[aria-label='#{I18n.t("menu.add_to_cart_bottle", wine: wine.name, bottle_label: bottle_label)}']").click
+  end
+
   # A successful add redirects back to the menu (final review finding 3),
   # so getting to the cart page from there is always a deliberate extra
   # step via the sticky bar's link.
@@ -77,7 +85,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     # Bump barolo from 1 to 2 glasses. Each cart line is one <li> of the
     # bill's ruled list (see carts/_cart_item).
     within(find("li", text: barolo.name)) do
-      select "2", from: "cart_item_#{barolo.id}_125_quantity"
+      select "2", from: "cart_item_#{barolo.id}_glass_125_quantity"
       click_button I18n.t("cart.update_quantity")
     end
 
@@ -213,6 +221,58 @@ class WineOrderingTest < ApplicationSystemTestCase
     assert_text gavi.name
   end
 
+  # --- Bottle serving (Task 3) ---
+
+  test "a diner adds a bottle to the cart from the menu and sees it in the cart and on the placed order" do
+    restaurant = restaurants(:osteria)
+    barolo = wines(:barolo)
+    bottle_label = I18n.t("shared.serving.bottle", size: barolo.bottle_size_ml)
+
+    # Entered through the table QR rather than the bare slug: placing an
+    # order reserves stock, so it needs a resolved table (see PlaceOrder's
+    # :table_required). The bare-slug entry this test used before now
+    # renders the cart with no submit control at all.
+    visit table_menu_path(table_token: restaurant_tables(:sala_t1).token)
+    add_bottle_to_cart(barolo)
+    assert_current_path published_menu_path(restaurant), wait: 5
+
+    go_to_cart
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
+    assert_recased_text bottle_label, wait: 5
+    assert_text format_price(barolo.price_bottle_cents)
+
+    click_button I18n.t("orders.form.submit")
+
+    assert_text I18n.t("orders.status.statuses.pending"), wait: 5
+    assert_text barolo.name
+    assert_recased_text bottle_label
+    assert_text format_price(barolo.price_bottle_cents)
+  end
+
+  # A bottle draws on no stock, so a wine with nothing left to pour is
+  # still orderable by the bottle and the cart offers the submit control —
+  # the exact case the two over-stock tests below withhold it for.
+  test "a bottle line is orderable with no glasses left, and is never flagged over stock" do
+    restaurant = restaurants(:osteria)
+    barolo = wines(:barolo)
+
+    visit table_menu_path(table_token: restaurant_tables(:sala_t1).token)
+    add_bottle_to_cart(barolo)
+    assert_current_path published_menu_path(restaurant), wait: 5
+
+    barolo.update!(available_glasses: 0)
+    visit cart_path(restaurant_slug: restaurant.slug)
+
+    assert_text barolo.name, wait: 5
+    assert_no_text I18n.t("cart.stock_shortfall_notice")
+
+    click_button I18n.t("orders.form.submit")
+
+    assert_text I18n.t("orders.status.statuses.pending"), wait: 5
+    # The bottle took none of the glass pool — the counter is untouched.
+    assert_equal 0, barolo.reload.available_glasses
+  end
+
   # --- stock falling away under a cart that was already valid (Task 4) ---
   #
   # The wine stays on the menu and keeps its price, so nothing is dropped:
@@ -229,7 +289,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     within(find("li", text: barolo.name)) do
-      select "3", from: "cart_item_#{barolo.id}_125_quantity"
+      select "3", from: "cart_item_#{barolo.id}_glass_125_quantity"
       click_button I18n.t("cart.update_quantity")
     end
     assert_text format_price(barolo.price_for_glass(125) * 3), wait: 5
@@ -242,11 +302,12 @@ class WineOrderingTest < ApplicationSystemTestCase
     assert_text I18n.t("cart.stock_shortfall", count: 2)
 
     within(find("li", text: barolo.name)) do
-      select "2", from: "cart_item_#{barolo.id}_125_quantity"
+      select "2", from: "cart_item_#{barolo.id}_glass_125_quantity"
       click_button I18n.t("cart.update_quantity")
     end
 
     assert_no_text I18n.t("cart.stock_shortfall_notice"), wait: 5
+
     click_button I18n.t("orders.form.submit")
 
     assert_text I18n.t("orders.status.statuses.pending"), wait: 5
@@ -264,7 +325,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     within(find("li", text: barolo.name)) do
-      select "3", from: "cart_item_#{barolo.id}_125_quantity"
+      select "3", from: "cart_item_#{barolo.id}_glass_125_quantity"
       click_button I18n.t("cart.update_quantity")
     end
     assert_text format_price(barolo.price_for_glass(125) * 3), wait: 5

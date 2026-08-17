@@ -20,7 +20,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   def add_barolo_to_cart(quantity: 1)
-    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: quantity }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: quantity }
   end
 
   def last_order

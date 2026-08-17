@@ -407,6 +407,35 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal glasses_before + 5, wine.reload.available_glasses
   end
 
+  # The release mirrors PlaceOrder#reserve_stock! exactly, and that spends
+  # nothing on a bottle: there is no bottle stock column, a positive bottle
+  # price being the whole of what "bottle available" means
+  # (Wine#bottle_available?). Releasing against a bottle line would mint a
+  # glass out of nothing on every cancel.
+  test "cancel! releases nothing for a bottle line" do
+    wine = wines(:barolo)
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 3,
+                              unit_price_cents: 9000)
+    glasses_before = wine.available_glasses
+
+    assert order.cancel!
+    assert_equal glasses_before, wine.reload.available_glasses
+  end
+
+  test "cancel! on a mixed order releases the glass line only" do
+    wine = wines(:barolo)
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 4,
+                              unit_price_cents: 9000)
+    order.order_items.create!(wine: wine, serving: :glass, glass_size_ml: 125, quantity: 2,
+                              unit_price_cents: 1800)
+    glasses_before = wine.available_glasses
+
+    assert order.cancel!
+    assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
   # --- stock_reserved ---
   #
   # Reservation moved from approval to placement in this deploy, so production

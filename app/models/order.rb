@@ -96,12 +96,19 @@ class Order < ApplicationRecord
       update!(status: :cancelled, stock_reserved: false)
       next true unless release
 
+      # Glass lines only, exactly mirroring what PlaceOrder#reserve_stock!
+      # spent. A bottle line took no decrement — there is no bottle stock
+      # column, a positive bottle price being the whole of what "bottle
+      # available" means (Wine#bottle_available?) — so releasing against one
+      # would invent glasses out of nothing, and a bottle-only order would
+      # mint a glass per bottle on every cancel.
+      #
       # Ordered by wine_id so two cancels racing over two orders that share
       # the same pair of wines take their row locks in the same sequence and
       # cannot deadlock each other. (A cancel cannot deadlock against a
       # placement: placement takes every wine lock it needs and then waits on
       # nothing a cancel holds.)
-      order_items.includes(:wine).order(:wine_id).each do |item|
+      order_items.glass.includes(:wine).order(:wine_id).each do |item|
         item.wine.increment!(:available_glasses, item.quantity)
       end
       true

@@ -74,10 +74,16 @@
           </div>
         <% end %>
 
+        <%# Glass rows only carry the flag. over_stock_wine_ids is keyed by
+            wine, and a wine can be over its glasses while a bottle of the
+            same wine is perfectly orderable (there is no bottle stock —
+            see Wine#bottle_available?), so flagging on wine id alone would
+            mark a blameless bottle row invalid and tell the diner to reduce
+            a quantity that is not the problem. %>
         <ul class="group-body">
           <% items.each do |item| %>
             <%= render "cart_item", item: item, restaurant: @restaurant,
-                  over_stock: over_stock_wine_ids.include?(item.wine.id) %>
+                  over_stock: item.serving == "glass" && over_stock_wine_ids.include?(item.wine.id) %>
           <% end %>
         </ul>
 

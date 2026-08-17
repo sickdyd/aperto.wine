@@ -20,6 +20,26 @@ en:
     flash_error: "Error"
     # Accessible name for the icon-only close button on every flash toast.
     flash_dismiss: "Dismiss message"
+    serving:
+      # The one bottle-serving label shared by every surface that renders a
+      # bottle line (cart, and the menu once Task 3 lands) — %{size} is the
+      # wine's bottle_size_ml. Explicit "Bottle" word plus the size, not a
+      # bare "750 ml": next to a glass pour's "125 ml" in the same column, a
+      # bare size reads as a very large pour, not a different serving.
+      bottle: "Bottle %{size} ml"
+    # Shared between the diner-facing menu row (a pip run's visible label and
+    # its screen-reader text equivalent) and the owner form's field labels —
+    # one word for the same idea on both surfaces, mirroring shared.serving.
+    certifications:
+      organic: "Organic"
+      natural_wine: "Natural wine"
+      vegan: "Vegan"
+      biodynamic: "Biodynamic"
+    tasting_axes:
+      body: "Body"
+      tannins: "Tannins"
+      acidity: "Acidity"
+      sweetness: "Sweetness"
   auth:
     sign_in: "Sign In"
     sign_up: "Create Account"
@@ -201,6 +221,16 @@ en:
         suggested: "Suggested"
         position: "Sort Order"
         active_label: "Wine is available for order"
+        character: "Character & Tasting"
+        abv: "ABV"
+        style: "Style"
+        short_description: "Short Description"
+        aromas: "Aromas"
+        aromas_placeholder: "e.g. cherry, vanilla, leather"
+        aromas_hint: "Comma-separated. Leave blank if none apply."
+        food_pairings: "Food Pairings"
+        food_pairings_placeholder: "e.g. red meat, aged cheese"
+        food_pairings_hint: "Comma-separated. Leave blank if none apply."
       autofill:
         aria_label: Wine name with autocomplete suggestions
     wine_lists:
@@ -540,6 +570,32 @@ en:
     empty: "No wines available at the moment."
     powered_by: "Powered by"
     add_to_cart: "Add %{wine}, %{size} ml"
+    # %{bottle_label} is shared.serving.bottle already rendered — reused
+    # rather than a second bottle wording (see shared.serving.bottle).
+    add_to_cart_bottle: "Add %{wine}, %{bottle_label}"
+    abv: "%{value}% vol"
+    # The screen-reader equivalent for a tasting axis's pip run — the pips
+    # themselves are aria-hidden, so this is the only place the reading is
+    # actually announced, e.g. "Body 4 of 5".
+    axis_reading: "%{axis} %{value} of %{max}"
+    food_pairings_label: "Pairs with"
+    aromas_label: "Aromas"
+    filters:
+      color_label: "Filter by colour"
+      serving_label: "Filter by serving"
+      serving:
+        glass: "By the glass"
+        bottle: "By the bottle"
+      certification_label: "Filter by certification"
+      price_band_label: "Filter by price"
+      # %{amount}/%{low}/%{high} are format_cents output, e.g. "€9.00". The
+      # boundaries are derived from the rendered wines' own prices (see
+      # MenusHelper#menu_price_band_facet), never hardcoded here.
+      price_band:
+        up_to: "Up to %{amount}"
+        between: "%{low}–%{high}"
+        over: "Over %{amount}"
+      clear_all: "Clear filters"
     cart_bar:
       item_count:
         one: "1 item"
@@ -581,6 +637,12 @@ en:
       unknown_wine: "Unavailable wine"
       unavailable: "Unavailable"
       remove_unknown: "Remove unavailable item #%{wine_id} (%{size} ml)"
+      # The wine itself is gone (deleted outright — the only case this
+      # renders, see #wine_name in _dropped_cart_item), so there is no
+      # bottle_size_ml left to report; %{wine_id} alone is what still
+      # distinguishes a bottle line from a same-wine glass line dropped
+      # alongside it.
+      remove_unknown_bottle: "Remove unavailable bottle #%{wine_id}"
       reasons:
         wine_not_found: "This wine is no longer on the menu."
         wine_unavailable: "This wine is currently unavailable."
@@ -588,6 +650,7 @@ en:
     errors:
       wine_not_found: "That wine could not be found."
       wine_unavailable: "That wine is no longer available."
+      invalid_serving: "That is not a valid way to order this wine."
       invalid_glass_size: "That is not a valid glass size."
       price_unavailable: "That wine has no price set for that glass size."
       cart_full: "Your cart is full — remove an item before adding another."
