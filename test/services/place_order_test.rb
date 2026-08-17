@@ -258,7 +258,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
   test "a disabled geofence records no location claim even when a good fix is supplied" do
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: 12)
 
@@ -272,7 +272,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
   test "an in-range fix is stamped onto the order" do
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: 12)
 
@@ -288,7 +288,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
     # device that simply cannot get a fix) must not cost a real order.
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
 
@@ -302,7 +302,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
   test "a fix too imprecise to judge places the order and records the accuracy but no distance" do
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
     too_wide = Geofence::MAX_ACCURACY_METERS + 1
 
     result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: too_wide)
@@ -319,7 +319,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
     # retry the order they already built rather than rebuild it from scratch.
     @osteria.update!(geofence_enabled: true)
     cart = cart_for(@osteria)
-    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
       result = place_at(cart, @osteria, point_at(@osteria, 4000), accuracy: 12)
