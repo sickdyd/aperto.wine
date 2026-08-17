@@ -7,11 +7,16 @@ module Owner
     # quietly stale instead of failing.
     BADGE_IDS = { sidebar: "owner-orders-badge", mobile: "owner-orders-badge-mobile" }.freeze
 
-    # The tally on the sidebar's Orders entry: what is still waiting on the
-    # owner, not how much has been sold. Re-read on every owner page render and
-    # restated by the poller, so a badge is never older than one poll.
+    # The tally on the Orders entry: what is still waiting on the owner, not how
+    # much has been sold. Re-read on every owner page render and restated by the
+    # poller, so a badge is never older than one poll.
+    #
+    # Memoised because the answer is asked for once per badge and every page
+    # carries two of them — one count query, not two, and the pair can never
+    # disagree with each other on the same render.
     def owner_pending_orders_count(restaurant)
-      restaurant.orders.pending.count
+      @owner_pending_orders_counts ||= {}
+      @owner_pending_orders_counts[restaurant.id] ||= restaurant.orders.pending.count
     end
 
     # The seed the poller starts from. Everything already on the page counts as

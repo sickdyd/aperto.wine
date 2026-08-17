@@ -6,10 +6,6 @@ import { Turbo } from "@hotwired/turbo-rails"
 // per-tab state on the server, and no cursor arithmetic here that could drift.
 const WINDOW_HEADER = "X-Order-Window"
 
-// The sidebar tally, read back off the page rather than tracked here, so a
-// badge replaced by any other response is the one the next poll reports.
-const BADGE_ID = "owner-orders-badge"
-
 // Asks the server, on a timer, whether an order has arrived — and lets the
 // server answer in Turbo Streams, so what a new order looks like stays in ERB
 // and this file never renders anything.
@@ -25,8 +21,12 @@ const BADGE_ID = "owner-orders-badge"
 //     network blinked", and a poller that starts reporting its own health is
 //     noisier than the thing it is reporting on. The next tick just tries again.
 export default class extends Controller {
+  // badgeId comes from the page rather than being spelled out again here: the
+  // markup and the Ruby constant behind it are the one source of that name, and
+  // a copy in this file could drift out of sync without anything failing.
   static values = {
     url: String,
+    badgeId: String,
     interval: { type: Number, default: 15000 },
     known: Array
   }
@@ -97,7 +97,9 @@ export default class extends Controller {
     this.known = header.split(",").filter(Boolean).map(Number)
   }
 
+  // Read back off the page rather than tracked here, so a badge replaced by any
+  // other response is still the one the next poll reports.
   pendingCount() {
-    return document.getElementById(BADGE_ID)?.dataset.pendingCount ?? ""
+    return document.getElementById(this.badgeIdValue)?.dataset.pendingCount ?? ""
   }
 }

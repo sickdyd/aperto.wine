@@ -143,6 +143,21 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal pair.max_by(&:id), restaurants(:enoteca).orders.notification_window.first
   end
 
+  # This scope runs on a timer for every owner page anyone has open, so it is
+  # the one query in the app that must never fall back to sorting a restaurant's
+  # whole order history. Only an index matching the ORDER BY — both columns,
+  # both descending — turns it into a five-row walk.
+  test "notification_window is backed by an index that matches its ordering" do
+    index = ActiveRecord::Base.connection.indexes(:orders).find do |candidate|
+      candidate.columns == %w[restaurant_id created_at id]
+    end
+
+    assert index, "no index covers Order.notification_window's filter and sort"
+    # Postgres reports only the columns that depart from the default ascending.
+    assert_equal({ "created_at" => :desc, "id" => :desc }, index.orders,
+      "the index has to descend exactly as the scope does, or Postgres sorts anyway")
+  end
+
   # --- calculate_total! ---
 
   test "calculate_total! sums order items" do

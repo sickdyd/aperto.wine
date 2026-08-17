@@ -66,6 +66,14 @@ Two non-ActiveRecord "models" carry customer state (both live in `app/models/` a
 
 **`PlaceOrder`** (`app/services/`) turns a cart into an `Order` in one transaction. Any line that fails the live re-check aborts the *whole* placement — shipping the survivors would serve a different order than the one the diner built.
 
+### Live order notifications (owner side)
+
+Action Cable is deliberately **not** loaded (see the commented railtie in `config/application.rb`). New orders reach the owner by polling instead: every owner page rendered inside a restaurant mounts `order_notifications_controller.js`, which asks `Owner::OrdersController#notifications` every 15s (1s under test — `order_notifications_poll_interval_ms`) and hands the answer to `Turbo.renderStreamMessage`.
+
+The browser holds the state, not the server. It sends back the window of order ids it was last given (`known`, echoed in the `X-Order-Window` response header) plus the pending tally it is currently showing (`count`, read off the badge's `data-pending-count`); the server answers `204 No Content` when neither has moved. Both params are untrusted and used for nothing but comparison. `Order.notification_window` is the window on both sides — its `created_at DESC, id DESC` ordering is load-bearing, because an order free to drop out of the window and come back is an order announced twice, and `index_orders_on_restaurant_id_and_recency` exists solely so the app's most frequent query never sorts a restaurant's whole history.
+
+Consequences elsewhere: `owner/shared/_flash` now renders its `.toast-stack` **unconditionally** (it is the append target for arriving orders, and a stream with no target is dropped silently), and the pending badge is rendered twice per page — sidebar and mobile top bar, ids in `Owner::OrdersHelper::BADGE_IDS` — because the sidebar is behind a drawer on a phone.
+
 ### Services
 
 Plain objects with a single `.call`: `PlaceOrder`, `QrSvgRenderer`, `Geocoding`, `WineReferences::{Importer,Lookup,PythonList}`. `WineReference` is a read-only global catalogue (public-domain X-Wines, CC0) powering the owner's wine type-ahead — it belongs to no restaurant. Address autocomplete proxies Photon (OpenStreetMap) via `Owner::AddressSuggestionsController`; `Restaurant` geocodes as a best-effort `after_validation` fallback that never blocks a save.

@@ -76,6 +76,7 @@
           <div hidden
                data-controller="order-notifications"
                data-order-notifications-url-value="<%= notifications_owner_restaurant_orders_path(@restaurant) %>"
+               data-order-notifications-badge-id-value="<%= Owner::OrdersHelper::BADGE_IDS[:sidebar] %>"
                data-order-notifications-known-value="<%= owner_recent_order_ids(@restaurant).to_json %>"
                data-order-notifications-interval-value="<%= order_notifications_poll_interval_ms %>"></div>
         <% end %>
