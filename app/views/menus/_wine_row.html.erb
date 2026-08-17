@@ -10,12 +10,18 @@
     restaurant         - the owning Restaurant, for the add-to-cart route (required)
     unavailable_label  - tag text when the wine isn't pourable
                          (defaults to the flat-menu "Sold out" wording)
+    facet_values       - this wine's { facet_name => "value1 value2" } entry
+                         from MenusHelper#menu_filter_facets, stamped onto
+                         data-facet-<name> for list_filter_controller.js to
+                         read (defaults to none, so a caller with no filter
+                         chips renders exactly as before)
   This row reasons per serving: glass controls gate on
   Wine#glasses_available?, bottle controls on #bottle_available?, and the
   sold-out tag shows only when #available? is false — neither serving
   offered.
 %>
 <% unavailable_label = local_assigns.fetch(:unavailable_label) { t("shared.sold_out") } %>
+<% facet_values = local_assigns.fetch(:facet_values) { {} } %>
 <% open_bottle = wine.wine_bottles.find { |b| b.status == "open" } %>
 <%# Priced servings, bottle first (a printed card lists the bottle price
     first), then priced pours in ascending size order — the price block and
@@ -41,7 +47,11 @@
 %>
 <li class="<%= class_names("wine-soldout" => !wine.available?) %>"
     data-list-filter-target="item"
-    data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.vintage_year, wine.region, wine.style, *wine.food_pairings, *wine.aromas].compact_blank.join(" ").downcase %>">
+    data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.vintage_year, wine.region, wine.style, *wine.food_pairings, *wine.aromas].compact_blank.join(" ").downcase %>"
+    <% if facet_values["color"] %>data-facet-color="<%= facet_values["color"] %>"<% end %>
+    <% if facet_values["serving"] %>data-facet-serving="<%= facet_values["serving"] %>"<% end %>
+    <% if facet_values["certification"] %>data-facet-certification="<%= facet_values["certification"] %>"<% end %>
+    <% if facet_values["price-band"] %>data-facet-price-band="<%= facet_values["price-band"] %>"<% end %>>
   <div class="wine-head">
     <%= wine_color_dot(wine.color) %>
     <span class="wine-name"><%= wine.name %></span>

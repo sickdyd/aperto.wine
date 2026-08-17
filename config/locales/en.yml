@@ -569,6 +569,22 @@ en:
     axis_reading: "%{axis} %{value} of %{max}"
     food_pairings_label: "Pairs with"
     aromas_label: "Aromas"
+    filters:
+      color_label: "Filter by colour"
+      serving_label: "Filter by serving"
+      serving:
+        glass: "By the glass"
+        bottle: "By the bottle"
+      certification_label: "Filter by certification"
+      price_band_label: "Filter by price"
+      # %{amount}/%{low}/%{high} are format_cents output, e.g. "€9.00". The
+      # boundaries are derived from the rendered wines' own prices (see
+      # MenusHelper#menu_price_band_facet), never hardcoded here.
+      price_band:
+        up_to: "Up to %{amount}"
+        between: "%{low}–%{high}"
+        over: "Over %{amount}"
+      clear_all: "Clear filters"
     cart_bar:
       item_count:
         one: "1 item"

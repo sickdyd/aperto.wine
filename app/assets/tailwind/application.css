@@ -892,7 +892,9 @@
     transform: rotate(-1.85deg);
   }
 
-  /* A chip: an inline filter or jump target. Never a button. */
+  /* A chip: an inline filter or jump target. A filter chip is a toggle
+     button — aria-pressed reflects its state — while a jump target is a
+     plain anchor carrying aria-current instead; both share this look. */
   .chip {
     @apply inline-flex items-center gap-1.5 whitespace-nowrap px-2 no-underline;
     min-height: 44px;
@@ -906,7 +908,8 @@
   }
 
   .chip:hover,
-  .chip[aria-current] {
+  .chip[aria-current],
+  .chip[aria-pressed="true"] {
     background-color: var(--color-ox-2);
     border-color: var(--color-ox-2);
     color: var(--color-paper);

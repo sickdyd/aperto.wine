@@ -561,6 +561,19 @@ it:
     axis_reading: "%{axis} %{value} su %{max}"
     food_pairings_label: "Si abbina con"
     aromas_label: "Aromi"
+    filters:
+      color_label: "Filtra per colore"
+      serving_label: "Filtra per servizio"
+      serving:
+        glass: "Al calice"
+        bottle: "A bottiglia"
+      certification_label: "Filtra per certificazione"
+      price_band_label: "Filtra per prezzo"
+      price_band:
+        up_to: "Fino a %{amount}"
+        between: "%{low}–%{high}"
+        over: "Oltre %{amount}"
+      clear_all: "Cancella filtri"
     cart_bar:
       item_count:
         one: "1 vino"
