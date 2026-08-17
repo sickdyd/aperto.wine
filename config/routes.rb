@@ -30,6 +30,9 @@ Rails.application.routes.draw do
     # its abuse controls. public_token is a 24-char base58 has_secure_token,
     # so :public_token gets no digits-only constraint the way an :id would.
     post "menu/:restaurant_id/orders", to: "orders#create", as: :orders
+    # No as: here — the post above already defines orders_path for this
+    # same URL, and a second :as on the same name would just warn.
+    get  "menu/:restaurant_id/orders", to: "orders#index"
     get  "orders/:public_token",       to: "orders#show",   as: :order_status
 
     # Owner namespace
