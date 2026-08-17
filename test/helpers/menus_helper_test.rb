@@ -207,6 +207,28 @@ class MenusHelperTest < ActionView::TestCase
     assert_nil facets[:groups].find { |g| g[:name] == "price-band" }
   end
 
+  test "price band facet does not render when the rank split still collapses to one band" do
+    # Ordinary long-tail restaurant pricing: a couple of by-the-glass
+    # bargains under a wall of similarly-priced bottles. Three distinct
+    # prices (10, 20, 30) clear the earlier guard, but with five wines
+    # clustered at the top price, both rank cutoffs (index 6/3=2 and
+    # 2*6/3=4 into the 7-item sorted list) land on 30 — so "price <= 30"
+    # swallows all seven wines into "low" and "mid"/"high" come out empty.
+    skewed_wines =
+      [ Wine.new(restaurant: restaurants(:osteria), name: "Cheap glass", color: :red,
+                 bottle_size_ml: 750, active: true, available_glasses: 5, price_125ml_cents: 1000),
+        Wine.new(restaurant: restaurants(:osteria), name: "Mid glass", color: :red,
+                 bottle_size_ml: 750, active: true, available_glasses: 5, price_125ml_cents: 2000) ] +
+      5.times.map do |n|
+        Wine.new(restaurant: restaurants(:osteria), name: "Cluster wine #{n}", color: :red,
+                 bottle_size_ml: 750, active: true, available_glasses: 5, price_125ml_cents: 3000)
+      end
+
+    facets = menu_filter_facets(rendered_from(skewed_wines))
+
+    assert_nil facets[:groups].find { |g| g[:name] == "price-band" }
+  end
+
   test "wine_values carries an entry per facet a wine actually takes a value on" do
     rendered = renderable_wine_lists([ wine_lists(:osteria_list) ])
     facets = menu_filter_facets(rendered)
