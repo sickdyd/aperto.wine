@@ -54,7 +54,9 @@ class OrdersController < ApplicationController
 
     result = PlaceOrder.call(
       cart: @cart, restaurant: @restaurant, table: current_table,
-      customer: current_user, guest_name: order_params[:guest_name].presence
+      customer: current_user, guest_name: order_params[:guest_name].presence,
+      latitude: order_params[:latitude], longitude: order_params[:longitude],
+      accuracy: order_params[:accuracy]
     )
 
     if result.success?
@@ -100,8 +102,20 @@ class OrdersController < ApplicationController
   # length-capped on the model). status, total_amount_cents, restaurant_id,
   # restaurant_table_id, customer_id and public_token are all set
   # server-side in PlaceOrder and never accepted from params.
+  #
+  # latitude/longitude/accuracy are the browser Geolocation API's reading,
+  # and with guest_name they are the only diner-supplied values that reach
+  # the service at all. Unlike guest_name none of them is persisted verbatim:
+  # the order row keeps only the derived distance and the accuracy, never a
+  # point the diner has stood on.
+  #
+  # There is deliberately no numeric or range check here. Geofence already
+  # treats anything non-numeric, non-finite or outside a real coordinate range
+  # as "no usable fix" — that validation lives there on purpose, and a second
+  # layer in this controller would be unreachable code. #permit also drops
+  # arrays and hashes to nil, which Geofence reads as the same "no fix".
   def order_params
-    params.permit(:guest_name)
+    params.permit(:guest_name, :latitude, :longitude, :accuracy)
   end
 
   # Read from the raw params, not the permitted order_params: Strong

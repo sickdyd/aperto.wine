@@ -68,6 +68,47 @@ class OrderTest < ActiveSupport::TestCase
     assert orders(:approved_order).approved?
   end
 
+  test "location_status enum values" do
+    assert_equal 0, Order.location_statuses[:not_checked]
+    assert_equal 1, Order.location_statuses[:verified]
+    assert_equal 2, Order.location_statuses[:unverified]
+  end
+
+  # Every order placed before the geofence existed, and every order at a
+  # restaurant that leaves it off, has to read as "no claim made" rather than as
+  # a failed check — so the column default is what the owner sees.
+  test "location_status defaults to not_checked" do
+    assert_equal "not_checked", Order.new.location_status
+    assert_equal "not_checked", Order.create!(valid_attributes).location_status
+  end
+
+  # The prefix is not cosmetic: unprefixed, `verified?` would sit next to the
+  # `status` enum's own predicates with nothing to say which one it answers.
+  test "location_status predicates are prefixed" do
+    order = Order.new(valid_attributes.merge(location_status: :verified))
+
+    assert order.location_status_verified?
+    assert_not order.location_status_not_checked?
+    assert_not order.location_status_unverified?
+  end
+
+  test "location_status scopes are prefixed" do
+    verified = Order.create!(valid_attributes.merge(location_status: :verified))
+    unverified = Order.create!(valid_attributes.merge(location_status: :unverified))
+
+    assert_includes Order.location_status_verified, verified
+    assert_not_includes Order.location_status_verified, unverified
+    assert_includes Order.location_status_unverified, unverified
+  end
+
+  test "distance_meters and location_accuracy_meters are optional" do
+    order = Order.new(valid_attributes)
+
+    assert_nil order.distance_meters
+    assert_nil order.location_accuracy_meters
+    assert order.valid?
+  end
+
   # --- Associations ---
 
   test "belongs to restaurant" do
