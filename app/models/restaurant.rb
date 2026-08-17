@@ -6,6 +6,7 @@ class Restaurant < ApplicationRecord
   # reached. Keep in step with config/routes.rb.
   RESERVED_SLUGS = %w[
     menu t cart orders sign_in sign_up sign_out owner up rails_icons en it
+    privacy terms
   ].freeze
 
   # The range over which a proximity radius actually decides anything. Below 50m

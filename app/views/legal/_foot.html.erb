@@ -1,0 +1,8 @@
+<%# Every legal page is a dead end unless it says where to go next: the other
+    document, and back out to the site. `.measure` rather than `.legal-head` —
+    same centred column, without borrowing a name that says "head". %>
+<nav class="measure mx-auto mt-14 pt-4 flex flex-wrap items-center gap-x-6" aria-label="<%= t("legal.nav.label") %>">
+  <hr class="rule-medium w-full mb-4">
+  <a href="<%= root_path %>" class="link-mono"><%= t("legal.back_to_site") %></a>
+  <a href="<%= other_document_path %>" class="link-mono"><%= other_document_label %></a>
+</nav>

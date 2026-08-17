@@ -1432,6 +1432,142 @@
   .measure {
     max-width: var(--measure);
   }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     LEGAL DOCUMENTS — the one long-form text on the site.
+
+     Everything else here is a menu row, a form field or a data table, so the
+     ledger had no vocabulary for running prose with headings and lists. Set
+     as a printed document: one measure, sections opened by a rule rather than
+     boxed, mono for the clause labels. Element selectors are scoped under
+     `.legal-doc` so they cannot leak into a view that merely sits nearby.
+     ═════════════════════════════════════════════════════════════════════════ */
+  .legal-doc {
+    max-width: var(--measure);
+    margin-inline: auto;
+    color: var(--color-ink);
+    text-wrap: pretty;
+  }
+
+  /* Section break: the heavy rule does the work a card would do elsewhere. */
+  .legal-doc h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--text-h3);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--color-ox-1);
+    margin-top: 2.75rem;
+    padding-top: 0.75rem;
+    border-top: 1.5px solid var(--color-rule-medium);
+    text-wrap: balance;
+  }
+
+  .legal-doc h3 {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-ox-2);
+    margin-top: 1.75rem;
+  }
+
+  .legal-doc p,
+  .legal-doc ul,
+  .legal-doc ol {
+    margin-top: 0.9rem;
+    line-height: 1.62;
+  }
+
+  .legal-doc ul,
+  .legal-doc ol {
+    padding-inline-start: 1.35rem;
+  }
+
+  .legal-doc ul {
+    list-style: square;
+  }
+
+  .legal-doc ol {
+    list-style: decimal;
+  }
+
+  .legal-doc li {
+    margin-top: 0.4rem;
+  }
+
+  .legal-doc li::marker {
+    color: var(--color-ox-3);
+  }
+
+  .legal-doc a {
+    color: var(--color-ox-2);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  .legal-doc strong {
+    font-weight: 600;
+    color: var(--color-ox-1);
+  }
+
+  /* Leader dots without the decorative span the rest of the app uses. The
+     identity block is a <dl>, and inside one a wrapping <div> may contain only
+     <dt>/<dd> — so the dotted rule is generated off the <dt> instead, which
+     grows to fill the row while the <dd> stays right-aligned. */
+  .legal-doc .leader-row dt {
+    @apply flex items-baseline gap-3;
+    flex: 1 1 auto;
+  }
+
+  .legal-doc .leader-row dt::after {
+    content: "";
+    flex: 1 1 1.5rem;
+    min-width: 1.25rem;
+    border-bottom: 1px dotted var(--color-leader);
+    transform: translateY(-0.1em);
+  }
+
+  /* A registered address is far longer than the prices `.leader-value` was
+     built for, and that class is `shrink-0`: on a phone the value ran past the
+     right edge and took the whole page with it. Here the value may shrink and
+     wrap, and a long email or VAT number may break mid-token. */
+  .legal-doc .leader-row dd {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* The document's own head: what it is, and when it last changed. */
+  .legal-head {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-bottom: 1rem;
+  }
+
+  .legal-updated {
+    @apply mt-3 block;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-quiet);
+  }
+
+  /* An identity field with nothing in it yet. Deliberately conspicuous: a
+     half-filled block that renders as a tidy blank line ships unnoticed. */
+  .legal-pending {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-ox-2);
+    background-color: var(--color-stock);
+    padding: 0.1em 0.4em;
+  }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

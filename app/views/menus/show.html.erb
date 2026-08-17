@@ -104,6 +104,13 @@
     <footer class="sheet-foot">
       <%= t("menu.powered_by") %>
       <a href="<%= root_path %>" class="underline decoration-ox-4 underline-offset-4 hover:text-ox-1">aperto.wine</a>
+      <%# A diner never leaves the menu, so this is the only foot most of them
+          will ever see — the informativa has to be reachable from it. %>
+      <span class="block mt-2">
+        <a href="<%= privacy_path %>" class="underline decoration-ox-4 underline-offset-4 hover:text-ox-1"><%= t("legal.nav.privacy") %></a>
+        &middot;
+        <a href="<%= terms_path %>" class="underline decoration-ox-4 underline-offset-4 hover:text-ox-1"><%= t("legal.nav.terms") %></a>
+      </span>
     </footer>
   </div>
 </main>

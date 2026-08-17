@@ -10,6 +10,8 @@ class PublicSlugRoutingTest < ActionDispatch::IntegrationTest
     "/up" => { controller: "rails/health", action: "show" },
     "/en/sign_in" => { controller: "sessions", action: "new", locale: "en" },
     "/en/sign_up" => { controller: "registrations", action: "new", locale: "en" },
+    "/en/privacy" => { controller: "legal", action: "privacy", locale: "en" },
+    "/en/terms" => { controller: "legal", action: "terms", locale: "en" },
     "/en/owner/restaurants" => { controller: "owner/restaurants", action: "index", locale: "en" },
     "/en/menu/1" => { controller: "menus", action: "legacy", locale: "en", id: "1" },
     "/en/t/some-token" => { controller: "menus", action: "show", locale: "en", table_token: "some-token" },

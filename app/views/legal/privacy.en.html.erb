@@ -1,0 +1,240 @@
+<% content_for :title, "#{t('legal.privacy.title')} · #{t('app_name')}" %>
+<% content_for :description, t("legal.privacy.meta_description") %>
+
+<main id="main" class="spread py-12">
+  <%= render "legal/head",
+        eyebrow: t("legal.eyebrow.privacy"),
+        title: t("legal.privacy.title"),
+        updated_on: LegalController::LAST_UPDATED %>
+
+  <article class="legal-doc">
+    <p class="lede">
+      This notice explains what personal data is processed when you use
+      aperto.wine — whether you are a guest scanning a table QR code or a
+      restaurateur managing a wine list — under Articles 13 and 14 of
+      Regulation (EU) 2016/679 (GDPR).
+    </p>
+
+    <h2>Two distinct roles</h2>
+    <p>
+      aperto.wine is a technical service restaurants use to publish their wine
+      list and receive table orders. That creates two different situations, and
+      the distinction matters because it changes who you should approach:
+    </p>
+    <ul>
+      <li>
+        <strong>Order and table data.</strong> The <strong>restaurant is the
+        data controller</strong>: it decides to collect this data, uses it to
+        serve the table, and sets how long it is kept. aperto.wine acts as a
+        <strong>processor</strong> under Article 28 GDPR — it processes that
+        data only on the restaurant's behalf and on its instructions. The
+        clauses of that appointment are in the
+        <%= link_to "Terms of Service", terms_path %>.
+      </li>
+      <li>
+        <strong>Restaurateur accounts.</strong> Here the data controller is the
+        operator of aperto.wine, identified below: the account exists to provide
+        the service to whoever subscribes to it.
+      </li>
+    </ul>
+
+    <h2>What we collect from guests</h2>
+    <p>
+      Reading a wine list requires no account, no app and no details at all.
+      Data appears only when you send an order:
+    </p>
+    <ul>
+      <li>
+        <strong>the guest name you type</strong> so the staff can find you — a
+        nickname is fine, the field is for the dining room and is never
+        verified;
+      </li>
+      <li>
+        <strong>the table</strong> you are ordering from, derived from the QR
+        code you scanned, and the <strong>order lines</strong> with their
+        quantities;
+      </li>
+      <li>
+        <strong>the cart in progress</strong>, which stays in your browser
+        session and is never stored as an order until you send it;
+      </li>
+      <li>
+        <strong>a signed technical cookie lasting 24 hours</strong>, holding
+        only the reference codes of orders sent from that device, so the device
+        that placed an order can see its status;
+      </li>
+      <li>
+        <strong>server logs</strong> (IP address, timestamp, requested page),
+        generated automatically and used for security and diagnostics.
+      </li>
+    </ul>
+    <p class="note">
+      We do not ask for an email address, a phone number, payment details or
+      location data. Payment happens at the table, outside this service.
+    </p>
+
+    <h2>What we collect from restaurateurs</h2>
+    <ul>
+      <li>
+        <strong>Account data:</strong> name, email address and password (stored
+        only as a hash, never in clear text).
+      </li>
+      <li>
+        <strong>Venue data:</strong> name, address, contact details published on
+        the menu, tables and the QR codes generated for them.
+      </li>
+      <li>
+        <strong>Content you enter:</strong> wines, prices, vintages, tasting
+        notes, lists and the orders you receive.
+      </li>
+    </ul>
+
+    <h2>Why we process it, and on what legal basis</h2>
+    <ul>
+      <li>
+        <strong>Providing the service</strong> — showing the menu, holding the
+        cart, passing the order to the venue, running the account: performance
+        of a contract or pre-contractual steps (Art. 6(1)(b) GDPR).
+      </li>
+      <li>
+        <strong>Keeping the service safe</strong> — preventing abuse and
+        automated ordering, keeping technical logs: legitimate interests
+        (Art. 6(1)(f) GDPR).
+      </li>
+      <li>
+        <strong>Legal obligations</strong> — where a rule requires us to retain
+        or disclose data: Art. 6(1)(c) GDPR.
+      </li>
+    </ul>
+    <p>
+      We do not profile people, we take no automated decisions about them, and
+      we do not pass data to third parties for marketing.
+    </p>
+
+    <h2>Cookies and similar technologies</h2>
+    <p>
+      aperto.wine uses <strong>technical cookies and storage only</strong>: the
+      session cookie navigation needs to work, the cart held in that session,
+      the 24-hour signed cookie that remembers orders sent from the device, and
+      your language preference. None of them profiles anyone or tracks people
+      across sites.
+    </p>
+    <p>
+      We use no third-party analytics, no advertising pixels, no social plugins
+      and no advertising tracking of any kind. That is why you see no consent
+      banner: under the Italian supervisory authority's cookie guidelines of
+      10 June 2021, purely technical tools do not require one. If we ever
+      introduce non-technical tools we will ask for consent <em>before</em>
+      setting them, and refusing will be as easy as accepting.
+    </p>
+
+    <h2>Who we share data with</h2>
+    <p>
+      Data is never sold or published. It is accessible to the staff of the
+      restaurant concerned and to the providers that help us run the service,
+      each appointed as a processor and bound by contract:
+    </p>
+    <div class="overflow-x-auto mt-4">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("legal.subprocessors.name") %></th>
+            <th scope="col"><%= t("legal.subprocessors.role") %></th>
+            <th scope="col"><%= t("legal.subprocessors.location") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Render Services, Inc.</td>
+            <td>Application and database hosting</td>
+            <td>Frankfurt, Germany (EU)</td>
+          </tr>
+          <tr>
+            <td>Komoot GmbH — Photon</td>
+            <td>
+              Address suggestions in the management area, on OpenStreetMap data.
+              It receives only the text a restaurateur types into the address
+              field: no guest or order data.
+            </td>
+            <td>Germany (EU)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      As at the date of this notice <strong>no email provider is
+      engaged</strong>: the service sends no email. We will update this list
+      before it sends any. Address suggestions derive from OpenStreetMap data,
+      © OpenStreetMap contributors.
+    </p>
+
+    <h2>Where the data is held</h2>
+    <p>
+      The application and its database are hosted in the Frankfurt (Germany)
+      region, inside the European Union. We make no transfers of personal data
+      to third countries. Should that change, we will put in place one of the
+      safeguards in Chapter V GDPR and update this notice.
+    </p>
+
+    <h2>How long we keep it</h2>
+    <ul>
+      <li>
+        <strong>Orders and table data:</strong> for as long as the restaurant,
+        as controller, decides, and in any case no longer than its relationship
+        with aperto.wine; when the account closes the data is deleted or
+        returned on its instructions.
+      </li>
+      <li><strong>The device's order cookie:</strong> 24 hours.</li>
+      <li><strong>The cart:</strong> for the life of the browser session.</li>
+      <li>
+        <strong>Restaurateur account and content:</strong> while the account is
+        active, and afterwards only as long as legal obligations require.
+      </li>
+      <li>
+        <strong>Server logs:</strong> for as long as security and diagnostics
+        require.
+      </li>
+    </ul>
+
+    <h2>Your rights</h2>
+    <p>
+      You may at any time request access to your data, its rectification or
+      erasure, restriction of processing, portability, and you may object to
+      processing based on legitimate interests (Arts. 15–22 GDPR).
+    </p>
+    <p>
+      <strong>Who to ask:</strong> for the data in an order or a table, address
+      the request to the <strong>restaurant</strong>, which is the controller —
+      we assist it in answering. For a restaurateur account, or if you are not
+      sure who to approach, write to the address in the legal information below.
+    </p>
+    <p>
+      You may always lodge a complaint with the Italian supervisory authority,
+      the <strong>Garante per la protezione dei dati personali</strong>
+      (Piazza Venezia 11, 00187 Rome —
+      <a href="https://www.garanteprivacy.it" rel="noopener noreferrer">garanteprivacy.it</a>),
+      or bring proceedings before the courts.
+    </p>
+
+    <h2>Minors</h2>
+    <p>
+      The service concerns alcoholic drinks and is not intended for anyone under
+      18. We do not knowingly collect data from minors. Verifying the age of
+      whoever drinks remains with the restaurant, which does so at the table as
+      Article 14-ter of Law 125/2001 requires.
+    </p>
+
+    <h2>Changes</h2>
+    <p>
+      This notice may be updated; the date at the top of the page marks the
+      current version. Substantive changes affecting restaurateurs are also
+      announced through the account.
+    </p>
+
+    <%= render "legal/operator_identity" %>
+  </article>
+
+  <%= render "legal/foot",
+        other_document_path: terms_path,
+        other_document_label: t("legal.terms.title") %>
+</main>
