@@ -561,6 +561,7 @@ it:
     errors:
       wine_not_found: "Non è stato possibile trovare questo vino."
       wine_unavailable: "Questo vino non è più disponibile."
+      invalid_serving: "Questo non è un modo valido di ordinare questo vino."
       invalid_glass_size: "Formato di calice non valido."
       price_unavailable: "Questo vino non ha un prezzo per questo formato."
       cart_full: "Il carrello è pieno — rimuovi un vino prima di aggiungerne un altro."

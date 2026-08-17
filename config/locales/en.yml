@@ -563,6 +563,7 @@ en:
     errors:
       wine_not_found: "That wine could not be found."
       wine_unavailable: "That wine is no longer available."
+      invalid_serving: "That is not a valid way to order this wine."
       invalid_glass_size: "That is not a valid glass size."
       price_unavailable: "That wine has no price set for that glass size."
       cart_full: "Your cart is full — remove an item before adding another."

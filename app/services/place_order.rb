@@ -12,9 +12,10 @@ class PlaceOrder
   #                         added, or everything was already removed)
   #   :items_unavailable  - one or more lines failed the live re-check (the
   #                         wine disappeared, went unavailable, or lost its
-  #                         price for that glass size) since being added.
-  #                         No order is placed; the cart is left untouched
-  #                         so the diner sees exactly which lines dropped.
+  #                         price for that serving — a glass size or a whole
+  #                         bottle) since being added. No order is placed;
+  #                         the cart is left untouched so the diner sees
+  #                         exactly which lines dropped.
   #   :order_invalid      - the order or one of its lines failed to save for
   #                         a reason not caught above (defensive: nothing
   #                         in the current model surface should reach this).
@@ -116,6 +117,7 @@ class PlaceOrder
   def create_order_item!(order, item)
     order.order_items.create!(
       wine: item.wine,
+      serving: item.serving,
       glass_size_ml: item.glass_size_ml,
       quantity: item.quantity,
       unit_price_cents: item.unit_price_cents

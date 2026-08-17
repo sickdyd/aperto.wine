@@ -20,7 +20,13 @@ class CartsController < ApplicationController
   # redirects to the cart page instead, where the error has full context —
   # see #flash_error.
   def add_item
-    result = @cart.add(wine_id: integer_param(:wine_id), glass_size_ml: integer_param(:glass_size_ml),
+    # serving is read as a raw string and handed to Cart unvalidated —
+    # integer_param would coerce junk to nil, and a nil serving that
+    # defaulted to something would let a malformed request place an order
+    # the diner did not build. Cart owns the validation and returns
+    # :invalid_serving.
+    result = @cart.add(wine_id: integer_param(:wine_id), serving: params[:serving],
+                        glass_size_ml: integer_param(:glass_size_ml),
                         quantity: integer_param(:quantity) || 1)
     if result.success?
       redirect_to menu_path_for(@restaurant), notice: t("cart.item_added")
@@ -31,14 +37,16 @@ class CartsController < ApplicationController
   end
 
   def update_item
-    result = @cart.update_quantity(wine_id: integer_param(:wine_id), glass_size_ml: integer_param(:glass_size_ml),
+    result = @cart.update_quantity(wine_id: integer_param(:wine_id), serving: params[:serving],
+                                    glass_size_ml: integer_param(:glass_size_ml),
                                     quantity: integer_param(:quantity) || 0)
     flash_error(result)
     redirect_to cart_path(restaurant_slug: @restaurant.slug)
   end
 
   def remove_item
-    @cart.remove(wine_id: integer_param(:wine_id), glass_size_ml: integer_param(:glass_size_ml))
+    @cart.remove(wine_id: integer_param(:wine_id), serving: params[:serving],
+                 glass_size_ml: integer_param(:glass_size_ml))
     redirect_to cart_path(restaurant_slug: @restaurant.slug)
   end
 

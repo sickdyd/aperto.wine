@@ -312,7 +312,7 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the sticky cart bar shows the item count and total once the cart has items" do
-    post cart_items_path(restaurant_slug: restaurants(:osteria).slug), params: { wine_id: wines(:barolo).id, glass_size_ml: 125, quantity: 2 }
+    post cart_items_path(restaurant_slug: restaurants(:osteria).slug), params: { wine_id: wines(:barolo).id, serving: "glass", glass_size_ml: 125, quantity: 2 }
 
     get published_menu_path(restaurants(:osteria))
     assert_response :success
@@ -322,7 +322,7 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the sticky cart bar links to this restaurant's cart page" do
-    post cart_items_path(restaurant_slug: restaurants(:osteria).slug), params: { wine_id: wines(:barolo).id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: restaurants(:osteria).slug), params: { wine_id: wines(:barolo).id, serving: "glass", glass_size_ml: 125, quantity: 1 }
 
     get published_menu_path(restaurants(:osteria))
     assert_response :success
@@ -330,7 +330,7 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a restaurant's sticky cart bar never reflects another restaurant's cart" do
-    post cart_items_path(restaurant_slug: restaurants(:trattoria).slug), params: { wine_id: wines(:trattoria_franciacorta).id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: restaurants(:trattoria).slug), params: { wine_id: wines(:trattoria_franciacorta).id, serving: "glass", glass_size_ml: 125, quantity: 1 }
 
     get published_menu_path(restaurants(:osteria))
     assert_response :success
