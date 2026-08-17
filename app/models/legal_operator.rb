@@ -26,12 +26,35 @@ class LegalOperator
     "#{ENV_PREFIX}#{field.to_s.upcase}"
   end
 
+  # Memoised for the life of the process. config_for is not memoised by Rails —
+  # every call re-reads and re-evaluates the ERB in config/legal.yml — and there
+  # is nothing to gain from doing that per request: Render restarts the service
+  # when a dashboard variable changes, so no running process ever sees two
+  # different values of LEGAL_*.
   def self.current
-    from(Rails.application.config_for(:legal))
+    @current ||= from(Rails.application.config_for(:legal))
+  end
+
+  # Tests that drive the real ENV → config_for → object path need the memo
+  # cleared between states. Nothing in the app should call this.
+  def self.reset!
+    @current = nil
   end
 
   def self.from(config)
     new(**FIELDS.index_with { |field| config[field] })
+  end
+
+  # Called once at boot from config/initializers/legal.rb. Lives here rather
+  # than in the initializer so the message is testable without booting a second
+  # environment.
+  def self.warn_if_incomplete(operator = current, logger: Rails.logger)
+    return if operator.configured?
+
+    logger.warn(
+      "[legal] operator identity incomplete — missing #{operator.missing_fields.join(", ")}. " \
+      "/privacy and /terms will publish a pending marker in place of each one."
+    )
   end
 
   def initialize(**values)

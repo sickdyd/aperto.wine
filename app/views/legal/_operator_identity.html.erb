@@ -4,7 +4,11 @@
     The labels are looked up one literal key at a time rather than
     interpolated from the field name: i18n-tasks reads these files statically,
     and a t("legal.identity.#{field}") would leave every one of them looking
-    unused to the drift guard. %>
+    unused to the drift guard.
+
+    No decorative <span> for the leader dots here, unlike the rest of the app:
+    inside a <dl> a wrapping <div> may hold only <dt>/<dd>, so the dots come
+    from `.legal-doc .leader-row dt::after` instead. %>
 <% labels = {
      name: t("legal.identity.name"),
      address: t("legal.identity.address"),
@@ -20,8 +24,7 @@
   <% LegalOperator::FIELDS.each do |field| %>
     <div class="leader-row mt-2">
       <dt class="mono-micro leader-label"><%= labels.fetch(field) %></dt>
-      <span class="leader" aria-hidden="true"></span>
-      <dd class="leader-value"><%= legal_operator_value(field) %></dd>
+      <dd class="leader-value"><%= legal_operator_value(@operator, field) %></dd>
     </div>
   <% end %>
 </dl>

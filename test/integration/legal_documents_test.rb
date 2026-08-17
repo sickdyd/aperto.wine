@@ -17,15 +17,18 @@ class LegalDocumentsTest < ActionDispatch::IntegrationTest
     @osteria = restaurants(:osteria)
   end
 
-  # The identity comes from the environment (config/legal.yml re-reads it on
-  # every call), so the honest way to exercise both states is to set it and put
-  # it back — no stubbing, and the ERB in the config file gets covered too.
+  # The identity comes from the environment, so the honest way to exercise both
+  # states is to set it and put it back — no stubbing, and the ERB in
+  # config/legal.yml gets covered along the way. LegalOperator.current memoises
+  # per process, hence the reset on both sides of the block.
   def with_identity(values)
     previous = IDENTITY.keys.index_with { |name| ENV[name] }
     IDENTITY.each_key { |name| ENV[name] = values[name] }
+    LegalOperator.reset!
     yield
   ensure
     previous.each { |name, value| ENV[name] = value }
+    LegalOperator.reset!
   end
 
   # --- reachability ---

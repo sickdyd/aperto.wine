@@ -63,6 +63,49 @@ class LegalOperatorTest < ActiveSupport::TestCase
     assert_kind_of LegalOperator, LegalOperator.current
   end
 
+  # config_for re-reads and re-evaluates the file on every call, and these two
+  # pages have no reason to pay for that per request.
+  test "current is memoised until reset" do
+    first = LegalOperator.current
+    assert_same first, LegalOperator.current
+
+    LegalOperator.reset!
+    assert_not_same first, LegalOperator.current
+  ensure
+    LegalOperator.reset!
+  end
+
+  test "an incomplete identity is announced at boot, naming the missing fields" do
+    logger = FakeLogger.new
+    incomplete = LegalOperator.new(**COMPLETE.except(:phone, :vat_number))
+
+    LegalOperator.warn_if_incomplete(incomplete, logger: logger)
+
+    assert_equal 1, logger.warnings.size
+    assert_match(/phone/, logger.warnings.first)
+    assert_match(/vat_number/, logger.warnings.first)
+  end
+
+  test "a complete identity says nothing at boot" do
+    logger = FakeLogger.new
+
+    LegalOperator.warn_if_incomplete(LegalOperator.new(**COMPLETE), logger: logger)
+
+    assert_empty logger.warnings
+  end
+
+  class FakeLogger
+    attr_reader :warnings
+
+    def initialize
+      @warnings = []
+    end
+
+    def warn(message)
+      @warnings << message
+    end
+  end
+
   test "env var names are derived from the field names" do
     assert_equal "LEGAL_NAME", LegalOperator.env_var(:name)
     assert_equal "LEGAL_VAT_NUMBER", LegalOperator.env_var(:vat_number)

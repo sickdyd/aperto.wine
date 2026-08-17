@@ -1513,6 +1513,33 @@
     color: var(--color-ox-1);
   }
 
+  /* Leader dots without the decorative span the rest of the app uses. The
+     identity block is a <dl>, and inside one a wrapping <div> may contain only
+     <dt>/<dd> — so the dotted rule is generated off the <dt> instead, which
+     grows to fill the row while the <dd> stays right-aligned. */
+  .legal-doc .leader-row dt {
+    @apply flex items-baseline gap-3;
+    flex: 1 1 auto;
+  }
+
+  .legal-doc .leader-row dt::after {
+    content: "";
+    flex: 1 1 1.5rem;
+    min-width: 1.25rem;
+    border-bottom: 1px dotted var(--color-leader);
+    transform: translateY(-0.1em);
+  }
+
+  /* A registered address is far longer than the prices `.leader-value` was
+     built for, and that class is `shrink-0`: on a phone the value ran past the
+     right edge and took the whole page with it. Here the value may shrink and
+     wrap, and a long email or VAT number may break mid-token. */
+  .legal-doc .leader-row dd {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   /* The document's own head: what it is, and when it last changed. */
   .legal-head {
     max-width: var(--measure);
