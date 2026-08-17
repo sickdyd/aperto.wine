@@ -1,6 +1,11 @@
 require "test_helper"
 
 class OrderTest < ActiveSupport::TestCase
+  # Deliberately leaves stock_reserved at its column default (false): that is
+  # the shape of an order placed before reservation moved to placement, and
+  # the cancel! tests below have to be explicit about which generation of
+  # order they are talking about. Anything meant to be holding a reservation
+  # merges stock_reserved: true in.
   def valid_attributes
     {
       restaurant: restaurants(:osteria),
@@ -8,6 +13,10 @@ class OrderTest < ActiveSupport::TestCase
       status: :pending,
       total_amount_cents: 0
     }
+  end
+
+  def reserving_attributes
+    valid_attributes.merge(stock_reserved: true)
   end
 
   # --- Validations ---
@@ -222,13 +231,39 @@ class OrderTest < ActiveSupport::TestCase
     assert order.reload.approved?
   end
 
-  test "approve! decrements available_glasses for each item" do
+  test "approve! does not move available_glasses" do
     order = orders(:pending_order)
     wine  = wines(:barolo)
     glasses_before = wine.available_glasses # 10
     order.approve!
-    # item quantity = 2
-    assert_equal glasses_before - 2, wine.reload.available_glasses
+    assert_equal glasses_before, wine.reload.available_glasses
+  end
+
+  test "approve! does nothing unless the order is pending" do
+    order = orders(:approved_order)
+    wine  = wines(:gavi)
+    glasses_before = wine.available_glasses
+    bottles_open_before = wine.wine_bottles.where(status: :open).count
+
+    result = order.approve!
+
+    assert_equal false, result
+    assert order.reload.approved?
+    assert_equal glasses_before, wine.reload.available_glasses
+    assert_equal bottles_open_before, wine.wine_bottles.where(status: :open).count
+  end
+
+  test "approve! twice only opens one bottle and never moves stock" do
+    order = orders(:pending_order)
+    wine  = wines(:barolo)
+    glasses_before = wine.available_glasses
+
+    order.approve!
+    second_result = order.approve!
+
+    assert_equal false, second_result
+    assert_equal glasses_before, wine.reload.available_glasses
+    assert_equal 1, wine.wine_bottles.where(status: :open).count
   end
 
   test "approve! opens a sealed bottle when no open bottle exists" do
@@ -239,6 +274,38 @@ class OrderTest < ActiveSupport::TestCase
     order = orders(:pending_order)
     order.approve!
 
+    assert_equal 1, wine.wine_bottles.where(status: :open).count
+  end
+
+  # A bottle sold whole leaves the cellar sealed — nothing is poured out of
+  # it, so nothing is opened. The claim is published, too: the public menu
+  # renders "Opened N ago" from wine_bottles.opened_at, so opening here would
+  # tell every later diner a sealed bottle had just been broached.
+  test "approve! opens no bottle for a bottle-only order" do
+    wine = wines(:barolo)
+    assert_equal 0, wine.wine_bottles.where(status: :open).count
+
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 1,
+                              unit_price_cents: 9000)
+
+    assert order.approve!
+    assert_equal 0, wine.wine_bottles.where(status: :open).count
+  end
+
+  # The mirror: the glass line still opens one, and the bottle line beside it
+  # neither adds a second nor suppresses it.
+  test "approve! on a mixed order opens a bottle for the glass line only" do
+    wine = wines(:barolo)
+    assert_equal 0, wine.wine_bottles.where(status: :open).count
+
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 2,
+                              unit_price_cents: 9000)
+    order.order_items.create!(wine: wine, serving: :glass, glass_size_ml: 125, quantity: 1,
+                              unit_price_cents: 1800)
+
+    assert order.approve!
     assert_equal 1, wine.wine_bottles.where(status: :open).count
   end
 
@@ -267,12 +334,13 @@ class OrderTest < ActiveSupport::TestCase
     assert order.reload.cancelled?
   end
 
-  test "cancel! from pending does not restore glasses" do
+  test "cancel! from pending restores glasses" do
     order = orders(:pending_order)
     wine  = wines(:barolo)
     glasses_before = wine.available_glasses
     order.cancel!
-    assert_equal glasses_before, wine.reload.available_glasses
+    # pending_barolo_glass: quantity 2
+    assert_equal glasses_before + 2, wine.reload.available_glasses
   end
 
   test "cancel! from approved restores glasses" do
@@ -282,6 +350,186 @@ class OrderTest < ActiveSupport::TestCase
     order.cancel!
     # approved_gavi_glass: quantity 2
     assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
+  test "cancel! twice restores once" do
+    order = orders(:pending_order)
+    wine  = wines(:barolo)
+    glasses_before = wine.available_glasses
+
+    order.cancel!
+    second_result = order.cancel!
+
+    assert_equal false, second_result
+    assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
+  # PlaceOrder locks wines in ascending id order when reserving (see
+  # PlaceOrder#reserve_stock!). If cancel! released them in a different
+  # order — order_items' own order, say — a cancel and a placement racing
+  # over the same two wines could acquire their row locks in opposite
+  # orders and deadlock in Postgres. This pins the release itself to
+  # ascending wine_id, independent of the order the order_items were
+  # created in, by inserting them in the reverse of wine-id order and
+  # asserting the UPDATE statements against "wines" still fire lowest-id
+  # first.
+  test "cancel! releases wines in ascending wine_id order, not order_items order" do
+    order = Order.create!(reserving_attributes)
+    lower_id_wine, higher_id_wine = [ wines(:barolo), wines(:gavi) ].sort_by(&:id)
+    assert_operator lower_id_wine.id, :<, higher_id_wine.id
+
+    # Created higher-id wine first, so order_items' own (creation) order is
+    # the opposite of ascending wine_id — proves the release sorts
+    # explicitly rather than happening to follow insertion order.
+    order.order_items.create!(wine: higher_id_wine, glass_size_ml: 125, quantity: 1, unit_price_cents: 2200)
+    order.order_items.create!(wine: lower_id_wine, glass_size_ml: 100, quantity: 1, unit_price_cents: 900)
+
+    touched_wine_ids = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      next unless payload[:name] == "Wine Update All"
+
+      # increment!'s UPDATE binds "id" as its final parameter in the test
+      # environment (prepared statements); fall back to an inlined literal
+      # in case a different environment's adapter config inlines it instead.
+      id_bind = payload[:binds]&.find { |bind| bind.name == "id" }
+      touched_wine_ids << (id_bind ? id_bind.value : payload[:sql][/"wines"\."id" = (\d+)/, 1].to_i)
+    end
+
+    begin
+      order.cancel!
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
+
+    assert_equal [ lower_id_wine.id, higher_id_wine.id ], touched_wine_ids
+  end
+
+  test "cancel! from completed restores nothing" do
+    order = Order.create!(reserving_attributes.merge(status: :completed))
+    wine  = wines(:barolo)
+    order.order_items.create!(
+      wine: wine,
+      glass_size_ml: 100,
+      quantity: 2,
+      unit_price_cents: 1800
+    )
+    glasses_before = wine.available_glasses
+
+    result = order.cancel!
+
+    assert_equal false, result
+    assert order.reload.completed?
+    assert_equal glasses_before, wine.reload.available_glasses
+  end
+
+  # PlaceOrder accumulates a wine's quantity across every cart line before
+  # checking it against stock, because two glass sizes of one wine draw from
+  # one pool. The release is the mirror image and has to give all of it back —
+  # a per-line release that stopped at the first item, or one that de-duplicated
+  # by wine, would strand the rest. Correct by construction, but nothing pinned
+  # it until now.
+  test "cancel! releases both lines of an order holding one wine at two glass sizes" do
+    wine = wines(:barolo)
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, glass_size_ml: 100, quantity: 2, unit_price_cents: 1500)
+    order.order_items.create!(wine: wine, glass_size_ml: 125, quantity: 3, unit_price_cents: 1800)
+    glasses_before = wine.available_glasses
+
+    assert order.cancel!
+    assert_equal glasses_before + 5, wine.reload.available_glasses
+  end
+
+  # The release mirrors PlaceOrder#reserve_stock! exactly, and that spends
+  # nothing on a bottle: there is no bottle stock column, a positive bottle
+  # price being the whole of what "bottle available" means
+  # (Wine#bottle_available?). Releasing against a bottle line would mint a
+  # glass out of nothing on every cancel.
+  test "cancel! releases nothing for a bottle line" do
+    wine = wines(:barolo)
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 3,
+                              unit_price_cents: 9000)
+    glasses_before = wine.available_glasses
+
+    assert order.cancel!
+    assert_equal glasses_before, wine.reload.available_glasses
+  end
+
+  test "cancel! on a mixed order releases the glass line only" do
+    wine = wines(:barolo)
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 4,
+                              unit_price_cents: 9000)
+    order.order_items.create!(wine: wine, serving: :glass, glass_size_ml: 125, quantity: 2,
+                              unit_price_cents: 1800)
+    glasses_before = wine.available_glasses
+
+    assert order.cancel!
+    assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
+  # --- stock_reserved ---
+  #
+  # Reservation moved from approval to placement in this deploy, so production
+  # holds orders of both generations. The flag is what tells them apart; status
+  # cannot.
+
+  test "an order placed before reservation moved to placement releases nothing on cancel" do
+    wine = wines(:barolo)
+    # The column default is exactly the legacy row: pending, and never
+    # decremented, because the old code took its glasses at approve!.
+    order = Order.create!(valid_attributes)
+    assert_not order.stock_reserved?
+    order.order_items.create!(wine: wine, glass_size_ml: 125, quantity: 2, unit_price_cents: 1800)
+    glasses_before = wine.available_glasses
+
+    assert order.cancel!
+    assert order.reload.cancelled?
+    # Releasing here would invent two glasses that were never taken.
+    assert_equal glasses_before, wine.reload.available_glasses
+  end
+
+  # The flag is cleared in the same UPDATE that writes the status, so a second
+  # release is structurally impossible even beyond the row lock cancel! takes.
+  test "cancel! clears the reservation flag as it releases" do
+    order = orders(:pending_order)
+
+    order.cancel!
+
+    assert_not order.reload.stock_reserved?
+  end
+
+  # --- concurrent transitions ---
+  #
+  # Both guards read the status *after* lock! reloads it. Two requests holding
+  # their own in-memory copy of the same order — two staff tabs, a Turbo retry —
+  # would otherwise both pass a guard read from an attribute loaded before
+  # either transaction opened, and both run the body: the same reservation
+  # released twice, or an order approved that no longer holds one.
+
+  test "a second in-memory copy of an order cannot cancel it again" do
+    wine = wines(:barolo)
+    first = orders(:pending_order)
+    second = Order.find(first.id)
+    glasses_before = wine.available_glasses
+
+    assert first.cancel!
+    # `second` still believes it is pending — exactly the stale attribute the
+    # old guard trusted.
+    assert second.pending?
+    assert_equal false, second.cancel!
+
+    # pending_barolo_glass: quantity 2, released once and only once.
+    assert_equal glasses_before + 2, wine.reload.available_glasses
+  end
+
+  test "a second in-memory copy of an order cannot approve it after it was cancelled" do
+    first = orders(:pending_order)
+    second = Order.find(first.id)
+
+    assert first.cancel!
+    assert_equal false, second.approve!
+    assert first.reload.cancelled?
   end
 
   # --- public_token ---

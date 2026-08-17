@@ -177,6 +177,9 @@ class CartTest < ActiveSupport::TestCase
 
   test "add clamps quantity above the max down to MAX_QUANTITY_PER_ITEM" do
     cart = cart_for(@osteria)
+    # Stock is not this test's concern — give barolo enough that clamping,
+    # not stock, is what determines the resulting quantity.
+    @barolo.update!(available_glasses: Cart::MAX_QUANTITY_PER_ITEM)
 
     cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 999)
 
@@ -212,6 +215,8 @@ class CartTest < ActiveSupport::TestCase
 
   test "a merged quantity is clamped to MAX_QUANTITY_PER_ITEM" do
     cart = cart_for(@osteria)
+    # Stock is not this test's concern — see the clamp test above.
+    @barolo.update!(available_glasses: Cart::MAX_QUANTITY_PER_ITEM)
 
     cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 15)
     cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 15)
@@ -244,6 +249,140 @@ class CartTest < ActiveSupport::TestCase
 
     assert increment_result.success?
     assert_equal 2, cart.items.first.quantity
+  end
+
+  # --- stock awareness (reserve stock at placement) ---
+  #
+  # 0 < available_glasses < quantity only — a sold-out wine (0 glasses) is
+  # already :wine_unavailable via the guard above and never reaches here.
+
+  test "add succeeds when quantity exactly matches available stock" do
+    cart = cart_for(@osteria)
+
+    result = cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: @gavi.available_glasses)
+
+    assert result.success?
+    assert_equal @gavi.available_glasses, cart.items.first.quantity
+  end
+
+  test "add fails when quantity exceeds available stock" do
+    cart = cart_for(@osteria)
+
+    result = cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: @gavi.available_glasses + 1)
+
+    assert_not result.success?
+    assert_equal :insufficient_stock, result.error
+    assert_empty cart.items
+  end
+
+  test "incrementing an existing line past available stock fails and leaves the line unchanged" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: @gavi.available_glasses - 2)
+
+    result = cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 3)
+
+    assert_not result.success?
+    assert_equal :insufficient_stock, result.error
+    assert_equal @gavi.available_glasses - 2, cart.items.first.quantity
+  end
+
+  # Stock is a per-wine pool, not a per-line one: barolo is offered at both
+  # 100ml and 125ml but only has one available_glasses count (10). A line
+  # for one size must be checked against what the other size has already
+  # drawn from that same pool, not just against the wine's raw stock.
+  test "add fails when a different glass size for the same wine would push their combined quantity past stock" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 6)
+
+    result = cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 6)
+
+    assert_not result.success?
+    assert_equal :insufficient_stock, result.error
+    assert_equal 1, cart.items.size
+    assert_equal 6, cart.items.first.quantity
+  end
+
+  # --- bottles and stock: a bottle draws on nothing ---
+  #
+  # There is no bottle stock column. A positive price_bottle_cents is the
+  # whole of what "bottle available" means (Wine#bottle_available?), and a
+  # wine is deliberately still bottle-orderable with zero glasses left. So a
+  # bottle line is never refused for want of glasses, never counted towards
+  # another line's shortfall, and never reported by #over_stock_wine_ids.
+
+  test "a bottle add is not refused however few glasses are left" do
+    cart = cart_for(@osteria)
+    @barolo.update!(available_glasses: 0)
+
+    result = cart.add(wine_id: @barolo.id, serving: "bottle", quantity: Cart::MAX_QUANTITY_PER_ITEM)
+
+    assert result.success?
+    assert_equal Cart::MAX_QUANTITY_PER_ITEM, cart.items.first.quantity
+  end
+
+  test "a bottle line does not eat into the glass pool a glass line is checked against" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 5)
+
+    # The full glass stock is still available: the 5 bottles took none of it.
+    result = cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125,
+                      quantity: @barolo.available_glasses)
+
+    assert result.success?
+    assert_equal [ 5, @barolo.available_glasses ], cart.items.map(&:quantity)
+  end
+
+  test "over_stock_wine_ids ignores bottle lines entirely" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 5)
+    @barolo.update!(available_glasses: 0)
+
+    assert_empty cart.over_stock_wine_ids
+    assert cart.orderable?
+  end
+
+  # The mirror of the test above: the glass line alone is over stock, so the
+  # wine is listed — but that is the glass line's doing, and the bottle line
+  # sitting beside it neither caused it nor is excused by it.
+  test "a wine over its glasses is still listed when a bottle line of it is also present" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: @barolo.available_glasses)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 2)
+
+    @barolo.update!(available_glasses: 1)
+
+    assert_equal [ @barolo.id ], cart.over_stock_wine_ids
+  end
+
+  # The over-exclusion direction: #other_glass_quantity must skip bottle lines
+  # and *only* bottle lines. With a bottle line sitting in the cart beside a
+  # glass line of the same wine, a further glass add still has to be refused —
+  # if that filter ever widened to skip a glass line too, the shortfall would
+  # go unnoticed and the guard would silently stop guarding.
+  test "a bottle line in the cart does not excuse a glass line from the stock check" do
+    cart = cart_for(@osteria)
+    @barolo.update!(available_glasses: 4)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 5)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3)
+
+    # 3 glasses already spoken for, 4 available: a second glass line of 2
+    # crosses the line even though 5 bottles sit beside it drawing nothing.
+    result = cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 2)
+
+    assert_not result.success?
+    assert_equal :insufficient_stock, result.error
+    assert_equal [ 5, 3 ], cart.items.map(&:quantity)
+  end
+
+  test "update_quantity does not refuse a bottle line for lack of glasses" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 1)
+    @barolo.update!(available_glasses: 0)
+
+    result = cart.update_quantity(wine_id: @barolo.id, serving: "bottle", glass_size_ml: nil, quantity: 9)
+
+    assert result.success?
+    assert_equal 9, cart.items.first.quantity
   end
 
   # --- bottles ---
@@ -472,11 +611,49 @@ class CartTest < ActiveSupport::TestCase
 
   test "update_quantity clamps the new quantity to MAX_QUANTITY_PER_ITEM" do
     cart = cart_for(@osteria)
+    # Stock is not this test's concern — see the add clamp tests above.
+    @barolo.update!(available_glasses: Cart::MAX_QUANTITY_PER_ITEM)
     cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     cart.update_quantity(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 999)
 
     assert_equal Cart::MAX_QUANTITY_PER_ITEM, cart.items.first.quantity
+  end
+
+  test "update_quantity succeeds up to available stock" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 1)
+
+    result = cart.update_quantity(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: @gavi.available_glasses)
+
+    assert result.success?
+    assert_equal @gavi.available_glasses, cart.items.first.quantity
+  end
+
+  test "update_quantity fails when the requested quantity exceeds available stock, leaving the line unchanged" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 1)
+
+    result = cart.update_quantity(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: @gavi.available_glasses + 1)
+
+    assert_not result.success?
+    assert_equal :insufficient_stock, result.error
+    assert_equal 1, cart.items.first.quantity
+  end
+
+  # Same per-wine pool as #add: bumping one glass size must be checked
+  # against what the wine's other glass sizes have already drawn from
+  # available_glasses, not just against the raw stock number.
+  test "update_quantity fails when the combined quantity across the wine's other glass sizes would exceed stock" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 4)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 4)
+
+    result = cart.update_quantity(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 7)
+
+    assert_not result.success?
+    assert_equal :insufficient_stock, result.error
+    assert_equal 4, cart.items.find { |item| item.glass_size_ml == 125 }.quantity
   end
 
   test "update_quantity to zero removes the line" do
@@ -747,5 +924,74 @@ class CartTest < ActiveSupport::TestCase
     cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1)
 
     assert session[:carts].key?(@osteria.id.to_s)
+  end
+
+  # --- orderable? / over_stock_wine_ids ---
+
+  test "orderable? is true for a cart whose lines are all resolvable and within stock" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 3)
+
+    assert cart.orderable?
+    assert_empty cart.over_stock_wine_ids
+  end
+
+  test "orderable? is vacuously true for an empty cart — callers must pair it with #items.any? or #empty?" do
+    cart = cart_for(@osteria)
+
+    assert cart.orderable?
+    assert cart.empty?
+  end
+
+  test "over_stock_wine_ids reports a single line whose quantity exceeds stock that dropped after adding, and orderable? is false" do
+    cart = cart_for(@osteria)
+    original_stock = @gavi.available_glasses
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: original_stock)
+
+    @gavi.update!(available_glasses: original_stock - 2)
+
+    assert_equal [ @gavi.id ], cart.over_stock_wine_ids
+    assert_not cart.orderable?
+  end
+
+  # Stock is a per-wine pool: two lines for the same wine at different
+  # glass sizes, each fine on its own when added, can together outrun stock
+  # that dropped afterward. #add and #update_quantity block this at write
+  # time (see those sections above) — this proves a read reports it too,
+  # for the case that got past them (e.g. stock falling after both lines
+  # were already in the cart).
+  test "over_stock_wine_ids reports a wine whose combined quantity across glass sizes exceeds stock that dropped after adding" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 6)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3)
+
+    @barolo.update!(available_glasses: 8)
+
+    assert_equal [ @barolo.id ], cart.over_stock_wine_ids
+    assert_not cart.orderable?
+  end
+
+  test "orderable? is false when the cart has a dropped item, even with no over-stock line" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 1)
+
+    @gavi.update!(active: false)
+
+    assert_not cart.orderable?
+    assert_empty cart.over_stock_wine_ids
+  end
+
+  test "a sold-out wine still lands in dropped_items rather than being reported by over_stock_wine_ids" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: 1)
+
+    @gavi.update!(available_glasses: 0)
+
+    assert_empty cart.items
+    dropped = cart.dropped_items.first
+    assert_equal :wine_unavailable, dropped.reason
+    assert_not_includes cart.over_stock_wine_ids, @gavi.id
+    assert_not cart.orderable?
   end
 end

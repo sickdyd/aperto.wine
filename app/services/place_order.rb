@@ -24,6 +24,18 @@ class PlaceOrder
   #                         the cart is left untouched, so a diner who moves
   #                         closer can retry with the order they already
   #                         built.
+  #   :insufficient_stock - a locked re-check at placement found a line's
+  #                         quantity exceeds the wine's available_glasses.
+  #                         No order is placed and nothing is reserved.
+  #   :table_required     - no table was resolved for this session. Placing an
+  #                         order now reserves stock, and this surface is
+  #                         unauthenticated and reachable from a bare slug
+  #                         URL, so without this one visitor who never set
+  #                         foot in the restaurant could reserve the whole
+  #                         cellar and only an owner cancelling each order
+  #                         would give it back. Scanning a table QR is the
+  #                         one thing that ties a placement to somebody
+  #                         actually sitting there.
   #
   # `dropped_items` is only ever populated alongside :items_unavailable —
   # the Cart::DroppedItem list that caused the abort, so the caller can tell
@@ -34,6 +46,21 @@ class PlaceOrder
       success
     end
   end
+
+  # Raised inside the transaction to unwind it (rolling back any reservation
+  # already made this call) without ever letting a bare business-rule
+  # failure escape as an unhandled exception — #call rescues it below and
+  # turns it into an ordinary failure(:insufficient_stock) Result.
+  InsufficientStock = Class.new(StandardError)
+
+  # Raised when a wine the cart's items reference is gone by the time
+  # #reserve_stock! locks it — it existed for Cart#items's live read a
+  # moment earlier but was deleted before this transaction's SELECT. Without
+  # this, that race surfaces as an unhandled KeyError (or, further down, an
+  # FK violation from order_items.create!) — a 500 either way. It maps onto
+  # :items_unavailable, which already means exactly this: a line that
+  # failed a live re-check.
+  WineGoneAtLock = Class.new(StandardError)
 
   # latitude/longitude/accuracy are the diner's device's own claim about where
   # it is, straight off the browser Geolocation API. They default to nil, and
@@ -60,6 +87,14 @@ class PlaceOrder
   end
 
   def call
+    # First of every guard, and deliberately ahead of the cart ones: it is a
+    # fact about the request rather than about the cart, and no advice about
+    # the cart is actionable for a diner who cannot order at all. The cart
+    # page withholds the submit control in this state (see carts/show), so
+    # reaching here without a table means a request that never rendered that
+    # page — but the service is the boundary that has to hold, not the view.
+    return failure(:table_required) if table.nil?
+
     # Cart#items/#dropped_items are loaded together from one live query (see
     # Cart#load_cart_data), so reading them here *is* the "re-read every
     # line against live wine state" the order-placement rule requires. Any
@@ -70,14 +105,22 @@ class PlaceOrder
     return failure(:items_unavailable, dropped_items: cart.dropped_items) if cart.dropped_items.any?
     return failure(:empty_cart) if cart.items.empty?
 
-    # Deliberately last of the three guards. A diner whose cart went stale
-    # should hear about the cart — that is the problem they can act on — and an
-    # empty cart cannot be ordered from at any distance, so neither of those
-    # answers should be displaced by a location complaint.
+    # Deliberately last of the guards that run before the transaction opens. A
+    # diner whose cart went stale should hear about the cart — that is the
+    # problem they can act on — and an empty cart cannot be ordered from at any
+    # distance, so neither of those answers should be displaced by a location
+    # complaint.
     #
     # Note the ordering also means an out-of-range diner never reaches
     # cart.clear below: the early return leaves the cart exactly as they built
     # it, which is what makes "walk closer and retry" work.
+    #
+    # It also runs ahead of the stock reservation in build_order! on purpose.
+    # Geofence.call is pure arithmetic over attributes already in memory — no
+    # query, no lock — whereas reserving takes a row lock on every wine in the
+    # cart. Refusing here costs nothing; refusing after the lock would have
+    # made every other placement queue behind a request that was never going
+    # to be accepted.
     location = Geofence.call(
       restaurant: restaurant, latitude: latitude, longitude: longitude, accuracy: accuracy
     )
@@ -88,6 +131,10 @@ class PlaceOrder
     success(order)
   rescue ActiveRecord::RecordInvalid
     failure(:order_invalid)
+  rescue InsufficientStock
+    failure(:insufficient_stock)
+  rescue WineGoneAtLock
+    failure(:items_unavailable)
   end
 
   private
@@ -100,14 +147,63 @@ class PlaceOrder
   # migration for why.
   def build_order!(location)
     ActiveRecord::Base.transaction do
+      reserve_stock!
+
+      # stock_reserved is stamped in the same transaction as the decrement
+      # above, so an order can never exist claiming a reservation it does not
+      # hold (or holding one it does not claim). Order#cancel! reads it to
+      # decide whether releasing is owed — see the stock_reserved migration
+      # for the legacy orders that make the flag necessary.
       order = restaurant.orders.create!(
         status: :pending, restaurant_table: table, customer: customer, guest_name: guest_name,
+        stock_reserved: true,
         location_status: location.status, distance_meters: location.distance_meters,
         location_accuracy_meters: location.accuracy_meters
       )
       cart.items.each { |item| create_order_item!(order, item) }
       order.calculate_total!
       order
+    end
+  end
+
+  # The moment of truth: locks every wine the cart touches — in id order, so
+  # two concurrent placements over overlapping wines can't deadlock each
+  # other — then checks and reserves against those locked rows before any
+  # Order or OrderItem exists. Cart's own filtering (dropped_items) already
+  # ruled out 0-glass wines; this is the only check for a line whose
+  # quantity exceeds what's left, and it must run here, under the lock, not
+  # be assumed already done by the caller.
+  #
+  # **Only glass lines reserve.** There is no bottle stock column: a
+  # positive price_bottle_cents is the entirety of what "bottle available"
+  # means (Wine#bottle_available?), and a wine is deliberately still
+  # bottle-orderable with zero glasses left. So a bottle line decrements
+  # nothing and is never refused for want of glasses. Bottle wines are still
+  # locked and still checked for existence, though — that guard is about the
+  # row having vanished under the read, not about stock, and skipping it
+  # would turn a deleted-wine race on a bottle-only cart back into the FK
+  # violation WineGoneAtLock exists to prevent. Cart#over_stock_wine_ids
+  # draws exactly the same line, unlocked.
+  def reserve_stock!
+    wine_ids = cart.items.map { |item| item.wine.id }.uniq
+    # Scoped through the restaurant even though the ids can only have come
+    # from this restaurant's own cart: the statement that takes the locks and
+    # spends the stock is where the tenant boundary is worth stating outright,
+    # rather than inherited from an argument three objects away.
+    locked_wines = restaurant.wines.where(id: wine_ids).order(:id).lock.index_by(&:id)
+
+    cart.items.each do |item|
+      wine = locked_wines[item.wine.id]
+      raise WineGoneAtLock if wine.nil?
+      next unless item.serving == "glass"
+
+      raise InsufficientStock if wine.available_glasses < item.quantity
+
+      # Same in-memory wine object across a diner's lines for the same
+      # wine (two glass sizes drawing from one pool) — decrement! updates
+      # its in-memory attribute too, so the next line's check sees the
+      # running total, not a stale snapshot.
+      wine.decrement!(:available_glasses, item.quantity)
     end
   end
 

@@ -11,6 +11,17 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     @unlisted = wines(:unlisted_wine)
   end
 
+  # Attaches a table to the session the way a diner does, by scanning its QR.
+  # Not in setup: several tests below are *about* the tableless state and have
+  # to arrive at the bare /menu/:id URL instead. Everything that asserts on
+  # the submit control or counts the page's alert bands scans first, because
+  # a tableless cart now carries a blocking band of its own and withholds the
+  # form — assertions about the stock gate would otherwise pass on the table
+  # gate's evidence.
+  def scan_table(table = restaurant_tables(:sala_t1))
+    get table_menu_path(table_token: table.token)
+  end
+
   # --- add_item ---
 
   test "adding an item shows it on the cart page" do
@@ -124,6 +135,26 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
     follow_redirect!
     assert_match I18n.t("cart.errors.invalid_glass_size"), response.body
+  end
+
+  test "a quantity beyond available stock is rejected with the flash the diner sees" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @gavi.id, serving: "glass", glass_size_ml: 100, quantity: @gavi.available_glasses + 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+    follow_redirect!
+    assert_match I18n.t("cart.errors.insufficient_stock"), response.body
+  end
+
+  # A bottle draws on no stock at all (see Wine#bottle_available?), so the
+  # quantity that is refused for a pour goes through untouched for a bottle.
+  test "a bottle quantity beyond the wine's remaining glasses is accepted" do
+    @barolo.update!(available_glasses: 0)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 3 }
+    assert_redirected_to published_menu_path(@osteria)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_match @barolo.name, response.body
+    assert_no_match I18n.t("cart.errors.insufficient_stock"), response.body
   end
 
   # --- bottle serving ---
@@ -253,6 +284,10 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- Flash layout (Task 5, Part E regression fix) ---
 
   test "the cart page's error flash renders exactly once, in the floating stack" do
+    # The table is scanned so the cart page has no second alert to render:
+    # without one it also announces that ordering needs a table, and this
+    # test is counting alerts.
+    scan_table
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 60, quantity: 1 }
     follow_redirect!
 
@@ -368,6 +403,33 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_match I18n.t("cart.no_table_context"), response.body
   end
 
+  # PlaceOrder refuses a tableless placement outright, so the page must not
+  # offer a control that can only fail — and must say why where the diner
+  # reads it while building the order, not after trying to send it.
+  test "a tableless cart withholds the submit control and says why" do
+    get published_menu_path(@osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 0
+    assert_match ERB::Util.html_escape(I18n.t("cart.no_table_context")), response.body
+    # Not the empty state either — the order is built, it just has nowhere to go.
+    assert_no_match I18n.t("cart.empty"), response.body
+    assert_match @barolo.name, response.body
+  end
+
+  test "scanning a table brings the submit control back to a cart built without one" do
+    get published_menu_path(@osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
+    scan_table
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 1
+    assert_no_match ERB::Util.html_escape(I18n.t("cart.no_table_context")), response.body
+  end
+
   test "a retired table's token attaches no table to the cart" do
     table = restaurant_tables(:retired_table)
     get table_menu_path(table_token: table.token)
@@ -444,6 +506,98 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match I18n.t("cart.dropped_items_notice"), response.body
     assert_match ERB::Util.html_escape(@gavi.name), response.body
+  end
+
+  # --- stock that fell away under a cart that was already valid (Task 4) ---
+  #
+  # Every case here is the same shape: a line the cart happily accepted, whose
+  # wine then lost glasses to somebody else's order. The wine is still on the
+  # menu and still has a price, so the line is *not* dropped — it is merely
+  # too large, and the diner fixes it with the stepper the line already has.
+
+  test "a line whose wine lost stock after it was added is flagged rather than dropped" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_match ERB::Util.html_escape(I18n.t("cart.stock_shortfall_notice")), response.body
+    assert_no_match I18n.t("cart.dropped_items_notice"), response.body
+    # Normal treatment kept: the line still carries the control that fixes it.
+    assert_select "select#cart_item_#{@barolo.id}_glass_125_quantity", 1
+  end
+
+  test "the shortfall banner is an alert, and a different one from the dropped-items band" do
+    scan_table
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_select "[role='alert'].alert-info", 1
+    assert_select "[role='alert'].alert-warning", 0
+  end
+
+  test "the shortfall note names what is left and is associated with that line's quantity control" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    note_id = "cart_item_#{@barolo.id}_glass_125_stock"
+    assert_select "p##{note_id}", text: I18n.t("cart.stock_shortfall", count: 2)
+    assert_select "select#cart_item_#{@barolo.id}_glass_125_quantity[aria-describedby=?]", note_id
+  end
+
+  # One wine at two glass sizes draws on one pool of glasses, so both lines are
+  # over stock together and the note states the wine's remaining total on each
+  # — it is a fact about the wine, not about the row.
+  test "the same wine at two glass sizes flags both of its lines" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 2 }
+    @barolo.update!(available_glasses: 3)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    [ 125, 100 ].each do |size|
+      assert_select "p#cart_item_#{@barolo.id}_glass_#{size}_stock", text: I18n.t("cart.stock_shortfall", count: 3)
+    end
+  end
+
+  test "the submit control is withheld while a line exceeds stock, without falling back to the empty state" do
+    scan_table
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 0
+    assert_no_match I18n.t("cart.empty"), response.body
+    assert_match ERB::Util.html_escape(@barolo.name), response.body
+  end
+
+  # The same gate covers the older blocker: a dropped line aborts the whole
+  # placement in PlaceOrder, so offering a submit that can only fail is worse
+  # than withholding it until the line is gone.
+  test "the submit control is withheld while a dropped line still needs removing" do
+    scan_table
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
+    @barolo.update!(active: false)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 0
+  end
+
+  test "lowering the quantity to what is left brings the submit control back" do
+    scan_table
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3 }
+    @barolo.update!(available_glasses: 2)
+    patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2 }
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_no_match ERB::Util.html_escape(I18n.t("cart.stock_shortfall_notice")), response.body
+    assert_select "button", text: I18n.t("orders.form.submit"), count: 1
   end
 
   private

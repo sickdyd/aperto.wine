@@ -50,29 +50,76 @@ class Order < ApplicationRecord
     update!(total_amount_cents: order_items.sum { |item| item.unit_price_cents * item.quantity })
   end
 
+  # The status guards below both read `self`'s status *after* `lock!`, never
+  # before. That ordering is the whole point: the in-memory attribute was
+  # loaded by the controller before this transaction opened, so two concurrent
+  # requests over the same order (two staff tabs, a Turbo retry) would both
+  # find it `pending` and both run the body — releasing the same reservation
+  # twice, or approving an order that no longer holds one. `lock!` reloads
+  # under `SELECT ... FOR UPDATE`, so the second caller reads what the first
+  # committed and falls out at the guard.
+  #
+  # The lock is on the `orders` row, which no placement ever takes (PlaceOrder
+  # locks `wines`), so it introduces no lock-ordering risk of its own.
+  #
+  # Both return true when they did the work and false when the guard turned
+  # them away — Owner::OrdersController tells the owner which happened.
   def approve!
     transaction do
+      lock!
+      next false unless pending?
+
       update!(status: :approved)
-      order_items.includes(:wine).each do |item|
+
+      # Glass lines only, for the same reason cancel! releases only those: a
+      # bottle line leaves the cellar sealed. Opening a bottle is a claim
+      # about physical stock — pours have to come out of something, a whole
+      # bottle sold does not — and it is a *published* claim: the public menu
+      # renders "Opened N ago" from wine_bottles.opened_at (see
+      # menus/_wine_row), so approving a bottle-only order would tell every
+      # later diner that a bottle which left sealed had just been opened.
+      order_items.glass.includes(:wine).each do |item|
         wine = item.wine
-        wine.decrement!(:available_glasses, item.quantity)
 
         # Open a bottle if needed
         bottle = wine.wine_bottles.find_by(status: :sealed)
         bottle&.open! if wine.wine_bottles.where(status: :open).none?
       end
+      true
     end
   end
 
   def cancel!
     transaction do
-      update!(status: :cancelled)
-      # Restore glasses if order was previously approved
-      if status_previously_was == "approved"
-        order_items.each do |item|
-          item.wine.increment!(:available_glasses, item.quantity)
-        end
+      lock!
+      next false unless pending? || approved?
+
+      # Release only what this order actually holds. Orders placed before
+      # reservation moved to placement never took a decrement while pending
+      # (the old code took it at approve!), so an unconditional release would
+      # invent glasses on their first cancel — see the stock_reserved
+      # migration. Clearing the flag in the same UPDATE as the status means a
+      # second release is impossible even if the lock above were ever lost.
+      release = stock_reserved?
+      update!(status: :cancelled, stock_reserved: false)
+      next true unless release
+
+      # Glass lines only, exactly mirroring what PlaceOrder#reserve_stock!
+      # spent. A bottle line took no decrement — there is no bottle stock
+      # column, a positive bottle price being the whole of what "bottle
+      # available" means (Wine#bottle_available?) — so releasing against one
+      # would invent glasses out of nothing, and a bottle-only order would
+      # mint a glass per bottle on every cancel.
+      #
+      # Ordered by wine_id so two cancels racing over two orders that share
+      # the same pair of wines take their row locks in the same sequence and
+      # cannot deadlock each other. (A cancel cannot deadlock against a
+      # placement: placement takes every wine lock it needs and then waits on
+      # nothing a cancel holds.)
+      order_items.glass.includes(:wine).order(:wine_id).each do |item|
+        item.wine.increment!(:available_glasses, item.quantity)
       end
+      true
     end
   end
 end

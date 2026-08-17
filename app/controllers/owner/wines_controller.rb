@@ -24,12 +24,28 @@ module Owner
     def edit
     end
 
+    # available_glasses is a live reservation counter now — diners spend it
+    # while this form sits open — but the form still edits it as an absolute
+    # number seeded when the page was rendered. Saving an unrelated change
+    # would otherwise write that stale number back and resurrect glasses
+    # already reserved. lock_version (a hidden field, see wines/_form) turns
+    # that into a StaleObjectError, and the owner is shown the wine as it
+    # actually stands rather than having their stale copy silently win.
+    #
+    # The reload is deliberate: their unsaved edits are discarded along with
+    # the stale numbers they were sitting next to, because there is no way to
+    # tell which of the two an owner meant to keep. 409 rather than 422 —
+    # nothing they typed was invalid, the record simply moved.
     def update
       if @wine.update(wine_params)
         redirect_to owner_restaurant_wines_path(@restaurant), notice: t("owner.wines.updated"), status: :see_other
       else
         render :edit, status: :unprocessable_entity
       end
+    rescue ActiveRecord::StaleObjectError
+      @wine.reload
+      flash.now[:alert] = t("owner.wines.stale_update", glasses: @wine.available_glasses)
+      render :edit, status: :conflict
     end
 
     def destroy
@@ -60,7 +76,10 @@ module Owner
         # The _list writers split/join a comma-separated string onto the
         # array columns — the arrays themselves (:aromas, :food_pairings)
         # are deliberately never permitted here (see Wine#aromas_list=).
-        :aromas_list, :food_pairings_list
+        :aromas_list, :food_pairings_list,
+        # Rails compares this against the stored column and raises
+        # StaleObjectError when they disagree; it is never written from it.
+        :lock_version
       )
     end
   end

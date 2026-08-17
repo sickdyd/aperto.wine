@@ -170,6 +170,11 @@ en:
       created: "Wine added successfully."
       updated: "Wine updated successfully."
       deleted: "Wine removed."
+      # Shown when a save carries a lock_version the record has moved past —
+      # in practice, diners reserved glasses while the form sat open. Names
+      # the current figure, because it is the one the owner's copy was wrong
+      # about and the one they have to decide against.
+      stale_update: "This wine changed while you were editing it — %{glasses} glasses are available now. Your changes were not saved; check the current values and try again."
       confirm_delete: "Are you sure you want to remove this wine?"
       glasses_available: "glasses"
       empty_title: "No wines yet"
@@ -369,6 +374,12 @@ en:
       cancel_order: "Cancel Order"
       approved: "Order approved. Open the bottle if needed."
       cancelled: "Order cancelled."
+      # The transition was refused because the order had already moved on —
+      # another tab, another member of staff, or a retried request. Saying
+      # "approved" here would leave the owner reading a status the board is
+      # about to contradict.
+      approve_failed: "That order is no longer pending, so it was not approved. The board below shows where it stands now."
+      cancel_failed: "That order can no longer be cancelled. The board below shows where it stands now."
       confirm_cancel: "Are you sure you want to cancel this order?"
       empty_title: "No orders yet"
       empty_description: "Orders will appear here when customers place them."
@@ -606,10 +617,24 @@ en:
     back_to_menu: "Back to menu"
     item_added: "Added to your cart."
     table_context: "Ordering for %{table}"
-    no_table_context: "No table selected — your order will reach the staff without table info."
+    # A blocker, not an aside: an order reserves stock the moment it is placed,
+    # so it has to belong to a table somebody is sitting at. Deliberately says
+    # the same thing as orders.errors.table_required — this one before the
+    # diner submits, that one if a request reaches the service anyway.
+    no_table_context: "No table selected — scan the QR code on your table to place an order."
     empty: "Your cart is empty."
     browse_menu: "Browse the wine list"
     dropped_items_notice: "Some items in your cart are no longer available and must be removed before you can order."
+    # Stock fell below what the cart already holds. Nothing here is dead — the
+    # wines are still on the menu — so the wording asks for a smaller number,
+    # never a removal, which is what separates it from dropped_items_notice.
+    stock_shortfall_notice: "One or more items exceed what's left — lower the quantity to order."
+    # Rendered on every line of the wine that is short, so it states the wine's
+    # remaining glasses rather than anything about the individual line: two
+    # glass sizes of one wine share a single pool and both carry this note.
+    stock_shortfall:
+      one: "Only 1 glass of this wine is left — lower the quantity to order."
+      other: "Only %{count} glasses of this wine are left — lower the quantity to order."
     glass_size_label: "Size"
     unit_price_label: "Price"
     subtotal_label: "Subtotal"
@@ -640,6 +665,7 @@ en:
       invalid_glass_size: "That is not a valid glass size."
       price_unavailable: "That wine has no price set for that glass size."
       cart_full: "Your cart is full — remove an item before adding another."
+      insufficient_stock: "Not enough of that wine is left — lower the quantity."
   orders:
     form:
       guest_name: "Your name (optional)"
@@ -648,6 +674,11 @@ en:
     errors:
       empty_cart: "Your cart is empty."
       items_unavailable: "Some items in your cart are no longer available. Please review your cart before ordering."
+      insufficient_stock: "Some items in your cart are no longer available in the quantity you asked for. Please review your cart before ordering."
+      # The cart page already withholds the submit control in this state and
+      # says the same thing there (cart.no_table_context) — this is what a
+      # request that never rendered that page gets back.
+      table_required: "Scan the QR code on your table to place an order."
       # Deliberately does not say how far outside the radius the diner is.
       # A message carrying the measured distance is a range oracle: a sender
       # can move a claimed position around and bisect the replies to recover

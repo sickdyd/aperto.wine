@@ -74,12 +74,31 @@ Authentication is hand-rolled (`app/controllers/concerns/authentication.rb`): `h
 
 Two non-ActiveRecord "models" carry customer state (both live in `app/models/` alongside `TableBulkGeneration`, both keyed by `restaurant_id.to_s`, both **assign a new structure rather than mutating in place**):
 
-- **`Cart`** — session-backed, no table, no `carts` row ever. Prices are never written to the session; `Cart#items` re-reads the live `Wine` price so a tampered cookie can't dictate a price. Lines whose wine vanished/went unavailable/lost its price are reported as `dropped_items` rather than silently disappearing. Reads never rewrite the session.
+- **`Cart`** — session-backed, no table, no `carts` row ever. Prices are never written to the session; `Cart#items` re-reads the live `Wine` price so a tampered cookie can't dictate a price. Lines whose wine vanished/went unavailable/lost its price are reported as `dropped_items` rather than silently disappearing. Reads never rewrite the session. `#over_stock_wine_ids` answers stock **per wine, not per line, and over glass lines only** — two glass sizes of one wine draw from one pool, while a bottle line of that same wine draws on nothing — and `#orderable?` folds it together with `dropped_items` into the single question the cart view asks before offering a submit control. Both are a courtesy, not the enforcement: they read unlocked rows, so `PlaceOrder` re-checks everything under a lock regardless.
 - **`OrderHistory`** — signed 24-hour cookie of order `public_token`s, so a device sees the orders it placed. Signed, not encrypted (the tokens are already in the confirmation URL). Parses defensively: anything malformed yields `[]`, never an exception. Resolution is scoped through `restaurant.orders` — *that scoping is the isolation guarantee*.
 
 **The publication boundary**: a wine is orderable only if it sits on at least one of the restaurant's **active** `WineList`s (`Cart#published_wines`, mirroring `MenusController#show`). A wine on no list, or only on unpublished ones, must be as unreachable to the cart as it is to the menu. `:wine_not_found` deliberately doesn't distinguish "unpublished" from "doesn't exist" — the difference would leak the owner's choices.
 
 **`PlaceOrder`** (`app/services/`) turns a cart into an `Order` in one transaction. Any line that fails the live re-check aborts the *whole* placement — shipping the survivors would serve a different order than the one the diner built.
+
+**Stock is reserved at placement, not at approval.** `wines.available_glasses` therefore means "not yet spoken for", not "on hand": a pending order is already holding its glasses. `PlaceOrder` locks the cart's wines with `restaurant.wines.where(id: ...).order(:id).lock` inside the transaction — ascending id, so two placements over overlapping wines can't deadlock — accumulates the required quantity per wine across every cart line, and decrements only after the whole cart clears. This is the only check that counts; the cart's own guard runs on unlocked rows.
+
+**Only glass lines reserve.** There is no bottle stock column at all: a positive `price_bottle_cents` is the entirety of what `Wine#bottle_available?` means, and a wine is deliberately still orderable by the bottle with zero glasses left. So a bottle line decrements nothing, is never refused for want of glasses, never counts towards another line's shortfall, is never released on cancel, and never opens a physical bottle. **Five** places draw that same line and must stay in step:
+
+- `PlaceOrder#reserve_stock!` — skips the check and the decrement.
+- `Cart#over_stock?` / `#over_stock_wine_ids` — a bottle neither triggers a shortfall nor is counted in one.
+- `Order#cancel!` — releases through `order_items.glass`.
+- `Order#approve!` — opens a sealed bottle through `order_items.glass` too. Pours have to come out of something; a whole bottle sold does not. This one is a *published* claim as well as a physical one: `menus/_wine_row` renders "Opened N ago" from `wine_bottles.opened_at`.
+- `carts/show` — only flags a row when its serving is a glass.
+
+Getting any one of them wrong is silent: releasing against a bottle mints glasses out of nothing, flagging one refuses a cart that is perfectly orderable, and opening one tells every later diner a sealed bottle was just broached. Bottle wines *are* still locked and existence-checked in `reserve_stock!` — that guard is about the row having vanished under the read, not about stock.
+
+Two consequences worth holding onto:
+
+- **`orders.stock_reserved`** exists because the two generations of order disagree about what a status implies. An order placed under the old code and still pending never took a decrement, so an unconditional release on cancel would *invent* glasses. `PlaceOrder` stamps the flag inside the reservation's own transaction; `Order#cancel!` releases only when it is set and clears it in the same UPDATE, so a double release is structurally impossible. `#approve!` and `#cancel!` both `lock!` the order row *before* reading their status guard — the in-memory attribute was loaded before the transaction opened, and trusting it let two staff tabs both run the body.
+- **Placement requires a scanned table** (`:table_required`). The surface is unauthenticated and the menu is reachable from a bare slug URL, so without it one visitor could reserve an entire cellar from anywhere and only an owner cancelling each order would give it back. `CustomerScoped#current_table` is the resolver, and a retired token resolves to nothing — so it is refused exactly like never having scanned. The cart page withholds the submit control and says why (`cart.no_table_context`) rather than offering a button that can only fail.
+
+On the owner's side, `wines.lock_version` guards the same counter from the other direction: the wine form edits `available_glasses` as an absolute number seeded when the page rendered, so a form left open while diners order would otherwise write the old figure back and resurrect reserved glasses. `Owner::WinesController#update` turns the resulting `StaleObjectError` into a 409 re-render. The `wines_available_glasses_non_negative` check constraint backs the model validation, which `decrement!` bypasses entirely (`update_counters` skips validations) — it is deliberately **not** rescued into a business failure, because the lock makes that state unreachable and masking it would hide data corruption.
 
 ### Live order notifications (owner side)
 

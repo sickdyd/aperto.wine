@@ -45,14 +45,27 @@ module Owner
       end
     end
 
+    # Both transitions can legitimately do nothing: the order moved between
+    # the board being rendered and the button being pressed (another tab, a
+    # second member of staff, a Turbo retry), and Order#approve!/#cancel!
+    # answer false rather than transitioning it twice. Flashing success
+    # regardless would hide exactly the state confusion those guards exist to
+    # prevent — the owner would read "approved" and be looking at a cancelled
+    # order.
     def approve
-      @order.approve!
-      redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.approved"), status: :see_other
+      if @order.approve!
+        redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.approved"), status: :see_other
+      else
+        redirect_to owner_restaurant_orders_path(@restaurant), alert: t("owner.orders.approve_failed"), status: :see_other
+      end
     end
 
     def cancel
-      @order.cancel!
-      redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.cancelled"), status: :see_other
+      if @order.cancel!
+        redirect_to owner_restaurant_orders_path(@restaurant), notice: t("owner.orders.cancelled"), status: :see_other
+      else
+        redirect_to owner_restaurant_orders_path(@restaurant), alert: t("owner.orders.cancel_failed"), status: :see_other
+      end
     end
 
     private

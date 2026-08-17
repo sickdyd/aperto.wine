@@ -61,6 +61,18 @@ class Cart
   #                          MAX_DISTINCT_ITEMS (incrementing an existing
   #                          line is still allowed at the cap; a bottle line
   #                          is one distinct item like any other)
+  #   :insufficient_stock  - the wine's combined quantity across all of this
+  #                          cart's GLASS lines for it (every glass size, not
+  #                          just the line being touched — see
+  #                          #over_stock_wine_ids) would exceed
+  #                          available_glasses (0 available_glasses is
+  #                          :wine_unavailable instead — see
+  #                          Wine#glasses_available?). Bottle lines are never
+  #                          refused for stock and never counted towards it:
+  #                          there is no bottle inventory to run out of, a
+  #                          positive bottle price being the whole of what
+  #                          "bottle available" means (see
+  #                          Wine#bottle_available?).
   Result = Struct.new(:success, :error, keyword_init: true) do
     def success?
       success
@@ -125,9 +137,17 @@ class Cart
     requested_quantity = clamp_quantity(quantity.to_i)
 
     if index
-      new_lines = replace_line(lines, index, quantity: clamp_quantity(lines[index]["quantity"] + requested_quantity))
+      new_quantity = clamp_quantity(lines[index]["quantity"] + requested_quantity)
+      if over_stock?(lines, wine, serving_value, new_quantity, excluding_index: index)
+        return failure(:insufficient_stock)
+      end
+
+      new_lines = replace_line(lines, index, quantity: new_quantity)
     else
       return failure(:cart_full) if lines.size >= MAX_DISTINCT_ITEMS
+      if over_stock?(lines, wine, serving_value, requested_quantity, excluding_index: nil)
+        return failure(:insufficient_stock)
+      end
 
       new_lines = lines + [ new_line(wine.id, serving_value, glass_size, requested_quantity) ]
     end
@@ -144,7 +164,23 @@ class Cart
     new_lines = if quantity.to_i <= 0
       remove_line(lines, index)
     else
-      replace_line(lines, index, quantity: clamp_quantity(quantity.to_i))
+      new_quantity = clamp_quantity(quantity.to_i)
+      # published_wines, not the bare tenant association — the same
+      # publication boundary #add enforces, so a wine that went inactive or
+      # was un-published answers a quantity bump the same way #add would
+      # (left to #items/#dropped_items to report, not misreported here as a
+      # stock problem).
+      #
+      # The serving is read back off the stored line rather than taken from
+      # the argument, so a legacy keyless line is judged as the glass every
+      # other read path already reads it as — and a bottle line is exempted
+      # from the stock check outright (see #over_stock?).
+      wine = published_wines.find_by(id: wine_id.to_i)
+      if wine && over_stock?(lines, wine, normalized_serving(lines[index]), new_quantity, excluding_index: index)
+        return failure(:insufficient_stock)
+      end
+
+      replace_line(lines, index, quantity: new_quantity)
     end
 
     persist(new_lines)
@@ -185,6 +221,38 @@ class Cart
   # #items/#dropped_items do.
   def any_lines?
     stored_lines.any?
+  end
+
+  # True when nothing blocks placing the cart as it reads right now: no line
+  # was dropped on this read, and no wine's combined quantity across its
+  # glass lines outruns its current available_glasses. Distinct from #empty?
+  # (line count only) — a cart can hold nothing but resolvable lines and
+  # still be unorderable because stock fell out from under one of them.
+  #
+  # Vacuously true for an empty cart (no dropped items, no over-stock wines
+  # to speak of) — deliberately not folded into "has anything to order".
+  # Pair with #items.any? / #empty? when the view needs to tell "nothing
+  # here yet" apart from "something here is blocked".
+  def orderable?
+    dropped_items.empty? && over_stock_wine_ids.empty?
+  end
+
+  # Ids of wines whose combined quantity across every GLASS line in this
+  # cart — every glass size, not just one — exceeds their current
+  # available_glasses. A wine offered at two sizes draws from one stock
+  # pool, so this is the single answer #add, #update_quantity and
+  # #orderable? all agree on; a wine can appear here even with just one
+  # line, if that line alone outruns stock.
+  #
+  # Bottle lines are invisible here, in both directions: a bottle never
+  # contributes to the total and a wine is never listed on account of one.
+  # There is no bottle stock column — a positive bottle price is the whole
+  # of what "bottle available" means (see Wine#bottle_available?) — so a
+  # bottle has no inventory to outrun and takes nothing out of the glass
+  # pool. PlaceOrder#reserve_stock! draws the same line.
+  def over_stock_wine_ids
+    load_cart_data
+    @over_stock_wine_ids
   end
 
   private
@@ -236,6 +304,38 @@ class Cart
       line["wine_id"] == wine_id &&
         normalized_serving(line) == serving &&
         line["glass_size_ml"] == glass_size_ml
+    end
+  end
+
+  # True when this wine's glass draw — the line being touched, at
+  # `quantity`, plus every OTHER glass line in the cart for the same wine —
+  # outruns its current available_glasses.
+  #
+  # A bottle serving answers false outright, and bottle lines never
+  # contribute to the sum either: there is no bottle stock column, so a
+  # bottle can neither run out nor eat into the glass pool (see
+  # Wine#bottle_available?). Stock is a per-wine pool across glass sizes,
+  # not a per-line one, which is why the other glass lines have to be added
+  # in — the same arithmetic #over_stock_wine_ids reports and
+  # PlaceOrder#reserve_stock! re-runs under a lock.
+  def over_stock?(lines, wine, serving, quantity, excluding_index:)
+    return false unless serving == "glass"
+
+    other_glass_quantity(lines, wine.id, excluding_index: excluding_index) + quantity > wine.available_glasses
+  end
+
+  # Total glass quantity already in the cart for this wine across every
+  # glass size, excluding the line at excluding_index (the line #add or
+  # #update_quantity is about to replace, so it isn't counted twice
+  # alongside its own resulting quantity). nil excludes nothing — correct
+  # when there is no existing line yet for the glass size being touched.
+  # Bottle lines for the same wine are skipped: they draw on no stock.
+  def other_glass_quantity(lines, wine_id, excluding_index:)
+    lines.each_with_index.sum do |line, i|
+      next 0 if i == excluding_index || line["wine_id"] != wine_id
+      next 0 unless normalized_serving(line) == "glass"
+
+      line["quantity"]
     end
   end
 
@@ -291,6 +391,15 @@ class Cart
 
     @items = kept
     @dropped_items = dropped
+    # Glass lines only, on both sides of the comparison: a bottle line
+    # neither draws on available_glasses nor can outrun a stock column it
+    # does not have, so counting one here would refuse a cart that is
+    # perfectly orderable (see #over_stock_wine_ids).
+    @over_stock_wine_ids = kept
+      .select { |item| item.serving == "glass" }
+      .group_by { |item| item.wine.id }
+      .select { |_wine_id, wine_items| wine_items.sum(&:quantity) > wine_items.first.wine.available_glasses }
+      .keys
     @cart_data_loaded = true
   end
 

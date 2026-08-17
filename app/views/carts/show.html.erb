@@ -22,17 +22,27 @@
         <%# The page's one ink stamp — the table this bill belongs to. %>
         <p class="mt-5"><span class="stamp"><%= t("cart.table_context", table: @table.name) %></span></p>
       <% else %>
-        <p class="note mt-4"><%= t("cart.no_table_context") %></p>
+        <%# No longer a quiet aside. Placing an order now reserves the glasses
+            (see PlaceOrder), so an order has to belong to somebody actually
+            sitting at a table — and this is the reason the submit control at
+            the foot of the page is missing. It is said here, where the stamp
+            would otherwise be, so a diner learns it while building the order
+            rather than after trying to send it. %>
+        <div role="alert" class="alert alert-warning flex items-start gap-3 mt-5">
+          <%= icon "warning", class: "size-4 shrink-0 mt-1" %>
+          <span class="min-w-0"><%= t("cart.no_table_context") %></span>
+        </div>
       <% end %>
     </header>
 
     <hr class="rule-section mt-6 mb-8">
 
-    <%# @cart.items/#dropped_items are loaded together from one query (see
-        Cart#load_cart_data) — read each once so the rest of this page never
-        re-triggers it. %>
+    <%# @cart.items/#dropped_items/#over_stock_wine_ids are loaded together
+        from one query (see Cart#load_cart_data) — read each once so the rest
+        of this page never re-triggers it. %>
     <% dropped_items = @cart.dropped_items %>
     <% items = @cart.items %>
+    <% over_stock_wine_ids = @cart.over_stock_wine_ids %>
 
     <% if dropped_items.any? %>
       <div role="alert" class="alert alert-warning flex items-start gap-3 mb-6">
@@ -52,9 +62,28 @@
         able to clear it — see Cart#any_lines?. %>
     <% if @cart.any_lines? %>
       <% if items.any? %>
+        <%# Deliberately a quieter band than the dropped-items warning above:
+            a dropped line is dead and has to go, this one is merely too large
+            and the diner fixes it in place with the stepper the line already
+            carries. Same alert grammar, different ground, and it sits with
+            the lines it is about rather than at the top of the page. %>
+        <% if over_stock_wine_ids.any? %>
+          <div role="alert" class="alert alert-info flex items-start gap-3 mb-6">
+            <%= icon "info", class: "size-4 shrink-0 mt-1" %>
+            <span class="min-w-0"><%= t("cart.stock_shortfall_notice") %></span>
+          </div>
+        <% end %>
+
+        <%# Glass rows only carry the flag. over_stock_wine_ids is keyed by
+            wine, and a wine can be over its glasses while a bottle of the
+            same wine is perfectly orderable (there is no bottle stock —
+            see Wine#bottle_available?), so flagging on wine id alone would
+            mark a blameless bottle row invalid and tell the diner to reduce
+            a quantity that is not the problem. %>
         <ul class="group-body">
           <% items.each do |item| %>
-            <%= render "cart_item", item: item, restaurant: @restaurant %>
+            <%= render "cart_item", item: item, restaurant: @restaurant,
+                  over_stock: item.serving == "glass" && over_stock_wine_ids.include?(item.wine.id) %>
           <% end %>
         </ul>
 
@@ -74,7 +103,16 @@
               data: { turbo_confirm: t("cart.confirm_clear") } %>
       </div>
 
-      <% if items.any? %>
+      <%# #orderable? is vacuously true for a cart with nothing in it, so it is
+          paired with items.any? rather than replacing it: "nothing here yet"
+          and "something here is blocked" are different pages. A blocked cart
+          gets neither the form nor the empty state — the band above and the
+          notes on the lines are what it has to say. @table is the third
+          blocker and behaves the same way: PlaceOrder refuses a tableless
+          placement outright (:table_required), so offering a control that can
+          only fail would be worse than withholding it and saying why in the
+          letterhead. %>
+      <% if items.any? && @cart.orderable? && @table %>
         <hr class="rule-section mt-6">
 
         <%= form_with url: orders_path(restaurant_slug: @restaurant.slug), method: :post, class: "form-section mt-8" do |f| %>
@@ -110,7 +148,7 @@
             <button type="submit" class="btn-wine w-full"><%= t("orders.form.submit") %></button>
           </div>
         <% end %>
-      <% else %>
+      <% elsif items.none? %>
         <%# Only dropped lines remain — nothing left to order until the diner
             removes them (above) or clears the cart. %>
         <div class="empty-state">

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_140200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_130000) do
     t.bigint "restaurant_id", null: false
     t.bigint "restaurant_table_id"
     t.integer "status", default: 0, null: false
+    t.boolean "stock_reserved", default: false, null: false
     t.integer "total_amount_cents", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["customer_id", "status"], name: "index_orders_on_customer_id_and_status"
@@ -336,6 +337,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_130000) do
     t.string "food_pairings", default: [], null: false, array: true
     t.string "grape_variety"
     t.string "image_url"
+    t.integer "lock_version", default: 0, null: false
     t.string "name", null: false
     t.boolean "natural_wine", default: false, null: false
     t.boolean "organic", default: false, null: false
@@ -361,6 +363,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_130000) do
     t.index ["restaurant_id"], name: "index_wines_on_restaurant_id"
     t.check_constraint "abv IS NULL OR abv >= 0::numeric AND abv <= 100::numeric", name: "wines_abv_range"
     t.check_constraint "acidity IS NULL OR acidity >= 0 AND acidity <= 5", name: "wines_acidity_range"
+    t.check_constraint "available_glasses >= 0", name: "wines_available_glasses_non_negative"
     t.check_constraint "body IS NULL OR body >= 0 AND body <= 5", name: "wines_body_range"
     t.check_constraint "sweetness IS NULL OR sweetness >= 0 AND sweetness <= 5", name: "wines_sweetness_range"
     t.check_constraint "tannins IS NULL OR tannins >= 0 AND tannins <= 5", name: "wines_tannins_range"

@@ -177,6 +177,10 @@ class LegalDocumentsTest < ActionDispatch::IntegrationTest
   # the order form is the only place a diner hands over anything.
   test "the order form carries the privacy notice link" do
     barolo = wines(:barolo)
+    # The form only renders for a diner with a scanned table — placement is
+    # refused without one (PlaceOrder's :table_required), so the cart withholds
+    # a control that could only fail.
+    get table_menu_path(table_token: restaurant_tables(:sala_t1).token)
     post cart_items_path(restaurant_slug: @osteria.slug),
          params: { wine_id: barolo.id, glass_size_ml: 125, quantity: 1 }
 
