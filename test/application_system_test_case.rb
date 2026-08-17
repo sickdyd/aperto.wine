@@ -14,7 +14,13 @@ Minitest::Retry.use!(retry_count: 2, verbose: true)
 #      transitions are disabled in the test layout so clicks never land
 #      mid-animation (see layouts/application.html.erb).
 #   2. Chrome crashing/hanging inside CI containers — hardening flags.
-Capybara.default_max_wait_time = ENV["CI"] ? 10 : 5
+#   3. Machine load. Locally this repo is worked on from several worktrees at
+#      once, so a suite can be competing for cores with anything else running.
+#      The old 5s local wait was tight enough that a loaded machine produced
+#      failures like asserting on a page that had not finished redirecting. The
+#      wait only costs time on a test that is going to fail anyway, so there is
+#      no reason to keep local lower than CI.
+Capybara.default_max_wait_time = 10
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 900 ] do |options|

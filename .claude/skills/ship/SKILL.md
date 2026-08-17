@@ -18,6 +18,13 @@ too much volume). Stopping at "PR opened" is a failure, not a checkpoint.
    if schema.rb needs regenerating use a scratch DB, never the shared dev DB.
 2. **Implement** — subagent-driven, TDD; every feature gets system/E2E tests on
    top of unit + integration.
+
+   While iterating, run only the **targeted** file or line
+   (`bin/rails test test/models/cart_test.rb:42`). Whole suites go through
+   `bin/test` (never `bin/rails test` directly) — it takes a repo-wide lock, so
+   parallel worktree sessions queue instead of thrashing the shared test
+   databases and the machine's cores. Run `bin/test --all` **once**, before the
+   review pipeline. Do not re-run a green suite to confirm it is still green.
 3. **Review pipeline** (before the PR, in this order):
    1. `/security-review`
    2. `/postgres-patterns` — skip only if the diff has no DB-related code
@@ -47,6 +54,8 @@ too much volume). Stopping at "PR opened" is a failure, not a checkpoint.
 | "This change is small, skip the review pipeline" | Small diffs review fast; run it anyway. |
 | "I'll reuse this existing branch/worktree" | New worktree + branch per task, always off latest origin/main. |
 | "I'll merge now and let CI run on main" | Merge only after `gh pr checks` reports all green. |
+| "Let me run the full suite again to be sure" | It was green; other sessions need those cores. Run it once, via `bin/test`. |
+| "A system test failed, I'll loop the suite to see if it's flaky" | Re-run that one test, not the suite. Suite loops are what put the machine at load 34. |
 
 ## Gotchas
 

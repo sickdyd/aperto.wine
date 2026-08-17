@@ -49,7 +49,24 @@ end
 
 module ActiveSupport
   class TestCase
-    parallelize(workers: :number_of_processors)
+    # Booting Rails dominates this suite — roughly 60 CPU-seconds of boot for 8s
+    # of actual test execution — so workers past a handful buy no measurable
+    # wall-clock while each costs a full Rails process, plus a Puma and a
+    # headless Chrome in system tests. `:number_of_processors` is 14 on the dev
+    # machine, and with several worktree sessions testing at once that
+    # oversubscribes it badly enough to make system tests flake on timing.
+    # Measured: 14 workers 13.6s, 6 workers 15.5s, for 2.3x the CPU.
+    #
+    # CI runners have fewer cores than the cap, so they keep using all of them.
+    # PARALLEL_WORKERS still overrides this — Rails reads the env var before it
+    # looks at the `workers:` argument.
+    #
+    # `available_processor_count` is what `:number_of_processors` resolves to and
+    # respects a container's CPU quota, so keep using it rather than the raw
+    # `processor_count`; this only caps that number, it does not replace it.
+    max_workers = 6
+    available = (Concurrent.available_processor_count || Concurrent.processor_count).floor
+    parallelize(workers: [ available, max_workers ].min)
     fixtures :all
 
     include PhotonStubs
