@@ -60,7 +60,15 @@ class OrderItemTest < ActiveSupport::TestCase
 
   # --- serving enum ---
 
-  test "serving enum values" do
+  # This guards Wine::SERVINGS' ORDER, not just its contents. The enum is
+  # derived from Wine::SERVINGS by index (see OrderItem's `enum :serving`),
+  # so a reorder — e.g. "bottle" before "glass" to match the menu row's
+  # display order — silently renumbers every existing OrderItem: every
+  # historical serving = 0 row (today, all real glass pours) would
+  # reinterpret as a bottle, with no error anywhere. Do not delete this as a
+  # "redundant" re-test of Rails' enum macro; it is the only thing that
+  # fails if that reorder happens. See Wine::SERVINGS' append-only note.
+  test "serving enum values are pinned to Wine::SERVINGS' order" do
     assert_equal 0, OrderItem.servings[:glass]
     assert_equal 1, OrderItem.servings[:bottle]
   end
