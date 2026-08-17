@@ -354,6 +354,26 @@ class CartTest < ActiveSupport::TestCase
     assert_equal [ @barolo.id ], cart.over_stock_wine_ids
   end
 
+  # The over-exclusion direction: #other_glass_quantity must skip bottle lines
+  # and *only* bottle lines. With a bottle line sitting in the cart beside a
+  # glass line of the same wine, a further glass add still has to be refused —
+  # if that filter ever widened to skip a glass line too, the shortfall would
+  # go unnoticed and the guard would silently stop guarding.
+  test "a bottle line in the cart does not excuse a glass line from the stock check" do
+    cart = cart_for(@osteria)
+    @barolo.update!(available_glasses: 4)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 5)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3)
+
+    # 3 glasses already spoken for, 4 available: a second glass line of 2
+    # crosses the line even though 5 bottles sit beside it drawing nothing.
+    result = cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 2)
+
+    assert_not result.success?
+    assert_equal :insufficient_stock, result.error
+    assert_equal [ 5, 3 ], cart.items.map(&:quantity)
+  end
+
   test "update_quantity does not refuse a bottle line for lack of glasses" do
     cart = cart_for(@osteria)
     cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 1)

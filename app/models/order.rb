@@ -70,7 +70,15 @@ class Order < ApplicationRecord
       next false unless pending?
 
       update!(status: :approved)
-      order_items.includes(:wine).each do |item|
+
+      # Glass lines only, for the same reason cancel! releases only those: a
+      # bottle line leaves the cellar sealed. Opening a bottle is a claim
+      # about physical stock — pours have to come out of something, a whole
+      # bottle sold does not — and it is a *published* claim: the public menu
+      # renders "Opened N ago" from wine_bottles.opened_at (see
+      # menus/_wine_row), so approving a bottle-only order would tell every
+      # later diner that a bottle which left sealed had just been opened.
+      order_items.glass.includes(:wine).each do |item|
         wine = item.wine
 
         # Open a bottle if needed

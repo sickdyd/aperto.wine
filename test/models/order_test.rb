@@ -277,6 +277,38 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal 1, wine.wine_bottles.where(status: :open).count
   end
 
+  # A bottle sold whole leaves the cellar sealed — nothing is poured out of
+  # it, so nothing is opened. The claim is published, too: the public menu
+  # renders "Opened N ago" from wine_bottles.opened_at, so opening here would
+  # tell every later diner a sealed bottle had just been broached.
+  test "approve! opens no bottle for a bottle-only order" do
+    wine = wines(:barolo)
+    assert_equal 0, wine.wine_bottles.where(status: :open).count
+
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 1,
+                              unit_price_cents: 9000)
+
+    assert order.approve!
+    assert_equal 0, wine.wine_bottles.where(status: :open).count
+  end
+
+  # The mirror: the glass line still opens one, and the bottle line beside it
+  # neither adds a second nor suppresses it.
+  test "approve! on a mixed order opens a bottle for the glass line only" do
+    wine = wines(:barolo)
+    assert_equal 0, wine.wine_bottles.where(status: :open).count
+
+    order = Order.create!(reserving_attributes)
+    order.order_items.create!(wine: wine, serving: :bottle, glass_size_ml: nil, quantity: 2,
+                              unit_price_cents: 9000)
+    order.order_items.create!(wine: wine, serving: :glass, glass_size_ml: 125, quantity: 1,
+                              unit_price_cents: 1800)
+
+    assert order.approve!
+    assert_equal 1, wine.wine_bottles.where(status: :open).count
+  end
+
   test "approve! does not open another bottle when one is already open" do
     # gavi already has open_gavi (open)
     wine = wines(:gavi)

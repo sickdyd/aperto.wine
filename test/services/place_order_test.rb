@@ -352,6 +352,42 @@ class PlaceOrderTest < ActiveSupport::TestCase
     assert_equal available_before - 2, @barolo.reload.available_glasses
   end
 
+  # stock_reserved marks "placed by the placement-era code path", not "took a
+  # decrement" — a bottle-only order takes none and is still flagged, which is
+  # what keeps it distinguishable from a pre-deploy legacy order (whose false
+  # flag is the only thing stopping cancel! inventing glasses). Pinned because
+  # it looks like a redundant write and is not.
+  test "a bottle-only order is still stamped as placement-era stock_reserved" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 1)
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    assert result.order.stock_reserved?
+  end
+
+  # The two halves of the invariant are pinned separately elsewhere; this is
+  # the only test that closes the loop on real PlaceOrder output. What
+  # reserve_stock! spends and what cancel! releases must agree exactly, or a
+  # mixed same-wine order leaks or invents glasses every round trip.
+  test "placing then cancelling a mixed same-wine order returns stock to exactly where it started" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 3)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2)
+    cart.add(wine_id: @barolo.id, serving: "glass", glass_size_ml: 100, quantity: 1)
+    available_before = @barolo.available_glasses
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: @table, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    # Only the two glass lines were spent; the three bottles cost nothing.
+    assert_equal available_before - 3, @barolo.reload.available_glasses
+
+    assert result.order.cancel!
+    assert_equal available_before, @barolo.reload.available_glasses
+  end
+
   # The existence guard is about the row having vanished under the read, not
   # about stock, so it still covers a bottle-only cart — without it this race
   # comes back as an FK violation from order_items.create!, i.e. a 500.

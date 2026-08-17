@@ -263,7 +263,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # gets it wrong.
 
   test "an add with the serving key entirely absent from the request is treated as a glass" do
-    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
     assert_redirected_to published_menu_path(@osteria)
 
     get cart_path(restaurant_slug: @osteria.slug)
@@ -346,7 +346,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
 
   test "updating quantity with the serving key entirely absent still finds the glass line" do
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
-    patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 3 }
+    patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     get cart_path(restaurant_slug: @osteria.slug)
@@ -355,7 +355,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
 
   test "removing an item with the serving key entirely absent still finds the glass line" do
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
-    delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125 }
+    delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125 }
     assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     get cart_path(restaurant_slug: @osteria.slug)
