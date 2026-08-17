@@ -40,9 +40,13 @@ pre-commit:
       run: npm audit --audit-level=moderate
 
 # Unit + integration tests are heavier than the lint/security scans, so they run
-# on push rather than on every commit. System tests (bin/rails test:system) spin
-# up a headless browser and are left to CI / manual runs.
+# on push rather than on every commit. System tests (bin/test --system) spin up a
+# headless browser and are left to CI / manual runs.
+#
+# Via bin/test rather than bin/rails test so a push from one worktree queues
+# behind a suite already running in another instead of racing it through the
+# shared test databases — see the comment at the top of bin/test.
 pre-push:
   commands:
     tests:
-      run: bin/rails test
+      run: bin/test

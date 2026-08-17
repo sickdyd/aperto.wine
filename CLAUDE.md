@@ -18,8 +18,9 @@ bin/setup                     # bundle, db:prepare, then starts the dev server
 bin/dev                       # rails server + tailwindcss:watch (Procfile.dev), PORT defaults to 4010
 bin/ci                        # full local CI chain (setup, rubocop, audits, tests, seed replant)
 
-bin/rails test                # unit + integration (parallelized, fixtures :all)
-bin/rails test:system         # headless Chrome via Selenium — separate job in CI, not part of `test`
+bin/test                      # unit + integration, serialized across worktrees
+bin/test --system             # headless Chrome via Selenium — separate job in CI, not part of `test`
+bin/test --all                # both suites under one lock — the pre-PR gate
 bin/rails test test/models/cart_test.rb            # one file
 bin/rails test test/models/cart_test.rb:42         # one test by line
 bin/rails test -n "/pattern/"                      # by name
@@ -36,7 +37,21 @@ bin/rails wine_references:import[path/to.csv]                    # X-Wines catal
 bin/rails db:seed             # loads db/seeds/demo.rb in development (demo owner/admin, password "password")
 ```
 
-Git hooks are managed by lefthook (`bundle exec lefthook install`): lint + security scans on commit, `bin/rails test` on push. CI (`.github/workflows/ci.yml`) additionally builds the production Docker image and runs system tests.
+Git hooks are managed by lefthook (`bundle exec lefthook install`): lint + security scans on commit, `bin/test` on push. CI (`.github/workflows/ci.yml`) additionally builds the production Docker image and runs system tests.
+
+### Testing this repo from several worktrees
+
+Every worktree resolves to the same Postgres and the same test databases, so two
+full suites running at once corrupt each other's fixtures *and* oversubscribe the
+machine — enough to make system tests fail on timing instead of on real
+regressions. So:
+
+- Run **whole** suites through `bin/test`, never `bin/rails test` directly. It
+  takes a repo-wide lock, so a second caller queues for ~45s instead of racing.
+- While iterating, run the **targeted** file or line (`bin/rails test <path>`) —
+  cheap, unlocked, and what you want in a red/green loop.
+- Run `bin/test --all` **once** before opening the PR. Re-running a green suite
+  to see if it is still green just burns cores other sessions need.
 
 ## Architecture
 
