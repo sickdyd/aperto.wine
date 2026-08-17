@@ -18,8 +18,9 @@ bin/setup                     # bundle, db:prepare, then starts the dev server
 bin/dev                       # rails server + tailwindcss:watch (Procfile.dev), PORT defaults to 4010
 bin/ci                        # full local CI chain (setup, rubocop, audits, tests, seed replant)
 
-bin/rails test                # unit + integration (parallelized, fixtures :all)
-bin/rails test:system         # headless Chrome via Selenium — separate job in CI, not part of `test`
+bin/test                      # unit + integration, serialized across worktrees
+bin/test --system             # headless Chrome via Selenium — separate job in CI, not part of `test`
+bin/test --all                # both suites under one lock — the pre-PR gate
 bin/rails test test/models/cart_test.rb            # one file
 bin/rails test test/models/cart_test.rb:42         # one test by line
 bin/rails test -n "/pattern/"                      # by name
@@ -36,7 +37,21 @@ bin/rails wine_references:import[path/to.csv]                    # X-Wines catal
 bin/rails db:seed             # loads db/seeds/demo.rb in development (demo owner/admin, password "password")
 ```
 
-Git hooks are managed by lefthook (`bundle exec lefthook install`): lint + security scans on commit, `bin/rails test` on push. CI (`.github/workflows/ci.yml`) additionally builds the production Docker image and runs system tests.
+Git hooks are managed by lefthook (`bundle exec lefthook install`): lint + security scans on commit, `bin/test` on push. CI (`.github/workflows/ci.yml`) additionally builds the production Docker image and runs system tests.
+
+### Testing this repo from several worktrees
+
+Every worktree resolves to the same Postgres and the same test databases, so two
+full suites running at once corrupt each other's fixtures *and* oversubscribe the
+machine — enough to make system tests fail on timing instead of on real
+regressions. So:
+
+- Run **whole** suites through `bin/test`, never `bin/rails test` directly. It
+  takes a repo-wide lock, so a second caller queues for ~45s instead of racing.
+- While iterating, run the **targeted** file or line (`bin/rails test <path>`) —
+  cheap, unlocked, and what you want in a red/green loop.
+- Run `bin/test --all` **once** before opening the PR. Re-running a green suite
+  to see if it is still green just burns cores other sessions need.
 
 ## Architecture
 
@@ -65,6 +80,14 @@ Two non-ActiveRecord "models" carry customer state (both live in `app/models/` a
 **The publication boundary**: a wine is orderable only if it sits on at least one of the restaurant's **active** `WineList`s (`Cart#published_wines`, mirroring `MenusController#show`). A wine on no list, or only on unpublished ones, must be as unreachable to the cart as it is to the menu. `:wine_not_found` deliberately doesn't distinguish "unpublished" from "doesn't exist" — the difference would leak the owner's choices.
 
 **`PlaceOrder`** (`app/services/`) turns a cart into an `Order` in one transaction. Any line that fails the live re-check aborts the *whole* placement — shipping the survivors would serve a different order than the one the diner built.
+
+### Live order notifications (owner side)
+
+Action Cable is deliberately **not** loaded (see the commented railtie in `config/application.rb`). New orders reach the owner by polling instead: every owner page rendered inside a restaurant mounts `order_notifications_controller.js`, which asks `Owner::OrdersController#notifications` every 15s (1s under test — `order_notifications_poll_interval_ms`) and hands the answer to `Turbo.renderStreamMessage`.
+
+The browser holds the state, not the server. It sends back the window of order ids it was last given (`known`, echoed in the `X-Order-Window` response header) plus the pending tally it is currently showing (`count`, read off the badge's `data-pending-count`); the server answers `204 No Content` when neither has moved. Both params are untrusted and used for nothing but comparison. `Order.notification_window` is the window on both sides — its `created_at DESC, id DESC` ordering is load-bearing, because an order free to drop out of the window and come back is an order announced twice, and `index_orders_on_restaurant_id_and_recency` exists solely so the app's most frequent query never sorts a restaurant's whole history.
+
+Consequences elsewhere: `owner/shared/_flash` now renders its `.toast-stack` **unconditionally** (it is the append target for arriving orders, and a stream with no target is dropped silently), and the pending badge is rendered twice per page — sidebar and mobile top bar, ids in `Owner::OrdersHelper::BADGE_IDS` — because the sidebar is behind a drawer on a phone.
 
 ### Services
 

@@ -58,6 +58,14 @@
         <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "input w-full" %>
       </div>
 
+      <%# The owner terms include the art. 28 appointment, so this is the moment
+          the restaurateur has to have seen them — not a footer link afterwards. %>
+      <p class="note mt-6">
+        <%= t("legal.signup_notice_html",
+              terms: link_to(t("legal.terms.title"), terms_path),
+              privacy: link_to(t("legal.privacy.title"), privacy_path)) %>
+      </p>
+
       <div class="form-actions mt-6">
         <%= f.submit t("auth.create_account"), class: "btn-wine w-full" %>
       </div>

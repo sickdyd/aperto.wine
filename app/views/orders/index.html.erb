@@ -8,7 +8,7 @@
 <main id="main" class="band-stock flex-1">
   <div class="sheet mx-auto w-full max-w-2xl">
     <header>
-      <a href="<%= menu_path(id: @restaurant) %>" class="link-mono gap-2">
+      <a href="<%= menu_path_for(@restaurant) %>" class="link-mono gap-2">
         <%= icon "arrow-left", class: "size-3.5" %>
         <%= t("orders.status.back_to_menu") %>
       </a>

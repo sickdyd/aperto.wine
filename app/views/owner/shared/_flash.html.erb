@@ -4,28 +4,39 @@
     else: no styling, no fixed positioning of its own, so when there is no
     flash it is an empty div that occupies no height.
 
-    The band inside it is the same one the public shell renders, floating in
-    the same `.toast-stack` — see shared/_flash_band, and see there too for why
-    the stack is data-turbo-temporary. The wrapper itself is not: it has to
-    survive into the cached snapshot, or the Turbo Stream that replaces it by
-    id lands on a page where the target is missing. %>
+    The stack inside it is the same one the public shell renders — see
+    shared/_flash_band — but unlike the public one it is rendered
+    unconditionally, because it is not only the flash's home any more. Arriving
+    orders are appended to it by the poller (owner/orders/notifications), and a
+    stack that only exists when there happens to be a flash is a stack the first
+    order of the evening lands beside rather than in. It costs nothing when
+    empty: the stack is fixed, so it is out of flow, and pointer-events: none,
+    so it is not a dead zone over the corner of the page.
+
+    data-turbo-temporary on the stack, not on the wrapper. Turbo caches the page
+    as it leaves it and paints that snapshot instantly on back/forward before
+    the fresh fetch arrives; a message baked into the snapshot is one the reader
+    already dealt with, and it does not come back quietly — it slides in and
+    arms a fresh timer, so it reads as something new having just happened. That
+    is as true of an order announced ten minutes ago as of a flash. The wrapper
+    has to survive into the snapshot for the opposite reason: it is the Turbo
+    Stream target, and a stream that lands on a restored page with no
+    #flash-messages in it drops the message silently. %>
 <div id="flash-messages">
-  <% if notice || alert %>
-    <div class="toast-stack" data-turbo-temporary>
-      <% if notice %>
-        <%= render "shared/flash_band",
-                   variant: "alert-success",
-                   icon_name: "check-circle",
-                   label: t("shared.flash_notice"),
-                   message: notice %>
-      <% end %>
-      <% if alert %>
-        <%= render "shared/flash_band",
-                   variant: "alert-error",
-                   icon_name: "warning",
-                   label: t("shared.flash_error"),
-                   message: alert %>
-      <% end %>
-    </div>
-  <% end %>
+  <div class="toast-stack" data-turbo-temporary id="owner-toast-stack">
+    <% if notice %>
+      <%= render "shared/flash_band",
+                 variant: "alert-success",
+                 icon_name: "check-circle",
+                 label: t("shared.flash_notice"),
+                 message: notice %>
+    <% end %>
+    <% if alert %>
+      <%= render "shared/flash_band",
+                 variant: "alert-error",
+                 icon_name: "warning",
+                 label: t("shared.flash_error"),
+                 message: alert %>
+    <% end %>
+  </div>
 </div>

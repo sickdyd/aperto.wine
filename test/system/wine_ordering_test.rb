@@ -61,9 +61,9 @@ class WineOrderingTest < ApplicationSystemTestCase
     # so both wines can be added one after another with no navigation in
     # between.
     add_to_cart(barolo, 125) # a non-default glass size
-    assert_current_path menu_path(id: restaurant), wait: 5
+    assert_current_path published_menu_path(restaurant), wait: 5
     add_to_cart(gavi, 100)
-    assert_current_path menu_path(id: restaurant), wait: 5
+    assert_current_path published_menu_path(restaurant), wait: 5
 
     assert_selector "#cart-bar", wait: 5
     within "#cart-bar" do
@@ -72,7 +72,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     end
     go_to_cart
 
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     # Bump barolo from 1 to 2 glasses. Each cart line is one <li> of the
     # bill's ruled list (see carts/_cart_item).
@@ -99,17 +99,17 @@ class WineOrderingTest < ApplicationSystemTestCase
     trattoria = restaurants(:trattoria)
     barolo = wines(:barolo)
 
-    visit menu_path(id: osteria)
+    visit restaurant_menu_path(restaurant_slug: osteria.slug)
     add_to_cart(barolo, 125)
-    assert_current_path menu_path(id: osteria), wait: 5
+    assert_current_path published_menu_path(osteria), wait: 5
     assert_selector "#cart-bar", wait: 5
 
-    visit menu_path(id: trattoria)
+    visit restaurant_menu_path(restaurant_slug: trattoria.slug)
     assert_no_selector "#cart-bar", wait: 5
-    visit cart_path(restaurant_id: trattoria)
+    visit cart_path(restaurant_slug: trattoria.slug)
     assert_text I18n.t("cart.empty"), wait: 5
 
-    visit menu_path(id: osteria)
+    visit restaurant_menu_path(restaurant_slug: osteria.slug)
     assert_selector "#cart-bar", wait: 5
     within "#cart-bar" do
       assert_recased_text I18n.t("menu.cart_bar.item_count", count: 1)
@@ -120,12 +120,12 @@ class WineOrderingTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     barolo = wines(:barolo)
 
-    visit menu_path(id: restaurant)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
     add_to_cart(barolo, 75)
-    assert_current_path menu_path(id: restaurant), wait: 5
+    assert_current_path published_menu_path(restaurant), wait: 5
 
     go_to_cart
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     click_button I18n.t("orders.form.submit")
 
@@ -138,12 +138,12 @@ class WineOrderingTest < ApplicationSystemTestCase
     barolo = wines(:barolo)
     owner = users(:owner)
 
-    visit menu_path(id: restaurant)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
     add_to_cart(barolo, 100)
-    assert_current_path menu_path(id: restaurant), wait: 5
+    assert_current_path published_menu_path(restaurant), wait: 5
 
     go_to_cart
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     fill_in I18n.t("orders.form.guest_name"), with: "System Test Diner"
     click_button I18n.t("orders.form.submit")
@@ -172,14 +172,14 @@ class WineOrderingTest < ApplicationSystemTestCase
     barolo = wines(:barolo)
     gavi = wines(:gavi)
 
-    visit menu_path(id: restaurant)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
     add_to_cart(barolo, 125)
     add_to_cart(gavi, 100)
     go_to_cart
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     barolo.update!(active: false)
-    visit cart_path(restaurant_id: restaurant)
+    visit cart_path(restaurant_slug: restaurant.slug)
     assert_text I18n.t("cart.dropped_items_notice"), wait: 5
     assert_text barolo.name
 
@@ -204,10 +204,10 @@ class WineOrderingTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     barolo = wines(:barolo)
 
-    visit menu_path(id: restaurant)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
     add_to_cart(barolo, 125)
     go_to_cart
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     within(find("li", text: barolo.name)) do
       select "3", from: "cart_item_#{barolo.id}_125_quantity"
@@ -217,7 +217,7 @@ class WineOrderingTest < ApplicationSystemTestCase
 
     # Somebody else's order takes the glasses out from under the cart.
     barolo.update!(available_glasses: 2)
-    visit cart_path(restaurant_id: restaurant)
+    visit cart_path(restaurant_slug: restaurant.slug)
 
     assert_text I18n.t("cart.stock_shortfall_notice"), wait: 5
     assert_text I18n.t("cart.stock_shortfall", count: 2)
@@ -239,10 +239,10 @@ class WineOrderingTest < ApplicationSystemTestCase
     restaurant = restaurants(:osteria)
     barolo = wines(:barolo)
 
-    visit menu_path(id: restaurant)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
     add_to_cart(barolo, 125)
     go_to_cart
-    assert_current_path cart_path(restaurant_id: restaurant), wait: 5
+    assert_current_path cart_path(restaurant_slug: restaurant.slug), wait: 5
 
     within(find("li", text: barolo.name)) do
       select "3", from: "cart_item_#{barolo.id}_125_quantity"
@@ -251,7 +251,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     assert_text format_price(barolo.price_for_glass(125) * 3), wait: 5
 
     barolo.update!(available_glasses: 2)
-    visit cart_path(restaurant_id: restaurant)
+    visit cart_path(restaurant_slug: restaurant.slug)
 
     assert_text I18n.t("cart.stock_shortfall_notice"), wait: 5
     assert_no_button I18n.t("orders.form.submit")

@@ -131,6 +131,8 @@ it:
         section_service: "Servizio"
         name: "Nome Ristorante"
         name_placeholder: "es. Osteria del Borgo"
+        slug: "Indirizzo Web della Carta"
+        slug_hint: "I clienti raggiungono la tua carta su %{url}. Cambiarlo invalida tutti i codici QR già stampati."
         address: "Indirizzo"
         address_placeholder: "es. Via Roma 42, Milano"
         address_suggestions_attribution: "© contributori di OpenStreetMap"
@@ -198,9 +200,11 @@ it:
         aria_label: Nome del vino con suggerimenti automatici
     wine_lists:
       title: "Carte dei Vini"
-      intro: "La carta pubblica mostra ogni lista attiva. Crea liste selezionate e attivale o disattivale qui."
+      intro: "Crea tutte le liste che vuoi; una sola alla volta è pubblicata per i clienti. I tuoi codici QR aprono sempre quella pubblicata, quindi cambiare carta non richiede mai di ristamparli."
       manage_wines: "Gestisci vini"
-      toggle_label: "Mostra sulla carta pubblica"
+      publish: "Pubblica"
+      published_hint: "È la lista che aprono i tuoi codici QR."
+      published_notice: "%{name} è ora la carta pubblicata."
       add: "Aggiungi Lista"
       add_first: "Crea la tua prima lista"
       new_title: "Nuova Lista"
@@ -223,7 +227,6 @@ it:
         season: "Stagione / Tema"
         season_placeholder: "es. Estate"
         position: "Ordinamento"
-        active_label: "Pubblicata (visibile sulla carta pubblica)"
       members:
         title: "Vini in questa lista"
         intro: "Scegli i vini dal tuo catalogo condiviso — lo stesso vino può apparire in qualsiasi numero di liste. La disponibilità dipende sempre dalle bottiglie — i vini in evidenza ma esauriti appaiono come non disponibili."
@@ -351,6 +354,11 @@ it:
       view_order: "Vedi ordine #%{id}"
       empty_filtered_title: "Niente al momento"
       empty_filtered_description: "Nessun ordine con questo stato. Prova un altro filtro."
+      new_order: "Nuovo ordine"
+      new_order_detail: "Ordine #%{id} — %{table}"
+      pending_count:
+        one: "%{count} ordine in attesa di approvazione"
+        other: "%{count} ordini in attesa di approvazione"
       order_count:
         zero: "Nessun ordine"
         one: "1 ordine"
@@ -398,6 +406,7 @@ it:
         name: "Nome"
         address: "Indirizzo"
         proximity_radius_meters: "Raggio di prossimità ordini"
+        geofence_enabled: "Verifica di prossimità"
         description: "Descrizione"
         user: "Proprietario"
       wine:
@@ -489,6 +498,11 @@ it:
           attributes:
             wine:
               wrong_restaurant: "deve appartenere allo stesso ristorante della lista"
+        # "Verifica" is feminine, so the participle agrees ("attivata").
+        restaurant:
+          attributes:
+            geofence_enabled:
+              requires_coordinates: "non può essere attivata senza le coordinate del ristorante"
         # Password and Email are feminine (rails-i18n itself ships
         # password_too_long: "è troppo lunga"; Email < posta elettronica), so
         # their blank/too_short/invalid halves agree in gender.
@@ -564,6 +578,10 @@ it:
       empty_cart: "Il tuo carrello è vuoto."
       items_unavailable: "Alcuni vini nel carrello non sono più disponibili. Controlla il carrello prima di ordinare."
       insufficient_stock: "Alcuni vini nel carrello non sono più disponibili nella quantità richiesta. Controlla il carrello prima di ordinare."
+      # Non indica di quanto il cliente sia fuori dal raggio: vedi il commento
+      # in en.yml — una distanza nel messaggio permetterebbe di risalire per
+      # tentativi alle coordinate e al raggio del ristorante.
+      location_out_of_range: "Devi essere al ristorante per inviare un ordine."
       order_invalid: "Non è stato possibile inviare l'ordine. Controlla il carrello e riprova."
       rate_limited: "Stai inviando ordini troppo velocemente. Attendi un momento e riprova."
     status:
@@ -600,6 +618,48 @@ it:
       empty: "Nessun ordine inviato da questo dispositivo."
       retention: "Ordini inviati da questo dispositivo, conservati per 24 ore."
       view_order: "Ordine del %{time}"
+  # I due documenti legali. Qui vive solo la cornice — titoli, etichette, gli
+  # avvisi che li richiamano. Il testo dei documenti sta nei template con
+  # suffisso di lingua (app/views/legal/privacy.it.html.erb): è prosa lunga, le
+  # cui frasi non sono stringhe riutilizzabili, e sommergerebbe i file di lingua.
+  legal:
+    nav:
+      privacy: "Privacy"
+      terms: "Termini"
+      # Nome accessibile della navigazione a piè di ciascun documento.
+      label: "Documenti legali"
+    eyebrow:
+      privacy: "Protezione dei dati"
+      terms: "Condizioni d'uso"
+    back_to_site: "Torna ad aperto.wine"
+    updated_on: "Ultimo aggiornamento %{date}"
+    privacy:
+      title: "Informativa privacy"
+      meta_description: "Come aperto.wine tratta i dati di ospiti e ristoratori, e chi è titolare di che cosa."
+    terms:
+      title: "Termini e condizioni"
+      meta_description: "I termini di aperto.wine: il rapporto sul vino è tra ospite e ristorante, noi siamo l'intermediario tecnico."
+    # Il blocco di identità del gestore — D.Lgs. 70/2003 art. 7 e DSA artt. 30–31.
+    identity:
+      heading: "Informazioni legali"
+      name: "Gestore"
+      address: "Sede legale"
+      email: "Email"
+      phone: "Telefono"
+      vat_number: "Partita IVA"
+      rea_number: "Numero REA"
+      # Mostrato al posto di un campo che il deploy non ha ancora impostato:
+      # volutamente visibile, perché un blocco a metà passa inosservato.
+      pending: "Da completare"
+    subprocessors:
+      name: "Fornitore"
+      role: "Che cosa fa"
+      location: "Dove"
+    # L'art. 13 GDPR vuole l'informativa dove i dati sono raccolti: per questo
+    # i due avvisi stanno sul modulo d'ordine e su quello di registrazione, non
+    # solo nel piè di pagina.
+    order_notice_html: "Inviando l'ordine il tuo nome e il tavolo vengono comunicati al ristorante, che decide come gestirlo — vedi l'%{privacy} e i %{terms}."
+    signup_notice_html: "Creando un account accetti i %{terms} e l'%{privacy}, compresa la nomina di aperto.wine a responsabile del trattamento dei dati dei tuoi ospiti."
   pwa:
     # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
     description: "aperto.wine — vino al calice, per scelta."

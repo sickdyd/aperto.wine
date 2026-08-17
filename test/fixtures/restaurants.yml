@@ -1,4 +1,5 @@
 osteria:
+  slug: osteria-del-borgo
   user: owner
   name: Osteria del Borgo
   address: Via Roma 42, Milano
@@ -9,12 +10,14 @@ osteria:
   active: true
 
 inactive_restaurant:
+  slug: closed-place
   user: owner
   name: Closed Place
   address: Via Chiusa 1, Roma
   active: false
 
 trattoria:
+  slug: trattoria-due
   user: owner_two
   name: Trattoria Due
   address: Via Verdi 7, Torino
@@ -22,6 +25,7 @@ trattoria:
   active: true
 
 enoteca:
+  slug: enoteca-del-borgo
   user: owner
   name: Enoteca del Borgo
   address: Via Torino 3, Milano

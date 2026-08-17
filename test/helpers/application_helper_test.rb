@@ -19,4 +19,13 @@ class ApplicationHelperTest < ActionView::TestCase
     order.guest_name = nil
     assert_equal I18n.t("shared.guest"), order_customer_label(order)
   end
+
+  # A quarter-minute is the production cadence; the suite cannot afford to wait
+  # that long for a toast, and Capybara's default wait is shorter still.
+  test "the owner poll runs far more often under test than in production" do
+    assert_operator order_notifications_poll_interval_ms, :<,
+      ApplicationHelper::ORDER_NOTIFICATIONS_POLL_INTERVAL_MS,
+      "a system test asserting on a live notification would time out before " \
+      "the first poll ever fired"
+  end
 end

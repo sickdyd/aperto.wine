@@ -14,10 +14,10 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- add_item ---
 
   test "adding an item shows it on the cart page" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
-    assert_redirected_to menu_path(id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
+    assert_redirected_to published_menu_path(@osteria)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match @barolo.name, response.body
     assert_match @barolo.producer, response.body
@@ -26,8 +26,8 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- adding from the menu (final review finding 3) ---
 
   test "a successful add redirects back to the menu, not the cart, with a confirmation flash" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
-    assert_redirected_to menu_path(id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to published_menu_path(@osteria)
 
     follow_redirect!
     assert_response :success
@@ -35,27 +35,27 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "adding a second wine from the menu never requires visiting the cart in between" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
-    assert_redirected_to menu_path(id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to published_menu_path(@osteria)
 
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
-    assert_redirected_to menu_path(id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
+    assert_redirected_to published_menu_path(@osteria)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_match @barolo.name, response.body
     assert_match ERB::Util.html_escape(@gavi.name), response.body
   end
 
   test "a failed add still redirects to the cart page, where the error has full context" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @sold_out.id, glass_size_ml: 125, quantity: 1 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @sold_out.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
   end
 
   test "the session survives a real cookie round trip and never stores a price" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
-    assert_redirected_to menu_path(id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
+    assert_redirected_to published_menu_path(@osteria)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match @barolo.name, response.body
 
@@ -69,30 +69,30 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "two restaurants' carts stay independent, and clearing one leaves the other intact" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
-    post cart_items_path(restaurant_id: @trattoria), params: { wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @trattoria.slug), params: { wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1 }
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_match @barolo.name, response.body
-    get cart_path(restaurant_id: @trattoria)
+    get cart_path(restaurant_slug: @trattoria.slug)
     assert_match ERB::Util.html_escape(@franciacorta.name), response.body
 
-    delete cart_path(restaurant_id: @osteria)
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    delete cart_path(restaurant_slug: @osteria.slug)
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_match I18n.t("cart.empty"), response.body
-    get cart_path(restaurant_id: @trattoria)
+    get cart_path(restaurant_slug: @trattoria.slug)
     assert_match ERB::Util.html_escape(@franciacorta.name), response.body
   end
 
   test "a wine belonging to another restaurant is rejected" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
     follow_redirect!
     assert_match I18n.t("cart.errors.wine_not_found"), response.body
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_match I18n.t("cart.empty"), response.body
   end
 
@@ -103,32 +103,32 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # doesn't exist at all, so the response never leaks which wines the owner
   # has chosen not to show.
   test "a wine that is not published on any active list is rejected" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @unlisted.id, glass_size_ml: 125, quantity: 1 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @unlisted.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
     follow_redirect!
     assert_match I18n.t("cart.errors.wine_not_found"), response.body
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_match I18n.t("cart.empty"), response.body
   end
 
   test "an unavailable wine is rejected with the flash the diner sees" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @sold_out.id, glass_size_ml: 125, quantity: 1 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @sold_out.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
     follow_redirect!
     assert_match I18n.t("cart.errors.wine_unavailable"), response.body
   end
 
   test "an invalid glass size fails cleanly" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 60, quantity: 1 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 60, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
     follow_redirect!
     assert_match I18n.t("cart.errors.invalid_glass_size"), response.body
   end
 
   test "a quantity beyond available stock is rejected with the flash the diner sees" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: @gavi.available_glasses + 1 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: @gavi.available_glasses + 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
     follow_redirect!
     assert_match I18n.t("cart.errors.insufficient_stock"), response.body
   end
@@ -136,7 +136,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- Flash layout (Task 5, Part E regression fix) ---
 
   test "the cart page's error flash renders exactly once, in the floating stack" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 60, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 60, quantity: 1 }
     follow_redirect!
 
     assert_select "[role='alert']", 1
@@ -144,28 +144,28 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a missing wine_id fails cleanly, not with a 500" do
-    post cart_items_path(restaurant_id: @osteria), params: { glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { glass_size_ml: 125, quantity: 1 }
     assert_response :redirect
     follow_redirect!
     assert_response :success
   end
 
   test "a non-numeric wine_id fails cleanly, not with a 500" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: "not-a-number", glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: "not-a-number", glass_size_ml: 125, quantity: 1 }
     assert_response :redirect
     follow_redirect!
     assert_response :success
   end
 
   test "a non-numeric glass_size_ml fails cleanly, not with a 500" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: "big", quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: "big", quantity: 1 }
     assert_response :redirect
     follow_redirect!
     assert_response :success
   end
 
   test "a missing quantity defaults cleanly rather than 500ing" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125 }
     assert_response :redirect
     follow_redirect!
     assert_response :success
@@ -174,20 +174,20 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- update_item / remove_item ---
 
   test "updating quantity changes the subtotal shown on the cart page" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
-    patch cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_match format_price(@barolo.price_for_glass(125) * 3), response.body
   end
 
   test "removing an item takes it off the cart page" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
-    delete cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_no_match @barolo.name, response.body
     assert_match I18n.t("cart.empty"), response.body
   end
@@ -197,19 +197,19 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   test "an inactive restaurant 404s on every cart action" do
     inactive = restaurants(:inactive_restaurant)
 
-    get cart_path(restaurant_id: inactive)
+    get cart_path(restaurant_slug: inactive.slug)
     assert_response :not_found
 
-    post cart_items_path(restaurant_id: inactive), params: { wine_id: 1, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: inactive.slug), params: { wine_id: 1, glass_size_ml: 125, quantity: 1 }
     assert_response :not_found
 
-    patch cart_items_path(restaurant_id: inactive), params: { wine_id: 1, glass_size_ml: 125, quantity: 1 }
+    patch cart_items_path(restaurant_slug: inactive.slug), params: { wine_id: 1, glass_size_ml: 125, quantity: 1 }
     assert_response :not_found
 
-    delete cart_items_path(restaurant_id: inactive), params: { wine_id: 1, glass_size_ml: 125 }
+    delete cart_items_path(restaurant_slug: inactive.slug), params: { wine_id: 1, glass_size_ml: 125 }
     assert_response :not_found
 
-    delete cart_path(restaurant_id: inactive)
+    delete cart_path(restaurant_slug: inactive.slug)
     assert_response :not_found
   end
 
@@ -219,15 +219,15 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     table = restaurant_tables(:sala_t1)
     get table_menu_path(table_token: table.token)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match table.name, response.body
   end
 
   test "the cart page renders without a table for a diner who arrived via /menu/:id" do
-    get menu_path(id: @osteria)
+    get published_menu_path(@osteria)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match I18n.t("cart.no_table_context"), response.body
   end
@@ -236,7 +236,7 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     table = restaurant_tables(:retired_table)
     get table_menu_path(table_token: table.token)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_no_match table.name, response.body
     assert_match I18n.t("cart.no_table_context"), response.body
@@ -245,10 +245,10 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- dropped items ---
 
   test "an item that becomes unavailable after being added is reported to the diner" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
     @barolo.update!(active: false)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match I18n.t("cart.dropped_items_notice"), response.body
   end
@@ -256,29 +256,29 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # --- recovering from a dropped line (final review finding 1) ---
 
   test "the dropped-items notice never claims items have already been removed" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
     @barolo.update!(active: false)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_no_match "have been removed", response.body
   end
 
   test "a dropped line renders its own name and a remove control" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
     @barolo.update!(active: false)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match @barolo.name, response.body
     assert_select "form[action=?][method=post] button[aria-label=?]",
-      cart_items_path(restaurant_id: @osteria), I18n.t("cart.remove_item", wine: @barolo.name)
+      cart_items_path(restaurant_slug: @osteria.slug), I18n.t("cart.remove_item", wine: @barolo.name)
   end
 
   test "a cart whose only line has been dropped still offers the Empty cart control" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
     @barolo.update!(active: false)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     # Reproduces the bricked-cart bug: items 0, dropped_items 1, empty? true —
     # the "Empty cart" button must still render even though the old `unless
@@ -288,23 +288,23 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a diner can remove a dropped line, recovering a cart that would otherwise be stuck forever" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
     @barolo.update!(active: false)
 
-    delete cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125 }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match I18n.t("cart.empty"), response.body
     assert_no_match I18n.t("cart.dropped_items_notice"), response.body
   end
 
   test "a wine whose price falls to zero after being added is treated as dropped, not silently blanked out" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
     @gavi.update!(price_100ml_cents: 0)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match I18n.t("cart.dropped_items_notice"), response.body
     assert_match ERB::Util.html_escape(@gavi.name), response.body
@@ -318,10 +318,10 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # too large, and the diner fixes it with the stepper the line already has.
 
   test "a line whose wine lost stock after it was added is flagged rather than dropped" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match ERB::Util.html_escape(I18n.t("cart.stock_shortfall_notice")), response.body
     assert_no_match I18n.t("cart.dropped_items_notice"), response.body
@@ -330,19 +330,19 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the shortfall banner is an alert, and a different one from the dropped-items band" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_select "[role='alert'].alert-info", 1
     assert_select "[role='alert'].alert-warning", 0
   end
 
   test "the shortfall note names what is left and is associated with that line's quantity control" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     note_id = "cart_item_#{@barolo.id}_125_stock"
     assert_select "p##{note_id}", text: I18n.t("cart.stock_shortfall", count: 2)
     assert_select "select#cart_item_#{@barolo.id}_125_quantity[aria-describedby=?]", note_id
@@ -352,11 +352,11 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # over stock together and the note states the wine's remaining total on each
   # — it is a fact about the wine, not about the row.
   test "the same wine at two glass sizes flags both of its lines" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 100, quantity: 2 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 100, quantity: 2 }
     @barolo.update!(available_glasses: 3)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     [ 125, 100 ].each do |size|
       assert_select "p#cart_item_#{@barolo.id}_#{size}_stock", text: I18n.t("cart.stock_shortfall", count: 3)
@@ -364,10 +364,10 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the submit control is withheld while a line exceeds stock, without falling back to the empty state" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_select "button", text: I18n.t("orders.form.submit"), count: 0
     assert_no_match I18n.t("cart.empty"), response.body
@@ -378,21 +378,21 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   # placement in PlaceOrder, so offering a submit that can only fail is worse
   # than withholding it until the line is gone.
   test "the submit control is withheld while a dropped line still needs removing" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @gavi.id, glass_size_ml: 100, quantity: 1 }
     @barolo.update!(active: false)
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_select "button", text: I18n.t("orders.form.submit"), count: 0
   end
 
   test "lowering the quantity to what is left brings the submit control back" do
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
     @barolo.update!(available_glasses: 2)
-    patch cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
+    patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 2 }
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_no_match ERB::Util.html_escape(I18n.t("cart.stock_shortfall_notice")), response.body
     assert_select "button", text: I18n.t("orders.form.submit"), count: 1

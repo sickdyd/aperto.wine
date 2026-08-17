@@ -2,7 +2,7 @@
 # endpoints (the menu, the cart, and — in a later task — order placement).
 #
 # A diner reaches these endpoints two ways:
-#   - the generic restaurant QR / link: /menu/:id, /menu/:restaurant_id/cart
+#   - the generic restaurant QR / link: /:restaurant_slug, /cart/:restaurant_slug
 #   - a per-table QR: /t/:table_token
 #
 # Either way we resolve @restaurant. When arriving via a table token whose
@@ -19,6 +19,10 @@
 # skip_before_action.
 module CustomerScoped
   extend ActiveSupport::Concern
+
+  included do
+    helper_method :menu_path_for
+  end
 
   private
 
@@ -40,7 +44,30 @@ module CustomerScoped
         remember_table(table)
       end
     else
-      @restaurant = Restaurant.active.find(params[:restaurant_id] || params[:id])
+      @restaurant = Restaurant.active.find_by!(slug: normalized_slug(params[:restaurant_slug]))
+    end
+  end
+
+  # Stored slugs are always lowercase (Sluggable parameterizes them on write),
+  # so lowering the incoming one costs nothing, still uses the plain unique
+  # index, and keeps a hand-typed or upper-cased URL from 404ing. Callers that
+  # compare against a stored slug get a canonicalizing redirect out of it.
+  def normalized_slug(value)
+    value.to_s.downcase
+  end
+
+  # The canonical public URL of a restaurant's menu, and where a diner is sent
+  # whenever we hand them back to it. Names the published list rather than
+  # pointing at the restaurant URL, so the round trip costs one request
+  # instead of two — the restaurant URL exists for QR codes, which need a
+  # target that survives a menu swap, not for in-app links that can name the
+  # current one. Callers holding the published list already (the menu itself)
+  # pass it in to save the lookup.
+  def menu_path_for(restaurant, published: restaurant.published_wine_list)
+    if published
+      wine_list_menu_path(restaurant_slug: restaurant.slug, wine_list_slug: published.slug)
+    else
+      restaurant_menu_path(restaurant_slug: restaurant.slug)
     end
   end
 

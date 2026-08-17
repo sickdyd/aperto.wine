@@ -47,6 +47,28 @@ module Owner
       assert_no_match 'fill="#currentColor"', response.body
     end
 
+    # The QR encodes the restaurant, never a wine list. That indirection is
+    # the whole point: the owner can publish a different list without any of
+    # the printed codes going stale.
+    test "GET /owner/restaurants/:id/qr_code encodes the restaurant slug, not a wine list" do
+      sign_in_as @owner
+      get owner_restaurant_qr_code_path(restaurant_id: @restaurant)
+
+      assert_match restaurant_menu_url(restaurant_slug: @restaurant.slug), response.body
+      assert_no_match(/#{@restaurant.published_wine_list.slug}/, response.body)
+    end
+
+    test "the QR target is unchanged by publishing a different wine list" do
+      sign_in_as @owner
+      get owner_restaurant_qr_code_path(restaurant_id: @restaurant)
+      before = response.body[/https?:\/\/[^"]+/]
+
+      wine_lists(:summer).publish!
+
+      get owner_restaurant_qr_code_path(restaurant_id: @restaurant)
+      assert_equal before, response.body[/https?:\/\/[^"]+/]
+    end
+
     test "GET /owner/restaurants/:id/qr_code as admin for own restaurant renders successfully" do
       # Admin can access their own restaurants; here we sign in as owner of osteria
       # and confirm the page renders — admin with no restaurants gets 404 (expected behaviour)

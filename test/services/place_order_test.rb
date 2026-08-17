@@ -252,4 +252,110 @@ class PlaceOrderTest < ActiveSupport::TestCase
 
     assert_equal expected_total, result.order.total_amount_cents
   end
+
+  # --- geofencing ---
+  #
+  # Geofence itself is exercised exhaustively in test/services/geofence_test.rb.
+  # What is proved here is only the wiring: that each verdict reaches the order
+  # row (or blocks it) intact.
+
+  # A point due north of the restaurant, `meters` away. Same derivation as
+  # GeofenceTest#point_at, and for the same reason: these tests are only
+  # meaningful if they track the fixture's radius and Geofence's accuracy cap,
+  # and a hardcoded latitude would quietly stop doing that the first time
+  # either moves.
+  def point_at(restaurant, meters)
+    origin = [ restaurant.latitude.to_f, restaurant.longitude.to_f ]
+    probe = 0.001
+    meters_per_degree = meters_between(origin, [ origin.first + probe, origin.last ]) / probe
+    [ origin.first + (meters / meters_per_degree), origin.last ]
+  end
+
+  def meters_between(from, to)
+    Geocoder::Calculations.distance_between(from, to, units: :km) * 1000
+  end
+
+  def place_at(cart, restaurant, point, accuracy:)
+    PlaceOrder.call(
+      cart: cart, restaurant: restaurant, table: nil, customer: nil, guest_name: "Jane",
+      latitude: point.first, longitude: point.last, accuracy: accuracy
+    )
+  end
+
+  test "a disabled geofence records no location claim even when a good fix is supplied" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+
+    result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: 12)
+
+    assert result.success?
+    order = result.order
+    assert order.location_status_not_checked?
+    assert_nil order.distance_meters
+    assert_nil order.location_accuracy_meters
+  end
+
+  test "an in-range fix is stamped onto the order" do
+    @osteria.update!(geofence_enabled: true)
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+
+    result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: 12)
+
+    assert result.success?
+    order = result.order
+    assert order.location_status_verified?
+    assert_equal 5, order.distance_meters
+    assert_equal 12, order.location_accuracy_meters
+  end
+
+  test "a diner who supplies no fix still places the order, unverified" do
+    # The product decision, not an oversight: a denied browser prompt (or a
+    # device that simply cannot get a fix) must not cost a real order.
+    @osteria.update!(geofence_enabled: true)
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+
+    result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
+
+    assert result.success?
+    order = result.order
+    assert order.location_status_unverified?
+    assert_nil order.distance_meters
+    assert_nil order.location_accuracy_meters
+  end
+
+  test "a fix too imprecise to judge places the order and records the accuracy but no distance" do
+    @osteria.update!(geofence_enabled: true)
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
+    too_wide = Geofence::MAX_ACCURACY_METERS + 1
+
+    result = place_at(cart, @osteria, point_at(@osteria, 5), accuracy: too_wide)
+
+    assert result.success?
+    order = result.order
+    assert order.location_status_unverified?
+    assert_equal too_wide, order.location_accuracy_meters
+    assert_nil order.distance_meters
+  end
+
+  test "an out-of-range fix places no order and leaves the cart intact" do
+    # The cart surviving is the point: a diner who walks closer must be able to
+    # retry the order they already built rather than rebuild it from scratch.
+    @osteria.update!(geofence_enabled: true)
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
+
+    assert_no_difference [ "Order.count", "OrderItem.count" ] do
+      result = place_at(cart, @osteria, point_at(@osteria, 4000), accuracy: 12)
+
+      assert_not result.success?
+      assert_equal :location_out_of_range, result.error
+      assert_nil result.order
+    end
+
+    assert_equal [ @barolo ], cart.items.map(&:wine)
+    assert_equal 2, cart.items.first.quantity
+  end
 end

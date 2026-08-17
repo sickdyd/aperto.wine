@@ -35,7 +35,7 @@ class OrdersController < ApplicationController
   # collapse every such visitor onto the same blank-string bucket.
   rate_limit to: 5, within: 1.minute, only: :create,
              by: -> { session.id.to_s.presence || request.remote_ip },
-             with: -> { redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.rate_limited") }
+             with: -> { redirect_to cart_path(restaurant_slug: @restaurant.slug), alert: t("orders.errors.rate_limited") }
 
   # IP-scoped: closes the bypass above. Placing an order always requires a
   # session-backed cart (see #set_cart / Cart), so by the time #create runs
@@ -47,14 +47,16 @@ class OrdersController < ApplicationController
   # diner may legitimately retry a few seconds later.
   rate_limit to: IP_RATE_LIMIT, within: 1.minute, only: :create, name: "orders_ip",
              by: -> { request.remote_ip },
-             with: -> { redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.rate_limited") }
+             with: -> { redirect_to cart_path(restaurant_slug: @restaurant.slug), alert: t("orders.errors.rate_limited") }
 
   def create
     return honeypot_response if honeypot_tripped?
 
     result = PlaceOrder.call(
       cart: @cart, restaurant: @restaurant, table: current_table,
-      customer: current_user, guest_name: order_params[:guest_name].presence
+      customer: current_user, guest_name: order_params[:guest_name].presence,
+      latitude: order_params[:latitude], longitude: order_params[:longitude],
+      accuracy: order_params[:accuracy]
     )
 
     if result.success?
@@ -65,7 +67,7 @@ class OrdersController < ApplicationController
       @order_history.record(result.order)
       redirect_to order_status_path(public_token: result.order.public_token)
     else
-      redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.#{result.error}")
+      redirect_to cart_path(restaurant_slug: @restaurant.slug), alert: t("orders.errors.#{result.error}")
     end
   end
 
@@ -100,8 +102,20 @@ class OrdersController < ApplicationController
   # length-capped on the model). status, total_amount_cents, restaurant_id,
   # restaurant_table_id, customer_id and public_token are all set
   # server-side in PlaceOrder and never accepted from params.
+  #
+  # latitude/longitude/accuracy are the browser Geolocation API's reading,
+  # and with guest_name they are the only diner-supplied values that reach
+  # the service at all. Unlike guest_name none of them is persisted verbatim:
+  # the order row keeps only the derived distance and the accuracy, never a
+  # point the diner has stood on.
+  #
+  # There is deliberately no numeric or range check here. Geofence already
+  # treats anything non-numeric, non-finite or outside a real coordinate range
+  # as "no usable fix" — that validation lives there on purpose, and a second
+  # layer in this controller would be unreachable code. #permit also drops
+  # arrays and hashes to nil, which Geofence reads as the same "no fix".
   def order_params
-    params.permit(:guest_name)
+    params.permit(:guest_name, :latitude, :longitude, :accuracy)
   end
 
   # Read from the raw params, not the permitted order_params: Strong
@@ -122,6 +136,6 @@ class OrdersController < ApplicationController
   # honeypot only withholds anything actionable (an order, a token, a
   # success message) from an automated submission.
   def honeypot_response
-    redirect_to menu_path(id: @restaurant)
+    redirect_to menu_path_for(@restaurant)
   end
 end

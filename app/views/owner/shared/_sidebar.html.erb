@@ -111,9 +111,14 @@
 
         <ul>
           <li>
+            <%# The tally rides the entry it belongs to rather than sitting on
+                its own: the badge is only ever read as "orders waiting". %>
             <%= link_to owner_restaurant_orders_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("orders")) do %>
               <%= icon "receipt", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.orders") %>
+              <%= render "owner/orders/badge",
+                         id: Owner::OrdersHelper::BADGE_IDS[:sidebar],
+                         count: owner_pending_orders_count(@restaurant) %>
             <% end %>
           </li>
           <li>
@@ -153,9 +158,16 @@
     </nav>
   </div>
 
-  <%# The running foot: who is signed in, and the way out. %>
+  <%# The running foot: who is signed in, and the way out. The legal documents
+      sit here too — the terms carry the art. 28 appointment a restaurateur is
+      bound by, so they have to stay re-readable after sign-up, not only before. %>
   <div class="border-t border-rule-fine px-4 py-3">
     <p class="truncate text-meta text-ink-soft" title="<%= current_user.name %>"><%= current_user.name %></p>
     <%= button_to t("auth.sign_out"), sign_out_path, method: :delete, class: "btn-wine-quiet mt-2 min-h-11 w-full" %>
+    <p class="mono-micro mt-3">
+      <%= link_to t("legal.nav.privacy"), privacy_path, class: "underline underline-offset-4 hover:text-ox-1" %>
+      &middot;
+      <%= link_to t("legal.nav.terms"), terms_path, class: "underline underline-offset-4 hover:text-ox-1" %>
+    </p>
   </div>
 </aside>

@@ -13,27 +13,44 @@ Rails.application.routes.draw do
     get "sign_up", to: "registrations#new", as: :sign_up
     post "sign_up", to: "registrations#create"
 
-    # Public menu (customer-facing, no auth required)
-    get "menu/:id", to: "menus#show", as: :menu
-    # Per-table QR entry point: same menu, resolved from the table's token
+    # Legal documents — public and unauthenticated: the informativa privacy
+    # (GDPR art. 13) and the terms, which also carry the operator identity
+    # D.Lgs. 70/2003 art. 7 requires the service to publish. The slugs stay in
+    # English in both locales; the surrounding "(:locale)" scope is what makes
+    # /it/privacy and /privacy the same document in two languages. Both names
+    # are in Restaurant::RESERVED_SLUGS — the catch-all slug route below could
+    # never reach a restaurant that claimed one.
+    get "privacy", to: "legal#privacy", as: :privacy
+    get "terms",   to: "legal#terms",   as: :terms
+
+    # Legacy numeric menu URL. QR codes printed before slugs existed point
+    # here, so it has to keep resolving — it redirects to the restaurant's
+    # slug. The digits-only constraint keeps it from swallowing slugs.
+    get "menu/:id", to: "menus#legacy", as: :menu, constraints: { id: /\d+/ }
+
+    # Per-table QR entry point: the published menu, resolved from the table's
+    # token. Renders in place rather than redirecting to the slug URL, so the
+    # table stays attributed even when the browser refuses cookies.
     get "t/:table_token", to: "menus#show", as: :table_menu
 
-    # Session-backed cart (customer-facing, no auth required)
-    get    "menu/:restaurant_id/cart",       to: "carts#show",        as: :cart
-    post   "menu/:restaurant_id/cart/items", to: "carts#add_item",    as: :cart_items
-    patch  "menu/:restaurant_id/cart/items", to: "carts#update_item"
-    delete "menu/:restaurant_id/cart/items", to: "carts#remove_item"
-    delete "menu/:restaurant_id/cart",       to: "carts#destroy"
+    # Session-backed cart (customer-facing, no auth required). Kept under its
+    # own "cart/" prefix rather than nested under the restaurant slug: that
+    # way no wine list slug can ever collide with "cart" or "orders".
+    get    "cart/:restaurant_slug",       to: "carts#show",        as: :cart
+    post   "cart/:restaurant_slug/items", to: "carts#add_item",    as: :cart_items
+    patch  "cart/:restaurant_slug/items", to: "carts#update_item"
+    delete "cart/:restaurant_slug/items", to: "carts#remove_item"
+    delete "cart/:restaurant_slug",       to: "carts#destroy"
 
     # Order placement and status (customer-facing, no auth required). The
     # only public write endpoint in the feature — see OrdersController for
     # its abuse controls. public_token is a 24-char base58 has_secure_token,
     # so :public_token gets no digits-only constraint the way an :id would.
-    post "menu/:restaurant_id/orders", to: "orders#create", as: :orders
+    post "cart/:restaurant_slug/orders", to: "orders#create", as: :orders
     # No as: here — the post above already defines orders_path for this
     # same URL, and a second :as on the same name would just warn.
-    get  "menu/:restaurant_id/orders", to: "orders#index"
-    get  "orders/:public_token",       to: "orders#show",   as: :order_status
+    get  "cart/:restaurant_slug/orders", to: "orders#index"
+    get  "orders/:public_token",         to: "orders#show",   as: :order_status
 
     # Owner namespace
     namespace :owner do
@@ -45,6 +62,11 @@ Rails.application.routes.draw do
       resources :restaurants do
         resources :wines, except: [ :show ]
         resources :wine_lists, except: [ :show ] do
+          member do
+            # Publishing is one list winning, not a flag being toggled on each
+            # — hence a dedicated action rather than an :active attribute.
+            patch :publish
+          end
           resources :wine_list_items, only: [ :create, :update, :destroy ] do
             collection do
               patch :sort
@@ -65,6 +87,13 @@ Rails.application.routes.draw do
           end
         end
         resources :orders, only: [ :index, :show ] do
+          # Polled by every open owner page for this restaurant — see
+          # Owner::OrdersController#notifications. A collection route rather
+          # than a member one: the question is "what has arrived", which no
+          # single order can answer.
+          collection do
+            get :notifications
+          end
           member do
             patch :approve
             patch :cancel
@@ -72,5 +101,13 @@ Rails.application.routes.draw do
         end
       end
     end
+
+    # The public menu, declared last on purpose: ":restaurant_slug" matches a
+    # single path segment and would shadow every route above it — "sign_in",
+    # "cart", the whole owner namespace — if it came first. Route order is
+    # what protects them; Restaurant::RESERVED_SLUGS keeps owners from
+    # claiming a slug that could never resolve anyway.
+    get ":restaurant_slug",                 to: "menus#show", as: :restaurant_menu
+    get ":restaurant_slug/:wine_list_slug", to: "menus#show", as: :wine_list_menu
   end
 end

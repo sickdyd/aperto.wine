@@ -47,10 +47,39 @@
             <%= icon "list", class: "size-5" %>
           </label>
           <a href="<%= owner_restaurants_path %>" class="font-display text-lg font-semibold text-primary px-2">aperto.wine</a>
+
+          <%# The sidebar's orders entry is behind the drawer on a phone, and a
+              tally nobody can see without opening a drawer is not a tally. The
+              same badge, on the one piece of chrome a phone always shows. %>
+          <% if @restaurant&.persisted? %>
+            <%= link_to owner_restaurant_orders_path(@restaurant),
+                  class: "nav-item ml-auto px-3",
+                  aria: { label: t("owner.restaurants.orders") } do %>
+              <%= icon "receipt", class: "size-4 shrink-0" %>
+              <%= render "owner/orders/badge",
+                         id: Owner::OrdersHelper::BADGE_IDS[:mobile],
+                         count: owner_pending_orders_count(@restaurant) %>
+            <% end %>
+          <% end %>
         </header>
 
-        <%# Flash messages %>
+        <%# Flash messages, and the stack that arriving orders are announced in %>
         <%= render "owner/shared/flash" %>
+
+        <%# The live order poller. Mounted per restaurant, because that is what
+            it asks about — outside a restaurant (the restaurant index, a new
+            restaurant form) there is nothing to announce, and no element here
+            means no polling at all rather than a request that answers nothing.
+            It seeds itself with the orders already on the page so the first
+            poll after every navigation announces none of them again. %>
+        <% if @restaurant&.persisted? %>
+          <div hidden
+               data-controller="order-notifications"
+               data-order-notifications-url-value="<%= notifications_owner_restaurant_orders_path(@restaurant) %>"
+               data-order-notifications-badge-id-value="<%= Owner::OrdersHelper::BADGE_IDS[:sidebar] %>"
+               data-order-notifications-known-value="<%= owner_recent_order_ids(@restaurant).to_json %>"
+               data-order-notifications-interval-value="<%= order_notifications_poll_interval_ms %>"></div>
+        <% end %>
 
         <%# Main content %>
         <main class="w-full max-w-6xl mx-auto flex-1 px-4 sm:px-6 lg:px-8 py-8">

@@ -1,0 +1,26 @@
+<%# One arriving order, announced on whichever page of the dashboard the owner
+    happens to be on. It is the shared flash band and nothing else — the same
+    ground, rule, label and dismiss control every other message in this app
+    uses — because a notification that looked like its own kind of object would
+    be a second vocabulary for the same job.
+
+    `variant` is passed as the whole class name, never assembled: Tailwind
+    builds its stylesheet by scanning these files for literal class strings, so
+    a name stitched together at render time gets no rule emitted at all and the
+    band silently loses its ground.
+
+    The message is a link rather than a sentence with a link after it. The one
+    thing the owner wants from this band is the order, and role="alert" on the
+    band announces the copy without pulling focus into it, so the link is
+    reachable but never grabbed mid-task. %>
+<%= render "shared/flash_band",
+           variant: "alert-info",
+           icon_name: "bell-ringing",
+           label: t("owner.orders.new_order"),
+           message: link_to(
+             t("owner.orders.new_order_detail",
+               id: order.id,
+               table: order.restaurant_table&.name || t("owner.orders.no_table")),
+             owner_restaurant_order_path(restaurant, order),
+             class: "underline underline-offset-2"
+           ) %>

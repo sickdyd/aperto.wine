@@ -87,6 +87,20 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     end
   end
 
+  # config/legal.yml reads these, and referenced_env_vars only sweeps app/ — so
+  # nothing else would catch a missing declaration. Named explicitly because the
+  # failure is invisible in production: the pages still render, with "to be
+  # completed" where the operator's identity should be.
+  test "the operator identity is declared as a dashboard secret" do
+    LegalOperator::FIELDS.each do |field|
+      name = LegalOperator.env_var(field)
+      entry = @staging["envVars"].find { |var| var["key"] == name }
+
+      assert entry, "#{name} should be declared"
+      assert_equal false, entry["sync"], "#{name} must be set in the dashboard, not in the repo"
+    end
+  end
+
   # Deliberately not a fixed list of secret names: one rotted when the
   # Wine-Searcher client was deleted. Any sync:false entry is dashboard-managed
   # by definition, so a literal value on one is the thing worth catching.

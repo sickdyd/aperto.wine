@@ -32,7 +32,7 @@
    ] %>
 <%# The public menu only serves active restaurants, so an inactive one gets a
     hint instead of a link that would 404. %>
-<% sections << { path: menu_path(id: @restaurant.id), icon: "eye", label: t("owner.restaurants.preview_menu"), hint: t("owner.restaurants.preview_description"), external: true } if @restaurant.active? %>
+<% sections << { path: restaurant_menu_path(restaurant_slug: @restaurant.slug), icon: "eye", label: t("owner.restaurants.preview_menu"), hint: t("owner.restaurants.preview_description"), external: true } if @restaurant.active? %>
 
 <%# The sidebar landmark is already labelled "Dashboard", so this one takes the
     restaurant's own name to stay distinguishable. %>

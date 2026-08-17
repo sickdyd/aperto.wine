@@ -22,9 +22,9 @@ class WineListTest < ActiveSupport::TestCase
     assert_not list.valid?
   end
 
-  test "defaults active to true and position to 0" do
+  test "defaults to unpublished with position 0" do
     list = WineList.create!(valid_attributes)
-    assert list.active?
+    assert_not list.published?, "publishing is an explicit act, never a side effect of creation"
     assert_equal 0, list.position
   end
 
@@ -57,10 +57,55 @@ class WineListTest < ActiveSupport::TestCase
 
   # --- Scopes ---
 
-  test "active scope returns only active lists" do
-    assert_includes WineList.active, wine_lists(:trattoria_list)
-    assert_not_includes WineList.active, wine_lists(:winter)
-    assert_not_includes WineList.active, wine_lists(:summer)
+  test "published scope returns only published lists" do
+    assert_includes WineList.published, wine_lists(:trattoria_list)
+    assert_not_includes WineList.published, wine_lists(:winter)
+    assert_not_includes WineList.published, wine_lists(:summer)
+  end
+
+  # --- Publishing ---
+
+  test "publish! retires the restaurant's previously published list" do
+    incumbent = wine_lists(:osteria_list)
+    challenger = wine_lists(:summer)
+
+    challenger.publish!
+
+    assert challenger.reload.published?
+    assert_not incumbent.reload.published?
+  end
+
+  test "publish! leaves another restaurant's published list alone" do
+    other = wine_lists(:trattoria_list)
+
+    wine_lists(:summer).publish!
+
+    assert other.reload.published?
+  end
+
+  test "publish! on the already published list is a no-op" do
+    list = wine_lists(:osteria_list)
+
+    list.publish!
+
+    assert list.reload.published?
+    assert_equal 1, restaurants(:osteria).wine_lists.published.count
+  end
+
+  test "a restaurant can never have two published lists" do
+    assert_raises ActiveRecord::RecordNotUnique do
+      wine_lists(:summer).update_column(:published, true)
+    end
+  end
+
+  test "published_wine_list returns the restaurant's one public list" do
+    assert_equal wine_lists(:osteria_list), restaurants(:osteria).published_wine_list
+  end
+
+  test "published_wine_list is nil when nothing is published" do
+    restaurants(:osteria).wine_lists.update_all(published: false)
+
+    assert_nil restaurants(:osteria).reload.published_wine_list
   end
 
   test "by_position orders by position then name" do

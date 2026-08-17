@@ -1,0 +1,88 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Runs the test suite while holding a lock shared by every worktree of this repo.
+#
+# Two reasons the runs must not overlap:
+#
+#   1. Correctness. Every worktree resolves to the same Postgres and the same
+#      test databases (aperto_wine_test, plus aperto_wine_test_0..N for the
+#      parallel workers). Two suites running at once load fixtures into the same
+#      tables and truncate each other mid-test, which surfaces as
+#      PG::TRDeadlockDetected — one process waiting on AccessExclusiveLock for a
+#      fixture TRUNCATE while the other holds AccessShareLock for a SELECT.
+#
+#   2. Load. Each run forks PARALLEL_WORKERS Rails processes, and in system
+#      tests each of those also gets a Puma and a headless Chrome. A handful of
+#      agent sessions doing that simultaneously put a 14-core machine at load
+#      34, which is where system tests start failing on timing rather than on
+#      real regressions.
+#
+# Queueing costs a caller the ~45s the suite actually takes; overlapping costs
+# everyone minutes and produces failures that do not reproduce.
+#
+# Usage:
+#   bin/test                  unit + integration
+#   bin/test --system         system tests
+#   bin/test --all            both, under a single lock acquisition
+#   bin/test <path>...        targeted unit/integration files
+#
+# The lock is advisory and held by the OS, so it is released even if this
+# process is killed. Set TEST_LOCK_DISABLED=1 to skip it; CI skips it
+# automatically, since each runner already has the machine to itself.
+
+require "digest"
+require "tmpdir"
+
+# --git-common-dir points at the primary checkout's .git from inside any
+# worktree, so every worktree of this repo derives the same lock path.
+common_dir = `git rev-parse --git-common-dir 2>/dev/null`.strip
+abort "bin/test: not inside a Git repository" if common_dir.empty?
+
+# bin/rails is resolved relative to the working directory, so run from the
+# worktree root and `bin/test` works from any subdirectory of it.
+toplevel = `git rev-parse --show-toplevel 2>/dev/null`.strip
+Dir.chdir(toplevel) unless toplevel.empty?
+
+LOCK_PATH = File.join(
+  Dir.tmpdir, "rails-test-#{Digest::SHA256.hexdigest(File.expand_path(common_dir))[0, 12]}.lock"
+)
+
+# Fail fast: a broken unit suite almost always breaks the system suite too, and
+# reporting both just buries the cause.
+TASKS =
+  case ARGV.first
+  when "--all"    then [ [ "test" ], [ "test:system" ] ]
+  when "--system" then [ [ "test:system" ] ]
+  when /\A--/     then abort "bin/test: unknown option #{ARGV.first}"
+  else                 [ [ "test", *ARGV ] ]
+  end
+
+def with_lock
+  return yield if ENV["TEST_LOCK_DISABLED"] == "1" || ENV["CI"]
+
+  File.open(LOCK_PATH, File::RDWR | File::CREAT, 0o644) do |lock|
+    unless lock.flock(File::LOCK_EX | File::LOCK_NB)
+      warn "bin/test: another run in this repo holds the suite lock; waiting..."
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      lock.flock(File::LOCK_EX)
+      waited = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      warn format("bin/test: acquired the lock after %.1fs", waited)
+    end
+
+    yield
+  end
+end
+
+status = 0
+
+with_lock do
+  TASKS.each do |task|
+    next if system("bin/rails", *task)
+
+    status = $?.exitstatus || 1
+    break
+  end
+end
+
+exit status

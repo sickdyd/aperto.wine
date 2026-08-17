@@ -135,7 +135,7 @@ class CartTest < ActiveSupport::TestCase
     cart = cart_for(@osteria)
     cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 1)
 
-    wine_lists(:osteria_list).update!(active: false)
+    wine_lists(:osteria_list).update!(published: false)
 
     assert_empty cart.items
     assert_equal 1, cart.dropped_items.size

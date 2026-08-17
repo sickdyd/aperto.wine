@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -58,7 +58,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
   create_table "orders", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "customer_id"
+    t.integer "distance_meters"
     t.string "guest_name"
+    t.integer "location_accuracy_meters"
+    t.integer "location_status", default: 0, null: false
     t.string "public_token", null: false
     t.bigint "restaurant_id", null: false
     t.bigint "restaurant_table_id"
@@ -68,6 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
     t.index ["customer_id", "status"], name: "index_orders_on_customer_id_and_status"
     t.index ["customer_id"], name: "index_orders_on_customer_id"
     t.index ["public_token"], name: "index_orders_on_public_token", unique: true
+    t.index ["restaurant_id", "created_at", "id"], name: "index_orders_on_restaurant_id_and_recency", order: { created_at: :desc, id: :desc }
     t.index ["restaurant_id", "status"], name: "index_orders_on_restaurant_id_and_status"
     t.index ["restaurant_id"], name: "index_orders_on_restaurant_id"
     t.index ["restaurant_table_id"], name: "index_orders_on_restaurant_table_id"
@@ -93,12 +97,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
     t.string "address", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.boolean "geofence_enabled", default: false, null: false
     t.decimal "latitude", precision: 10, scale: 7
     t.decimal "longitude", precision: 10, scale: 7
     t.string "name", null: false
     t.integer "proximity_radius_meters", default: 200, null: false
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["slug"], name: "index_restaurants_on_slug", unique: true
     t.index ["user_id"], name: "index_restaurants_on_user_id"
   end
 
@@ -278,14 +285,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
   end
 
   create_table "wine_lists", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.integer "position", default: 0, null: false
+    t.boolean "published", default: false, null: false
     t.bigint "restaurant_id", null: false
     t.string "season"
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["restaurant_id", "position"], name: "index_wine_lists_on_restaurant_id_and_position"
+    t.index ["restaurant_id", "slug"], name: "index_wine_lists_on_restaurant_id_and_slug", unique: true
+    t.index ["restaurant_id"], name: "index_wine_lists_on_one_published_per_restaurant", unique: true, where: "published"
     t.index ["restaurant_id"], name: "index_wine_lists_on_restaurant_id"
   end
 

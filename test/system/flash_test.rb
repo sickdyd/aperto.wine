@@ -34,8 +34,11 @@ class FlashTest < ApplicationSystemTestCase
     with_flash = main_offset_top
 
     # Same page, same layout — the flash has been consumed by the first render.
+    # The owner stack itself stays: it is also where arriving orders are
+    # announced, so it is rendered empty rather than conditionally. Being fixed,
+    # an empty stack is exactly what this test is checking costs nothing.
     visit owner_restaurants_path
-    assert_no_selector ".toast-stack"
+    assert_no_selector ".toast-band"
 
     assert_in_delta with_flash, main_offset_top, 1,
       "the flash moved <main>; a floating toast must cost the page no space"
@@ -94,7 +97,7 @@ class FlashTest < ApplicationSystemTestCase
   # overlap — rather than the number itself, which may legitimately change.
   test "a toast never lands on the menu's cart bar" do
     barolo = wines(:barolo)
-    visit menu_path(id: restaurants(:osteria))
+    visit restaurant_menu_path(restaurant_slug: restaurants(:osteria).slug)
 
     find("button[aria-label='#{I18n.t("menu.add_to_cart", wine: barolo.name, size: 125)}']").click
 

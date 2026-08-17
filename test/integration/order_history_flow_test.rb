@@ -13,19 +13,19 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   end
 
   def add_barolo_to_cart(restaurant: @osteria, quantity: 1)
-    post cart_items_path(restaurant_id: restaurant), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: quantity }
+    post cart_items_path(restaurant_slug: restaurant.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: quantity }
   end
 
   def place_order(restaurant: @osteria, guest_name: "Jane")
     add_barolo_to_cart(restaurant: restaurant)
-    post orders_path(restaurant_id: restaurant), params: { guest_name: guest_name }
+    post orders_path(restaurant_slug: restaurant.slug), params: { guest_name: guest_name }
     Order.order(:created_at).last
   end
 
   test "placing an order records it, and it appears on the device's index" do
     order = place_order
 
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match order.public_token, response.body
   end
@@ -34,13 +34,13 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
     first = place_order(guest_name: "First Diner")
     second = place_order(guest_name: "Second Diner")
 
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_operator response.body.index(second.public_token), :<, response.body.index(first.public_token)
   end
 
   test "a fresh device's index renders successfully and lists nothing" do
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     # No order_tokens cookie was ever set, so none of this restaurant's
     # existing orders — fixtures or otherwise — should resolve for us.
@@ -51,14 +51,14 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   test "an order placed at restaurant A does not appear on restaurant B's index" do
     order = place_order(restaurant: @osteria)
 
-    get orders_path(restaurant_id: @trattoria)
+    get orders_path(restaurant_slug: @trattoria.slug)
     assert_response :success
     assert_no_match order.public_token, response.body
   end
 
   test "the index for an inactive restaurant 404s" do
     inactive = restaurants(:inactive_restaurant)
-    get orders_path(restaurant_id: inactive)
+    get orders_path(restaurant_slug: inactive.slug)
     assert_response :not_found
   end
 
@@ -68,7 +68,7 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
     get order_status_path(public_token: order.public_token)
     assert_response :success
 
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_no_match order.public_token, response.body
   end
@@ -76,10 +76,10 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   test "the honeypot path records nothing" do
     add_barolo_to_cart
     assert_no_difference "Order.count" do
-      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane", contact_reference: "http://spam.example" }
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane", contact_reference: "http://spam.example" }
     end
 
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     # Not just a 200 — the index renders for any number of reasons. This is
     # the assertion that the history is genuinely still empty.
@@ -89,14 +89,14 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   test "a garbage order_tokens cookie does not break the index" do
     cookies[:order_tokens] = "not-json-and-not-signed"
 
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match I18n.t("orders.history.empty"), response.body
   end
 
   test "the index does not 429 under repeated GETs, unlike create" do
     50.times do
-      get orders_path(restaurant_id: @osteria)
+      get orders_path(restaurant_slug: @osteria.slug)
       assert_response :success
     end
   end
@@ -110,17 +110,17 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   # assertion stands in for that last one).
 
   def history_link
-    "href=\"#{orders_path(restaurant_id: @osteria)}\""
+    "href=\"#{orders_path(restaurant_slug: @osteria.slug)}\""
   end
 
   test "the menu shows no history link until this device has ordered here" do
-    get menu_path(id: @osteria)
+    get published_menu_path(@osteria)
     assert_response :success
     assert_no_match history_link, response.body
 
     place_order
 
-    get menu_path(id: @osteria)
+    get published_menu_path(@osteria)
     assert_response :success
     assert_match history_link, response.body
     assert_match I18n.t("orders.history.title"), response.body
@@ -129,9 +129,9 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   test "a device that ordered at A sees no history link on B's menu" do
     place_order(restaurant: @osteria)
 
-    get menu_path(id: @trattoria)
+    get published_menu_path(@trattoria)
     assert_response :success
-    assert_no_match "href=\"#{orders_path(restaurant_id: @trattoria)}\"", response.body
+    assert_no_match "href=\"#{orders_path(restaurant_slug: @trattoria.slug)}\"", response.body
   end
 
   # The list would be a one-line copy of the page already open, so the status
@@ -154,7 +154,7 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   test "each index row prints its status and total and links to its receipt" do
     order = place_order
 
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match "href=\"#{order_status_path(public_token: order.public_token)}\"", response.body
     assert_match I18n.t("orders.status.statuses.#{order.status}"), response.body
@@ -165,7 +165,7 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
   end
 
   test "a fresh device's index prints the empty state and the retention line" do
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match I18n.t("orders.history.empty"), response.body
     assert_match I18n.t("orders.history.retention"), response.body
@@ -181,17 +181,17 @@ class OrderHistoryFlowTest < ActionDispatch::IntegrationTest
 
     # A second glass in the cart, so the session has something live to lose.
     add_barolo_to_cart
-    get menu_path(id: @osteria)
+    get published_menu_path(@osteria)
     assert_match "id=\"cart-bar\"", response.body
 
     cookies.delete(Rails.application.config.session_options[:key])
 
-    get menu_path(id: @osteria)
+    get published_menu_path(@osteria)
     assert_response :success
     assert_no_match "id=\"cart-bar\"", response.body
     assert_match history_link, response.body
 
-    get orders_path(restaurant_id: @osteria)
+    get orders_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_match order.public_token, response.body
   end

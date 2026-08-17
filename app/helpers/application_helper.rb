@@ -13,6 +13,21 @@ module ApplicationHelper
     Rails.env.test? ? 0 : FLASH_TOAST_TIMEOUT_MS
   end
 
+  # How often an open owner page asks whether an order has arrived. Fifteen
+  # seconds is well inside the time it takes anyone to walk to a table, and it
+  # is one small request per open tab — cheap enough that it needs no cleverness
+  # about backing off, and the poller stops entirely while the tab is hidden.
+  ORDER_NOTIFICATIONS_POLL_INTERVAL_MS = 15_000
+
+  # A second under test, for the same reason the flash timeout is zero: a
+  # browser test that has to sit out the production cadence before the thing it
+  # is asserting on can possibly appear is a test that only ever times out.
+  ORDER_NOTIFICATIONS_TEST_POLL_INTERVAL_MS = 1_000
+
+  def order_notifications_poll_interval_ms
+    Rails.env.test? ? ORDER_NOTIFICATIONS_TEST_POLL_INTERVAL_MS : ORDER_NOTIFICATIONS_POLL_INTERVAL_MS
+  end
+
   def format_cents(cents)
     return nil unless cents&.positive?
 

@@ -29,20 +29,102 @@ class RestaurantTest < ActiveSupport::TestCase
     assert restaurant.errors.of_kind?(:address, :blank)
   end
 
-  test "requires proximity_radius_meters greater than 0" do
+  test "requires user" do
+    restaurant = Restaurant.new(valid_attributes.merge(user: nil))
+    assert_not restaurant.valid?
+  end
+
+  # --- Proximity radius bounds ---
+  #
+  # The radius is what the geofence measures against, so both ends of the range
+  # are behavioural, not cosmetic: see the validation in Restaurant.
+
+  test "accepts proximity_radius_meters at the lower bound" do
+    restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: 50))
+    assert restaurant.valid?
+  end
+
+  test "accepts proximity_radius_meters at the upper bound" do
+    restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: 5000))
+    assert restaurant.valid?
+  end
+
+  test "rejects proximity_radius_meters just below the lower bound" do
+    restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: 49))
+    assert_not restaurant.valid?
+    assert restaurant.errors.of_kind?(:proximity_radius_meters, :greater_than_or_equal_to)
+  end
+
+  test "rejects proximity_radius_meters just above the upper bound" do
+    restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: 5001))
+    assert_not restaurant.valid?
+    assert restaurant.errors.of_kind?(:proximity_radius_meters, :less_than_or_equal_to)
+  end
+
+  test "rejects a proximity_radius_meters of zero" do
     restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: 0))
     assert_not restaurant.valid?
-    assert restaurant.errors.of_kind?(:proximity_radius_meters, :greater_than)
+    assert restaurant.errors.of_kind?(:proximity_radius_meters, :greater_than_or_equal_to)
   end
 
   test "rejects negative proximity_radius_meters" do
     restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: -10))
     assert_not restaurant.valid?
+    assert restaurant.errors.of_kind?(:proximity_radius_meters, :greater_than_or_equal_to)
   end
 
-  test "requires user" do
-    restaurant = Restaurant.new(valid_attributes.merge(user: nil))
+  test "rejects a nil proximity_radius_meters" do
+    restaurant = Restaurant.new(valid_attributes.merge(proximity_radius_meters: nil))
     assert_not restaurant.valid?
+    assert restaurant.errors.of_kind?(:proximity_radius_meters, :not_a_number)
+  end
+
+  # --- Geofence ---
+
+  test "geofence_enabled defaults to false" do
+    assert_equal false, Restaurant.new.geofence_enabled
+  end
+
+  test "geofence_enabled is valid when both coordinates are present" do
+    restaurant = Restaurant.new(
+      valid_attributes.merge(geofence_enabled: true, latitude: 45.0703, longitude: 7.6869)
+    )
+    assert restaurant.valid?
+  end
+
+  test "geofence_enabled cannot be true without a latitude" do
+    restaurant = Restaurant.new(
+      valid_attributes.merge(geofence_enabled: true, latitude: nil, longitude: 7.6869)
+    )
+    assert_not restaurant.valid?
+    assert restaurant.errors.of_kind?(:geofence_enabled, :requires_coordinates)
+  end
+
+  test "geofence_enabled cannot be true without a longitude" do
+    restaurant = Restaurant.new(
+      valid_attributes.merge(geofence_enabled: true, latitude: 45.0703, longitude: nil)
+    )
+    assert_not restaurant.valid?
+    assert restaurant.errors.of_kind?(:geofence_enabled, :requires_coordinates)
+  end
+
+  test "geofence_enabled cannot be true without either coordinate" do
+    restaurant = Restaurant.new(valid_attributes.merge(geofence_enabled: true))
+    assert_not restaurant.valid?
+    assert restaurant.errors.of_kind?(:geofence_enabled, :requires_coordinates)
+  end
+
+  test "a disabled geofence is valid without coordinates" do
+    restaurant = Restaurant.new(valid_attributes.merge(geofence_enabled: false))
+    assert restaurant.valid?
+    assert_empty restaurant.errors[:geofence_enabled]
+  end
+
+  test "a disabled geofence is valid with coordinates" do
+    restaurant = Restaurant.new(
+      valid_attributes.merge(geofence_enabled: false, latitude: 45.0703, longitude: 7.6869)
+    )
+    assert restaurant.valid?
   end
 
   # --- Associations ---

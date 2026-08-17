@@ -117,6 +117,49 @@ module Owner
       assert_equal "Osteria Aggiornata", restaurants(:osteria).reload.name
     end
 
+    test "PATCH /owner/restaurants/:id can change the public menu slug" do
+      sign_in_as users(:owner)
+      patch owner_restaurant_path(id: restaurants(:osteria)), params: {
+        restaurant: { slug: "da-gino" }
+      }
+      assert_redirected_to owner_restaurant_path(id: restaurants(:osteria))
+      assert_equal "da-gino", restaurants(:osteria).reload.slug
+    end
+
+    test "PATCH /owner/restaurants/:id normalizes a hand-typed slug" do
+      sign_in_as users(:owner)
+      patch owner_restaurant_path(id: restaurants(:osteria)), params: {
+        restaurant: { slug: "  Da Gino!  " }
+      }
+      assert_equal "da-gino", restaurants(:osteria).reload.slug
+    end
+
+    test "PATCH /owner/restaurants/:id rejects a slug another restaurant already uses" do
+      sign_in_as users(:owner)
+      patch owner_restaurant_path(id: restaurants(:osteria)), params: {
+        restaurant: { slug: restaurants(:trattoria).slug }
+      }
+      assert_response :unprocessable_entity
+      assert_equal "osteria-del-borgo", restaurants(:osteria).reload.slug
+    end
+
+    test "PATCH /owner/restaurants/:id rejects a slug that would be shadowed by a real route" do
+      sign_in_as users(:owner)
+      patch owner_restaurant_path(id: restaurants(:osteria)), params: {
+        restaurant: { slug: "sign_in" }
+      }
+      assert_response :unprocessable_entity
+      assert_equal "osteria-del-borgo", restaurants(:osteria).reload.slug
+    end
+
+    test "renaming a restaurant leaves its slug alone so printed QR codes keep working" do
+      sign_in_as users(:owner)
+      patch owner_restaurant_path(id: restaurants(:osteria)), params: {
+        restaurant: { name: "Osteria Aggiornata" }
+      }
+      assert_equal "osteria-del-borgo", restaurants(:osteria).reload.slug
+    end
+
     test "PATCH /owner/restaurants/:id with invalid params re-renders edit form" do
       sign_in_as users(:owner)
       patch owner_restaurant_path(id: restaurants(:osteria)), params: {

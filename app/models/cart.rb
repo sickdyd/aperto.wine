@@ -219,14 +219,14 @@ class Cart
   end
 
   # The same publication boundary the public menu enforces
-  # (MenusController#show / WineList.active): a wine is orderable only if it
+  # (MenusController#show / WineList.published): a wine is orderable only if it
   # sits on at least one of this restaurant's active wine lists. A wine on no
   # list, or only on unpublished lists, must be as unreachable to the cart as
   # it is to the menu — the owner's "Published" toggle is otherwise cosmetic.
   # `distinct` guards against a wine published on more than one active list
   # producing duplicate rows from the join.
   def published_wines
-    restaurant.wines.joins(:wine_lists).merge(WineList.active).distinct
+    restaurant.wines.joins(:wine_lists).merge(WineList.published).distinct
   end
 
   def all_carts

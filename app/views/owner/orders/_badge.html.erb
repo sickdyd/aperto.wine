@@ -1,0 +1,23 @@
+<%# The tally of orders still waiting. Rendered twice per page — once in the
+    sidebar, once in the mobile top bar, which is the only one of the two a
+    phone can see without opening the drawer — hence the `id` local: two live
+    copies need two Turbo Stream targets, and a duplicate id would leave one of
+    them permanently stale.
+
+    The wrapper is always rendered, empty or not: it is what the poller replaces
+    by id, and a target that only exists once there is something to count is a
+    target the first order of the evening can never land on.
+
+    data-pending-count is the browser's half of the exchange — the poller reads
+    it back off the page and sends it with the next request, so the server can
+    answer "nothing has moved" without rendering anything at all.
+
+    The figure is written twice on purpose. A bare number sitting beside a nav
+    label says nothing on its own to a screen reader, so the digit is hidden
+    from the accessibility tree and the sentence is given instead. %>
+<span id="<%= id %>" class="ml-auto" data-pending-count="<%= count %>">
+  <% if count.positive? %>
+    <span class="badge badge-sm badge-warning num" aria-hidden="true"><%= count %></span>
+    <span class="sr-only"><%= t("owner.orders.pending_count", count: count) %></span>
+  <% end %>
+</span>

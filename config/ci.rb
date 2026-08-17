@@ -8,11 +8,13 @@ CI.run do
   step "Security: Gem audit", "bin/bundler-audit"
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
-  step "Tests: Rails", "bin/rails test"
+  # Via bin/test so a local CI run queues behind a suite already running in
+  # another worktree instead of racing it through the shared test databases.
+  step "Tests: Rails", "bin/test"
   step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
 
   # Optional: Run system tests
-  # step "Tests: System", "bin/rails test:system"
+  # step "Tests: System", "bin/test --system"
 
   # Optional: set a green GitHub commit status to unblock PR merge.
   # Requires the `gh` CLI and `gh extension install basecamp/gh-signoff`.

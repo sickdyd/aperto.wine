@@ -85,6 +85,23 @@ services:
         sync: false
       - key: HTTP_AUTH_PASSWORD
         sync: false
+      # Operator identity published on /privacy and /terms — see
+      # config/legal.yml and LegalOperator. Dashboard-managed, not committed:
+      # these are the *deployment's* legal details, and a staging copy must not
+      # publish the production entity's. Unset fields render a visible
+      # "to be completed" marker rather than a blank line.
+      - key: LEGAL_NAME
+        sync: false
+      - key: LEGAL_ADDRESS
+        sync: false
+      - key: LEGAL_EMAIL
+        sync: false
+      - key: LEGAL_PHONE
+        sync: false
+      - key: LEGAL_VAT_NUMBER
+        sync: false
+      - key: LEGAL_REA_NUMBER
+        sync: false
       # Pre-fills the sign-in form with the demo accounts from
       # db/seeds/demo.rb. Staging only — the production block below leaves it
       # unset, and the app treats any value other than "1" as off.
@@ -136,6 +153,21 @@ services:
 #               - key: HTTP_AUTH_USER
 #                 sync: false
 #               - key: HTTP_AUTH_PASSWORD
+#                 sync: false
+#               # Operator identity for /privacy and /terms (config/legal.yml).
+#               # Production must have all six set before launch: the store
+#               # listings publish the same details under DSA arts. 30–31.
+#               - key: LEGAL_NAME
+#                 sync: false
+#               - key: LEGAL_ADDRESS
+#                 sync: false
+#               - key: LEGAL_EMAIL
+#                 sync: false
+#               - key: LEGAL_PHONE
+#                 sync: false
+#               - key: LEGAL_VAT_NUMBER
+#                 sync: false
+#               - key: LEGAL_REA_NUMBER
 #                 sync: false
 #
 #         services:

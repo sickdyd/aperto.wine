@@ -68,6 +68,47 @@ class OrderTest < ActiveSupport::TestCase
     assert orders(:approved_order).approved?
   end
 
+  test "location_status enum values" do
+    assert_equal 0, Order.location_statuses[:not_checked]
+    assert_equal 1, Order.location_statuses[:verified]
+    assert_equal 2, Order.location_statuses[:unverified]
+  end
+
+  # Every order placed before the geofence existed, and every order at a
+  # restaurant that leaves it off, has to read as "no claim made" rather than as
+  # a failed check — so the column default is what the owner sees.
+  test "location_status defaults to not_checked" do
+    assert_equal "not_checked", Order.new.location_status
+    assert_equal "not_checked", Order.create!(valid_attributes).location_status
+  end
+
+  # The prefix is not cosmetic: unprefixed, `verified?` would sit next to the
+  # `status` enum's own predicates with nothing to say which one it answers.
+  test "location_status predicates are prefixed" do
+    order = Order.new(valid_attributes.merge(location_status: :verified))
+
+    assert order.location_status_verified?
+    assert_not order.location_status_not_checked?
+    assert_not order.location_status_unverified?
+  end
+
+  test "location_status scopes are prefixed" do
+    verified = Order.create!(valid_attributes.merge(location_status: :verified))
+    unverified = Order.create!(valid_attributes.merge(location_status: :unverified))
+
+    assert_includes Order.location_status_verified, verified
+    assert_not_includes Order.location_status_verified, unverified
+    assert_includes Order.location_status_unverified, unverified
+  end
+
+  test "distance_meters and location_accuracy_meters are optional" do
+    order = Order.new(valid_attributes)
+
+    assert_nil order.distance_meters
+    assert_nil order.location_accuracy_meters
+    assert order.valid?
+  end
+
   # --- Associations ---
 
   test "belongs to restaurant" do
@@ -109,6 +150,53 @@ class OrderTest < ActiveSupport::TestCase
     newer = Order.create!(valid_attributes.merge(created_at: 1.day.ago))
     result = Order.recent.to_a
     assert result.index(newer) < result.index(older)
+  end
+
+  # The owner's poller compares the ids in this window against the ones it has
+  # already announced, so the window has to be bounded, newest first, and the
+  # same set for the same data every time it is asked. Every case below builds
+  # on `enoteca`, which carries no order fixtures — the window is ordered by
+  # created_at, and fixtures are all stamped at load time.
+  def enoteca_order(created_at)
+    Order.create!(valid_attributes.merge(restaurant: restaurants(:enoteca), created_at: created_at))
+  end
+
+  test "notification_window is bounded by NOTIFICATION_WINDOW" do
+    (Order::NOTIFICATION_WINDOW + 2).times { |index| enoteca_order(index.minutes.ago) }
+
+    assert_equal Order::NOTIFICATION_WINDOW,
+      restaurants(:enoteca).orders.notification_window.count
+  end
+
+  test "notification_window returns the newest orders first" do
+    older = enoteca_order(2.days.ago)
+    newer = enoteca_order(1.minute.ago)
+
+    assert_equal [ newer, older ], restaurants(:enoteca).orders.notification_window.to_a
+  end
+
+  # Two orders placed in the same instant would otherwise swap places between
+  # two polls, and an order that comes back into the window is announced twice.
+  test "notification_window breaks created_at ties on id" do
+    stamp = 1.minute.ago
+    pair = [ enoteca_order(stamp), enoteca_order(stamp) ]
+
+    assert_equal pair.max_by(&:id), restaurants(:enoteca).orders.notification_window.first
+  end
+
+  # This scope runs on a timer for every owner page anyone has open, so it is
+  # the one query in the app that must never fall back to sorting a restaurant's
+  # whole order history. Only an index matching the ORDER BY — both columns,
+  # both descending — turns it into a five-row walk.
+  test "notification_window is backed by an index that matches its ordering" do
+    index = ActiveRecord::Base.connection.indexes(:orders).find do |candidate|
+      candidate.columns == %w[restaurant_id created_at id]
+    end
+
+    assert index, "no index covers Order.notification_window's filter and sort"
+    # Postgres reports only the columns that depart from the default ascending.
+    assert_equal({ "created_at" => :desc, "id" => :desc }, index.orders,
+      "the index has to descend exactly as the scope does, or Postgres sorts anyway")
   end
 
   # --- calculate_total! ---

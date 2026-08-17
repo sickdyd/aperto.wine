@@ -131,6 +131,8 @@ en:
         section_service: "Service"
         name: "Restaurant Name"
         name_placeholder: "e.g. Osteria del Borgo"
+        slug: "Menu Web Address"
+        slug_hint: "Diners reach your menu at %{url}. Changing it invalidates every QR code you have already printed."
         address: "Address"
         address_placeholder: "e.g. Via Roma 42, Milano"
         address_suggestions_attribution: "© OpenStreetMap contributors"
@@ -198,9 +200,11 @@ en:
         aria_label: Wine name with autocomplete suggestions
     wine_lists:
       title: "Wine Lists"
-      intro: "Your public menu shows every enabled list. Build curated lists and toggle them on and off here."
+      intro: "Build as many lists as you like; exactly one is published to diners at a time. Your QR codes always open the published one, so swapping menus never means reprinting them."
       manage_wines: "Manage wines"
-      toggle_label: "Show on public menu"
+      publish: "Publish"
+      published_hint: "This is the list your QR codes open."
+      published_notice: "%{name} is now the published menu."
       add: "Add List"
       add_first: "Create your first list"
       new_title: "New Wine List"
@@ -223,7 +227,6 @@ en:
         season: "Season / Theme"
         season_placeholder: "e.g. Summer"
         position: "Sort Order"
-        active_label: "Published (visible on the public menu)"
       members:
         title: "Wines on this list"
         intro: "Hand-pick wines from your shared catalog — the same wine can appear on any number of lists. Availability is still driven by your bottles — featured wines that are sold out show as currently unavailable."
@@ -351,6 +354,15 @@ en:
       view_order: "View order #%{id}"
       empty_filtered_title: "Nothing here right now"
       empty_filtered_description: "No orders with this status. Try another filter."
+      # The live announcement: the band's mono caps label, then the order
+      # itself, which is also the link to it.
+      new_order: "New order"
+      new_order_detail: "Order #%{id} — %{table}"
+      # Read out in place of the sidebar badge's bare figure, which says
+      # nothing on its own beside a nav label.
+      pending_count:
+        one: "%{count} order awaiting approval"
+        other: "%{count} orders awaiting approval"
       order_count:
         zero: "No orders"
         one: "1 order"
@@ -390,6 +402,7 @@ en:
         name: "Name"
         address: "Address"
         proximity_radius_meters: "Order proximity radius"
+        geofence_enabled: "Proximity check"
         description: "Description"
         user: "Owner"
       wine:
@@ -491,6 +504,10 @@ en:
           attributes:
             wine:
               wrong_restaurant: "must belong to the same restaurant as the list"
+        restaurant:
+          attributes:
+            geofence_enabled:
+              requires_coordinates: "can't be enabled without the restaurant's coordinates"
         user:
           attributes:
             password:
@@ -569,6 +586,11 @@ en:
       empty_cart: "Your cart is empty."
       items_unavailable: "Some items in your cart are no longer available. Please review your cart before ordering."
       insufficient_stock: "Some items in your cart are no longer available in the quantity you asked for. Please review your cart before ordering."
+      # Deliberately does not say how far outside the radius the diner is.
+      # A message carrying the measured distance is a range oracle: a sender
+      # can move a claimed position around and bisect the replies to recover
+      # the restaurant's stored coordinates and radius.
+      location_out_of_range: "You need to be at the restaurant to place an order."
       order_invalid: "Your order could not be placed. Please review your cart and try again."
       rate_limited: "You're placing orders too quickly. Please wait a moment and try again."
     status:
@@ -605,6 +627,49 @@ en:
       empty: "No orders placed from this device yet."
       retention: "Orders placed on this device, kept for 24 hours."
       view_order: "Order of %{time}"
+  # The two legal documents. Only the chrome lives here — titles, labels, the
+  # notices that link to them. The prose itself sits in locale-suffixed
+  # templates (app/views/legal/privacy.en.html.erb), because a legal document is
+  # long-form text whose paragraphs are not reusable strings and would bury both
+  # locale files.
+  legal:
+    nav:
+      privacy: "Privacy"
+      terms: "Terms"
+      # Accessible name for the in-document navigation at the foot of each page.
+      label: "Legal documents"
+    eyebrow:
+      privacy: "Data protection"
+      terms: "Terms of use"
+    back_to_site: "Back to aperto.wine"
+    updated_on: "Last updated %{date}"
+    privacy:
+      title: "Privacy Notice"
+      meta_description: "How aperto.wine handles the data of diners and restaurateurs, and who is the controller of what."
+    terms:
+      title: "Terms of Service"
+      meta_description: "The terms of aperto.wine: the wine contract is between diner and restaurant; we are the technical intermediary."
+    # The operator identity block — D.Lgs. 70/2003 art. 7 and DSA arts. 30–31.
+    identity:
+      heading: "Legal information"
+      name: "Operator"
+      address: "Registered office"
+      email: "Email"
+      phone: "Telephone"
+      vat_number: "VAT number"
+      rea_number: "REA number"
+      # Shown in place of a field the deployment has not set yet: deliberately
+      # visible, because a half-filled identity block ships unnoticed.
+      pending: "To be completed"
+    subprocessors:
+      name: "Provider"
+      role: "What it does"
+      location: "Where"
+    # GDPR art. 13 wants the notice available where the data is collected, so
+    # these two sit on the order form and the sign-up form rather than only in
+    # the footer.
+    order_notice_html: "Sending this order shares your name and table with the restaurant, which decides how the order is handled — see the %{privacy} and the %{terms}."
+    signup_notice_html: "Creating an account means accepting the %{terms} and the %{privacy}, including the appointment of aperto.wine as processor of your guests' data."
   pwa:
     # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
     description: "aperto.wine — wine by the glass, by choice."
