@@ -23,10 +23,10 @@ class CartsController < ApplicationController
     result = @cart.add(wine_id: integer_param(:wine_id), glass_size_ml: integer_param(:glass_size_ml),
                         quantity: integer_param(:quantity) || 1)
     if result.success?
-      redirect_to menu_path(id: @restaurant), notice: t("cart.item_added")
+      redirect_to menu_path_for(@restaurant), notice: t("cart.item_added")
     else
       flash_error(result)
-      redirect_to cart_path(restaurant_id: @restaurant)
+      redirect_to cart_path(restaurant_slug: @restaurant.slug)
     end
   end
 
@@ -34,17 +34,17 @@ class CartsController < ApplicationController
     result = @cart.update_quantity(wine_id: integer_param(:wine_id), glass_size_ml: integer_param(:glass_size_ml),
                                     quantity: integer_param(:quantity) || 0)
     flash_error(result)
-    redirect_to cart_path(restaurant_id: @restaurant)
+    redirect_to cart_path(restaurant_slug: @restaurant.slug)
   end
 
   def remove_item
     @cart.remove(wine_id: integer_param(:wine_id), glass_size_ml: integer_param(:glass_size_ml))
-    redirect_to cart_path(restaurant_id: @restaurant)
+    redirect_to cart_path(restaurant_slug: @restaurant.slug)
   end
 
   def destroy
     @cart.clear
-    redirect_to cart_path(restaurant_id: @restaurant)
+    redirect_to cart_path(restaurant_slug: @restaurant.slug)
   end
 
   private

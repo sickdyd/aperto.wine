@@ -1,14 +1,14 @@
 module Owner
   class WineListsController < BaseController
     before_action :set_restaurant
-    before_action :set_wine_list, only: %i[edit update destroy]
+    before_action :set_wine_list, only: %i[edit update destroy publish]
 
     def index
       @wine_lists = @restaurant.wine_lists.by_position.includes(:wine_list_items)
     end
 
     def new
-      @wine_list = @restaurant.wine_lists.build(active: true)
+      @wine_list = @restaurant.wine_lists.build
     end
 
     def create
@@ -37,6 +37,16 @@ module Owner
       redirect_to owner_restaurant_wine_lists_path(@restaurant), notice: t("owner.wine_lists.deleted"), status: :see_other
     end
 
+    # Swaps which single list the public menu serves. The restaurant's QR
+    # codes point at the restaurant, not at a list, so this changes what
+    # diners see without any reprinting.
+    def publish
+      @wine_list.publish!
+      redirect_to owner_restaurant_wine_lists_path(@restaurant),
+                  notice: t("owner.wine_lists.published_notice", name: @wine_list.name),
+                  status: :see_other
+    end
+
     private
 
     def set_restaurant
@@ -48,7 +58,9 @@ module Owner
     end
 
     def wine_list_params
-      params.require(:wine_list).permit(:name, :season, :position, :active)
+      # No :published — publishing goes through #publish, so it can never be
+      # set on a plain update and break the one-published-list invariant.
+      params.require(:wine_list).permit(:name, :season, :position)
     end
   end
 end

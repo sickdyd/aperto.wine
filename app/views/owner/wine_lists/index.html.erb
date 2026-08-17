@@ -8,7 +8,7 @@
 
   <div class="flex flex-wrap items-center gap-2">
     <% if @restaurant.active? %>
-      <a href="<%= menu_path(id: @restaurant.id) %>" target="_blank" rel="noopener" class="btn-wine-outline">
+      <a href="<%= restaurant_menu_path(restaurant_slug: @restaurant.slug) %>" target="_blank" rel="noopener" class="btn-wine-outline">
         <%= icon "eye", class: "size-4" %>
         <%= t("owner.restaurants.preview_menu") %>
       </a>
@@ -45,8 +45,8 @@
       <table class="ledger-table">
         <thead>
           <tr>
-            <%# The toggle column is self-explanatory once the label has nowhere
-                to go: below md the head is read out rather than set. %>
+            <%# The publish column is self-explanatory once the label has
+                nowhere to go: below md the head is read out rather than set. %>
             <th scope="col" class="w-px"><span class="sr-only md:not-sr-only"><%= t("owner.wine_lists.published") %></span></th>
             <th scope="col"><%= t("owner.wine_lists.form.name") %></th>
             <th scope="col" class="hidden whitespace-nowrap md:table-cell"><%= t("owner.wine_lists.form.season") %></th>
@@ -58,12 +58,20 @@
           <% @wine_lists.each do |wine_list| %>
             <tr data-list-filter-target="item"
                 data-search-terms="<%= wine_list.name.downcase %>">
+              <%# One list is published at a time, so this is a choice between
+                  rows rather than a per-row toggle: the published row states
+                  its status, every other row offers to take its place. %>
               <td>
-                <%= form_with model: [ :owner, @restaurant, wine_list ], method: :patch, data: { controller: "auto-submit" } do |f| %>
-                  <%= f.check_box :active,
-                        class: "toggle toggle-primary toggle-sm",
-                        aria: { label: t("owner.wine_lists.toggle_label") },
-                        data: { action: "change->auto-submit#submit" } %>
+                <% if wine_list.published? %>
+                  <span class="stamp" title="<%= t("owner.wine_lists.published_hint") %>">
+                    <%= t("owner.wine_lists.published") %>
+                  </span>
+                <% else %>
+                  <%= button_to t("owner.wine_lists.publish"),
+                        publish_owner_restaurant_wine_list_path(@restaurant, wine_list),
+                        method: :patch,
+                        class: "btn-wine-quiet whitespace-nowrap",
+                        aria: { label: "#{t('owner.wine_lists.publish')}: #{wine_list.name}" } %>
                 <% end %>
               </td>
               <td>

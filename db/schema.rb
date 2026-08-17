@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_073410) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -98,8 +98,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_073410) do
     t.decimal "longitude", precision: 10, scale: 7
     t.string "name", null: false
     t.integer "proximity_radius_meters", default: 200, null: false
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["slug"], name: "index_restaurants_on_slug", unique: true
     t.index ["user_id"], name: "index_restaurants_on_user_id"
   end
 
@@ -279,14 +281,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_073410) do
   end
 
   create_table "wine_lists", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.integer "position", default: 0, null: false
+    t.boolean "published", default: false, null: false
     t.bigint "restaurant_id", null: false
     t.string "season"
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["restaurant_id", "position"], name: "index_wine_lists_on_restaurant_id_and_position"
+    t.index ["restaurant_id", "slug"], name: "index_wine_lists_on_restaurant_id_and_slug", unique: true
+    t.index ["restaurant_id"], name: "index_wine_lists_on_one_published_per_restaurant", unique: true, where: "published"
     t.index ["restaurant_id"], name: "index_wine_lists_on_restaurant_id"
   end
 

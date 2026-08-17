@@ -8,7 +8,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   def add_barolo_to_cart(quantity: 1)
-    post cart_items_path(restaurant_id: @osteria), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: quantity }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: quantity }
   end
 
   def last_order
@@ -20,7 +20,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   test "a guest places an order end to end and lands on the status page" do
     add_barolo_to_cart
 
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
     order = last_order
     assert_redirected_to order_status_path(public_token: order.public_token)
 
@@ -34,9 +34,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "the cart is cleared after placing an order" do
     add_barolo_to_cart
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
 
-    get cart_path(restaurant_id: @osteria)
+    get cart_path(restaurant_slug: @osteria.slug)
     assert_match I18n.t("cart.empty"), response.body
   end
 
@@ -46,7 +46,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     sign_in_as @customer
     add_barolo_to_cart
 
-    post orders_path(restaurant_id: @osteria)
+    post orders_path(restaurant_slug: @osteria.slug)
 
     assert_equal @customer, last_order.customer
   end
@@ -58,16 +58,16 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     get table_menu_path(table_token: table.token)
     add_barolo_to_cart
 
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
 
     assert_equal table, last_order.restaurant_table
   end
 
   test "ordering from /menu/:id records no table" do
-    get menu_path(id: @osteria)
+    get published_menu_path(@osteria)
     add_barolo_to_cart
 
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
 
     assert_nil last_order.restaurant_table
   end
@@ -77,7 +77,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   test "status, totals and ids cannot be mass-assigned through the form" do
     add_barolo_to_cart
 
-    post orders_path(restaurant_id: @osteria), params: {
+    post orders_path(restaurant_slug: @osteria.slug), params: {
       guest_name: "Jane", status: "approved", total_amount_cents: 999_999,
       customer_id: @customer.id, public_token: "hijacked-token"
     }
@@ -96,12 +96,12 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     follow_redirect! # render the menu so the add's own flash doesn't leak into the assertion below
 
     assert_no_difference "Order.count" do
-      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane", contact_reference: "http://spam.example" }
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane", contact_reference: "http://spam.example" }
     end
     # A real success redirects to the order's own status page — the
     # honeypot response is trivially distinguishable, not a fabricated
     # success (final review finding 4). It sets no flash of its own either.
-    assert_redirected_to menu_path(id: @osteria)
+    assert_redirected_to published_menu_path(@osteria)
 
     follow_redirect!
     assert_response :success
@@ -112,9 +112,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     add_barolo_to_cart
 
     assert_no_difference "Order.count" do
-      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane", contact_reference: [ "http://spam.example" ] }
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane", contact_reference: [ "http://spam.example" ] }
     end
-    assert_redirected_to menu_path(id: @osteria)
+    assert_redirected_to published_menu_path(@osteria)
   end
 
   # --- rate limit ---
@@ -123,13 +123,13 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     add_barolo_to_cart
 
     5.times do
-      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
       assert_response :redirect
       add_barolo_to_cart
     end
 
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     follow_redirect!
     assert_match ERB::Util.html_escape(I18n.t("orders.errors.rate_limited")), response.body
@@ -148,7 +148,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
       OrdersController::IP_RATE_LIMIT.times do
         reset!
         add_barolo_to_cart
-        post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+        post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
         assert_response :redirect
         assert_not_equal cart_url(restaurant_id: @osteria), response.location
       end
@@ -157,9 +157,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     reset!
     add_barolo_to_cart
     assert_no_difference "Order.count" do
-      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
     end
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     follow_redirect!
     assert_match ERB::Util.html_escape(I18n.t("orders.errors.rate_limited")), response.body
@@ -168,8 +168,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   # --- empty cart ---
 
   test "an empty cart cannot be ordered" do
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     follow_redirect!
     assert_match I18n.t("orders.errors.empty_cart"), response.body
@@ -195,13 +195,13 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   # of the public_token alone.
   test "one diner cannot read another's order" do
     add_barolo_to_cart
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "First Diner" }
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "First Diner" }
     first_order = last_order
 
     reset!
 
     add_barolo_to_cart
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Second Diner" }
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Second Diner" }
     second_order = last_order
 
     get order_status_path(public_token: second_order.public_token)
@@ -222,9 +222,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     over_length_name = "a" * 65
 
     assert_no_difference [ "Order.count", "OrderItem.count" ] do
-      post orders_path(restaurant_id: @osteria), params: { guest_name: over_length_name }
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: over_length_name }
     end
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     follow_redirect!
     assert_match ERB::Util.html_escape(I18n.t("orders.errors.order_invalid")), response.body
@@ -234,7 +234,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "an inactive restaurant 404s on order creation" do
     inactive = restaurants(:inactive_restaurant)
-    post orders_path(restaurant_id: inactive), params: { guest_name: "Jane" }
+    post orders_path(restaurant_slug: inactive.slug), params: { guest_name: "Jane" }
     assert_response :not_found
   end
 

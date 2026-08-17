@@ -11,13 +11,13 @@
           withheld when this order is the only one the device holds — the list
           would then be a one-line copy of the page already open. %>
       <div class="flex flex-wrap items-center justify-between gap-x-4">
-        <a href="<%= menu_path(id: @order.restaurant) %>" class="link-mono gap-2">
+        <a href="<%= menu_path_for(@order.restaurant) %>" class="link-mono gap-2">
           <%= icon "arrow-left", class: "size-3.5" %>
           <%= t("orders.status.back_to_menu") %>
         </a>
 
         <% if @order_history.orders.size > 1 %>
-          <a href="<%= orders_path(restaurant_id: @order.restaurant) %>" class="link-mono gap-2">
+          <a href="<%= orders_path(restaurant_slug: @order.restaurant.slug) %>" class="link-mono gap-2">
             <%= icon "receipt", class: "size-3.5" %>
             <%= t("orders.history.other_orders") %>
           </a>

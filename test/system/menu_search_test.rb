@@ -3,7 +3,7 @@ require "application_system_test_case"
 class MenuSearchTest < ApplicationSystemTestCase
   def visit_menu
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
     assert_text "Barolo Riserva", wait: 5
   end
 

@@ -50,12 +50,14 @@ trattoria_white_item:
   wine: trattoria_white
   position: 3
 
-# Publishes trattoria_franciacorta on trattoria_reserve (see that fixture's
-# comment) so cart specs can add it as a normal, published wine.
+# Carries trattoria_franciacorta on the published list so cart specs can add
+# it as a normal, purchasable wine. It is sparkling rather than red or white,
+# so it forms its own colour group and leaves the red/white group assertions
+# on trattoria_list untouched.
 trattoria_reserve_franciacorta:
-  wine_list: trattoria_reserve
+  wine_list: trattoria_list
   wine: trattoria_franciacorta
-  position: 1
+  position: 4
 
 # mixed_order_list: item positions deliberately contradict colour enum order
 # (white first, dessert second, red last) so the helper's grouping can only

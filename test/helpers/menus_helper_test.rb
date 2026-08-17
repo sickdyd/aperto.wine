@@ -15,6 +15,7 @@ class MenusHelperTest < ActionView::TestCase
     wines(:chianti).update!(active: false)
     wines(:trattoria_sold_out).update!(active: false)
     wines(:trattoria_white).update!(active: false)
+    wines(:trattoria_franciacorta).update!(active: false)
 
     assert_empty renderable_wine_lists([ wine_lists(:trattoria_list) ])
   end
@@ -23,9 +24,12 @@ class MenusHelperTest < ActionView::TestCase
     rendered = renderable_wine_lists([ wine_lists(:trattoria_list) ])
 
     _list, colour_groups = rendered.first
-    # red (chianti, reserve barbaresco) before white (trattoria_white),
-    # matching Wine's color enum order, not insertion order.
-    assert_equal [ "red", "white" ], colour_groups.map(&:first)
+    # red (chianti, reserve barbaresco) before white (trattoria_white) before
+    # sparkling (trattoria_franciacorta), matching Wine's color enum order
+    # rather than insertion order — the franciacorta item sits at position 4,
+    # after the white one, so insertion order would agree here, but the list's
+    # colours sort alphabetically as [red, sparkling, white], which does not.
+    assert_equal [ "red", "white", "sparkling" ], colour_groups.map(&:first)
 
     red_wines = colour_groups.first.last.map(&:wine)
     assert_equal [ wines(:chianti), wines(:trattoria_sold_out) ], red_wines
@@ -56,12 +60,14 @@ class MenusHelperTest < ActionView::TestCase
 
     sections = menu_nav_sections(rendered)
 
+    list_id = wine_lists(:trattoria_list).id
     assert_equal(
-      [ "list-#{wine_lists(:trattoria_list).id}-red", "list-#{wine_lists(:trattoria_list).id}-white" ],
+      [ "list-#{list_id}-red", "list-#{list_id}-white", "list-#{list_id}-sparkling" ],
       sections.map(&:first)
     )
     assert_equal(
-      [ I18n.t("owner.wines.colors.red"), I18n.t("owner.wines.colors.white") ],
+      [ I18n.t("owner.wines.colors.red"), I18n.t("owner.wines.colors.white"),
+        I18n.t("owner.wines.colors.sparkling") ],
       sections.map(&:last)
     )
   end

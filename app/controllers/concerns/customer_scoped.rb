@@ -2,7 +2,7 @@
 # endpoints (the menu, the cart, and — in a later task — order placement).
 #
 # A diner reaches these endpoints two ways:
-#   - the generic restaurant QR / link: /menu/:id, /menu/:restaurant_id/cart
+#   - the generic restaurant QR / link: /:restaurant_slug, /cart/:restaurant_slug
 #   - a per-table QR: /t/:table_token
 #
 # Either way we resolve @restaurant. When arriving via a table token whose
@@ -19,6 +19,10 @@
 # skip_before_action.
 module CustomerScoped
   extend ActiveSupport::Concern
+
+  included do
+    helper_method :menu_path_for
+  end
 
   private
 
@@ -40,7 +44,22 @@ module CustomerScoped
         remember_table(table)
       end
     else
-      @restaurant = Restaurant.active.find(params[:restaurant_id] || params[:id])
+      @restaurant = Restaurant.active.find_by!(slug: params[:restaurant_slug])
+    end
+  end
+
+  # Where a diner is sent when we hand them back to the menu. Resolves the
+  # published list here rather than pointing at the restaurant URL, so the
+  # round trip costs one request instead of two — the restaurant URL exists
+  # for QR codes, which need a target that survives a menu swap, not for
+  # in-app links that can name the current one.
+  def menu_path_for(restaurant)
+    published = restaurant.published_wine_list
+
+    if published
+      wine_list_menu_path(restaurant_slug: restaurant.slug, wine_list_slug: published.slug)
+    else
+      restaurant_menu_path(restaurant_slug: restaurant.slug)
     end
   end
 
