@@ -199,6 +199,18 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     get cart_path(restaurant_slug: @osteria.slug)
     assert_response :success
     assert_select "button[aria-label=?]", I18n.t("cart.dropped_item.remove_unknown_bottle", wine_id: doomed_wine.id)
+
+    # End-to-end removability: the rendered button is not just cosmetic — a
+    # diner stuck with an unremovable line has a dead cart, so the delete it
+    # posts must actually clear the dropped line, not just render.
+    delete cart_items_path(restaurant_slug: @osteria.slug),
+      params: { wine_id: doomed_wine.id, serving: "bottle" }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_match I18n.t("cart.empty"), response.body
+    assert_no_match I18n.t("cart.dropped_items_notice"), response.body
   end
 
   test "an add with a bad serving fails cleanly and adds nothing to the cart" do

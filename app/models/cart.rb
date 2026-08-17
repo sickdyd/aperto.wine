@@ -108,7 +108,7 @@ class Cart
       # carrying a stray glass size.
       glass_size = nil
     else
-      glass_size = glass_size_ml.to_i
+      glass_size = normalize_glass_size(glass_size_ml)
       return failure(:invalid_glass_size) unless Wine::GLASS_SIZES.include?(glass_size)
     end
 
