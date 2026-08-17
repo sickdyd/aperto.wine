@@ -15,10 +15,11 @@ class RestaurantTable < ApplicationRecord
   validates :area, length: { maximum: 100 }
 
   scope :active, -> { where(active: true) }
-  scope :by_position, -> { order(:area, :position, :name) }
+  # See Wine.in_display_order — `position` is no longer settable and is not read.
+  scope :in_display_order, -> { order(:area, :name) }
 
   # Ordered hash of area => tables, for the grouped index and bulk print.
   def self.grouped_by_area
-    by_position.group_by(&:area)
+    in_display_order.group_by(&:area)
   end
 end

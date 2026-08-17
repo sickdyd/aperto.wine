@@ -67,9 +67,10 @@ Rails.application.routes.draw do
             # — hence a dedicated action rather than an :active attribute.
             patch :publish
           end
-          resources :wine_list_items, only: [ :create, :update, :destroy ] do
+          resources :wine_list_items, only: [ :create, :destroy ] do
             collection do
               patch :sort
+              post :sort_alphabetically
               post :create_all
             end
           end

@@ -78,6 +78,22 @@ module Owner
       assert_equal "summer-2026", @wine_list.slug, "the slug follows the name"
     end
 
+    # See the matching test in wines_controller_test — :position is no longer
+    # permitted anywhere in the owner area.
+    test "update ignores a position submitted in the params" do
+      sign_in_as @owner
+      original_position = @wine_list.position
+
+      patch owner_restaurant_wine_list_path(restaurant_id: @restaurant, id: @wine_list), params: {
+        wine_list: { name: "Summer 2026", position: 42 }
+      }
+
+      assert_redirected_to owner_restaurant_wine_lists_path(restaurant_id: @restaurant)
+      @wine_list.reload
+      assert_equal "Summer 2026", @wine_list.name
+      assert_equal original_position, @wine_list.position
+    end
+
     test "update with invalid params re-renders edit" do
       sign_in_as @owner
       patch owner_restaurant_wine_list_path(restaurant_id: @restaurant, id: @wine_list), params: {

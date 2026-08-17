@@ -4,7 +4,7 @@ module Owner
     before_action :set_wine_list, only: %i[edit update destroy publish]
 
     def index
-      @wine_lists = @restaurant.wine_lists.by_position.includes(:wine_list_items)
+      @wine_lists = @restaurant.wine_lists.in_display_order.includes(:wine_list_items)
     end
 
     def new
@@ -60,7 +60,7 @@ module Owner
     def wine_list_params
       # No :published — publishing goes through #publish, so it can never be
       # set on a plain update and break the one-published-list invariant.
-      params.require(:wine_list).permit(:name, :season, :position)
+      params.require(:wine_list).permit(:name, :season)
     end
   end
 end

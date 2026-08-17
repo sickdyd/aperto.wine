@@ -52,37 +52,64 @@ module Owner
       assert WineListItem.exists?(wine_list: list, wine: barolo)
     end
 
-    test "owner removes a wine from the list with the delete button" do
+    test "owner removes a wine from the list with the labelled Remove from list button" do
       sign_in_as_owner
       list = wine_lists(:summer) # members: barolo, sold_out
       barolo = wines(:barolo)
       visit_list(list)
 
       # Removing a wine is a one-click action: no confirmation dialog stands
-      # between the owner and the delete button.
+      # between the owner and the remove button.
       assert_no_selector "[data-id='#{wine_list_items(:summer_barolo).id}'] " \
                          "button[type='submit'][data-turbo-confirm]"
 
+      # The control carries visible text, not a bare bin icon: it takes the
+      # wine off this list, it does not delete it from the cellar.
+      # Matched case-insensitively: btn-wine-quiet renders its label in caps,
+      # so the visible string is the CSS transform of the translation.
       within "[data-id='#{wine_list_items(:summer_barolo).id}']" do
-        find("button[type='submit']").click
+        assert_text(/#{Regexp.escape(I18n.t("owner.wine_lists.members.remove_from_list"))}/i)
+        click_button I18n.t("owner.wine_lists.members.remove_from_list")
       end
 
       assert_text I18n.t("owner.wine_lists.members.removed"), wait: 5
       assert_not WineListItem.exists?(wine_list: list, wine: barolo)
+      # The wine itself survives, and comes back as available to re-add.
+      assert Wine.exists?(barolo.id)
+      within "[data-sortable-target='available']" do
+        assert_text barolo.name
+      end
     end
 
-    test "owner reorders a member with the position number field" do
+    test "owner sorts the whole list alphabetically with one press" do
       sign_in_as_owner
-      list = wine_lists(:summer) # barolo pos 1, sold_out pos 2
-      visit_list(list)
+      list = wine_lists(:osteria_list)
+      barolo_item = wine_list_items(:osteria_barolo)     # "Barolo Riserva", red
+      sold_out_item = wine_list_items(:osteria_sold_out) # "Sold Out Wine", red
+      # Seed the red group out of alphabetical order so the press has work to do.
+      sold_out_item.update!(position: 0)
 
-      within "[data-id='#{wine_list_items(:summer_barolo).id}']" do
-        fill_in I18n.t("owner.wine_lists.members.position"), with: 5
-        click_button I18n.t("shared.save")
-      end
+      visit_list(list)
+      assert_equal(
+        [ sold_out_item.id.to_s, barolo_item.id.to_s ],
+        all("#{red_members} [data-id]").map { |el| el["data-id"] }
+      )
+
+      click_button I18n.t("owner.wine_lists.members.sort_alphabetically")
 
       assert_text I18n.t("owner.wine_lists.members.reordered"), wait: 5
-      assert_equal 5, wine_list_items(:summer_barolo).reload.position
+      assert_equal(
+        [ barolo_item.id.to_s, sold_out_item.id.to_s ],
+        all("#{red_members} [data-id]").map { |el| el["data-id"] }
+      )
+      assert_operator barolo_item.reload.position, :<, sold_out_item.reload.position
+    end
+
+    test "the Sort A-Z button is withheld from a list with nothing to reorder" do
+      sign_in_as_owner
+      visit_list(wine_lists(:winter)) # a single member: gavi
+
+      assert_no_button I18n.t("owner.wine_lists.members.sort_alphabetically")
     end
 
     test "owner puts the whole cellar on a list with Add all wines" do

@@ -1,5 +1,5 @@
 <% items = wine_list.wine_list_items.includes(:wine).by_position %>
-<% available_wines = @restaurant.wines.by_position.where.not(id: items.map(&:wine_id)) %>
+<% available_wines = @restaurant.wines.in_display_order.where.not(id: items.map(&:wine_id)) %>
 <%# One drop container per colour, in Wine's colour enum order. A colour is
     rendered when it has an item on the list OR an available wine — so every
     wine that can be dragged always has a target, while unused colours stay
@@ -29,6 +29,17 @@
       <div class="list-head">
         <h2 class="list-title"><%= t("owner.wine_lists.members.title") %></h2>
         <span class="admin-subtitle ml-auto"><%= t("owner.wine_lists.wine_count", count: items.size) %></span>
+        <%# One press instead of dragging every row. Pointless below two items,
+            so it only appears once there is something to reorder. %>
+        <% if items.size > 1 %>
+          <%= button_to sort_alphabetically_owner_restaurant_wine_list_wine_list_items_path(@restaurant, wine_list),
+                method: :post,
+                class: "btn-wine-quiet",
+                form_class: "self-center" do %>
+            <%= icon "sort-ascending", class: "size-4" %>
+            <span><%= t("owner.wine_lists.members.sort_alphabetically") %></span>
+          <% end %>
+        <% end %>
       </div>
 
       <% if active_colours.empty? %>

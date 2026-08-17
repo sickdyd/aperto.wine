@@ -141,26 +141,17 @@
   <fieldset class="form-section">
     <legend class="form-section-title"><%= t("owner.wines.form.availability") %></legend>
 
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div class="field">
-        <%= f.label :available_glasses, t("owner.wines.form.available_glasses"), class: "field-label" %>
-        <%= f.number_field :available_glasses, min: 0, class: "input w-28 font-mono num",
-              **field_error_attributes(f, :available_glasses, describedby: "wine_available_glasses_hint") %>
-        <%= field_errors f, :available_glasses %>
-        <p class="field-hint" id="wine_available_glasses_hint">
-          <%= t("owner.wines.form.suggested") %>:
-          <% Wine::GLASS_SIZES.each do |size| %>
-            <span class="num font-medium"><%= (wine.bottle_size_ml || 750) / size %></span> &times; <%= size %>ml<%= size == Wine::GLASS_SIZES.last ? "" : "," %>
-          <% end %>
-        </p>
-      </div>
-
-      <div class="field">
-        <%= f.label :position, t("owner.wines.form.position"), class: "field-label" %>
-        <%= f.number_field :position, min: 0, class: "input w-28 font-mono num",
-              **field_error_attributes(f, :position) %>
-        <%= field_errors f, :position %>
-      </div>
+    <div class="field">
+      <%= f.label :available_glasses, t("owner.wines.form.available_glasses"), class: "field-label" %>
+      <%= f.number_field :available_glasses, min: 0, class: "input w-28 font-mono num",
+            **field_error_attributes(f, :available_glasses, describedby: "wine_available_glasses_hint") %>
+      <%= field_errors f, :available_glasses %>
+      <p class="field-hint" id="wine_available_glasses_hint">
+        <%= t("owner.wines.form.suggested") %>:
+        <% Wine::GLASS_SIZES.each do |size| %>
+          <span class="num font-medium"><%= (wine.bottle_size_ml || 750) / size %></span> &times; <%= size %>ml<%= size == Wine::GLASS_SIZES.last ? "" : "," %>
+        <% end %>
+      </p>
     </div>
 
     <label class="field-toggle">

@@ -83,7 +83,7 @@ module Owner
     end
 
     def table_params
-      params.require(:restaurant_table).permit(:name, :area, :position, :active)
+      params.require(:restaurant_table).permit(:name, :area, :active)
     end
 
     def bulk_params

@@ -8,7 +8,6 @@ en:
     # Rendered by layouts/application for every public page, not just the
     # landing page it started on.
     skip_to_content: "Skip to content"
-    save: "Save"
     cancel: "Cancel"
     confirm: "Confirm"
     edit: "Edit"
@@ -219,7 +218,6 @@ en:
         availability: "Availability"
         available_glasses: "Available Glasses"
         suggested: "Suggested"
-        position: "Sort Order"
         active_label: "Wine is available for order"
         character: "Character & Tasting"
         abv: "ABV"
@@ -261,12 +259,10 @@ en:
         name_placeholder: "e.g. Summer Selection"
         season: "Season / Theme"
         season_placeholder: "e.g. Summer"
-        position: "Sort Order"
       members:
         title: "Wines on this list"
         intro: "Hand-pick wines from your shared catalog — the same wine can appear on any number of lists. Availability is still driven by your bottles — featured wines that are sold out show as currently unavailable."
         empty: "No wines on this list yet."
-        position: "Sort order"
         added: "Wine added to the list."
         removed: "Wine removed from the list."
         reordered: "List order updated."
@@ -280,8 +276,10 @@ en:
         go_to_wines: "Go to My Wines"
         available_title: "Available wines"
         add_to_list: "Add to list"
+        remove_from_list: "Remove from list"
+        sort_alphabetically: "Sort A–Z"
         drag_label: "Drag to reorder"
-        drag_hint: "Drag a wine onto its colour group to add it, or drag list rows to reorder within a colour. Prefer the keyboard? Use the \"Add to list\" and sort-order controls instead."
+        drag_hint: "Drag a wine onto its colour group to add it, or drag list rows to reorder within a colour. Prefer the keyboard? Use \"Add to list\" to add a wine, \"Remove from list\" to take one off, and \"Sort A–Z\" to order the whole list by name."
         empty_color: "Drop a wine of this colour here."
         reorder_failed: "Could not save the new order. Please try again."
         add_failed: "Could not add that wine. Please try again."
@@ -352,7 +350,6 @@ en:
         name_placeholder: "e.g. Table 1"
         area: "Room / Area"
         area_placeholder: "e.g. Main room, Terrace"
-        position: "Sort Order"
         active_label: "Active (QR resolves to this table)"
     qr_code:
       title: "QR Code"
@@ -457,7 +454,6 @@ en:
         bottle_size_ml: "Bottle size"
         price_bottle_cents: "Bottle price"
         available_glasses: "Available glasses"
-        position: "Sort order"
         abv: "ABV"
         tannins: "Tannins"
         acidity: "Acidity"
@@ -473,7 +469,6 @@ en:
       wine_list:
         name: "Name"
         season: "Season"
-        position: "Sort order"
         restaurant: "Restaurant"
       wine_list_item:
         wine: "Wine"
@@ -482,7 +477,6 @@ en:
       restaurant_table:
         name: "Name"
         area: "Room"
-        position: "Sort order"
         restaurant: "Restaurant"
       user:
         email: "Email"

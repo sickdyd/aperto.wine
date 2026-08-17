@@ -94,13 +94,25 @@ class WineTest < ActiveSupport::TestCase
     assert_not_includes Wine.active, wine
   end
 
-  test "by_position scope orders by color then position then name" do
-    result = restaurants(:osteria).wines.by_position
+  test "in_display_order scope orders by color then name" do
+    result = restaurants(:osteria).wines.in_display_order
     assert result.is_a?(ActiveRecord::Relation)
     # Verify ordering — red (0) should come before white (1)
     red_index   = result.to_a.index(wines(:barolo))
     white_index = result.to_a.index(wines(:gavi))
     assert red_index < white_index
+  end
+
+  # The `position` column is no longer written by any form and is dropped in a
+  # later deploy; until then a stale value must not perturb the display order.
+  test "in_display_order ignores a stale position value" do
+    osteria = restaurants(:osteria)
+    zeta  = osteria.wines.create!(valid_attributes.merge(name: "Zeta Rosso", position: 1))
+    alpha = osteria.wines.create!(valid_attributes.merge(name: "Alpha Rosso", position: 99))
+
+    ordered = osteria.wines.in_display_order.to_a
+
+    assert_operator ordered.index(alpha), :<, ordered.index(zeta)
   end
 
   # --- suggested_glasses ---
