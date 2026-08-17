@@ -18,11 +18,10 @@ class TableBulkGenerationTest < ActiveSupport::TestCase
     assert_equal 0, gen.skipped_count
     areas = @restaurant.restaurant_tables.distinct.pluck(:area).sort
     assert_equal [ "Floor 1", "Floor 2" ], areas
-    floor1 = @restaurant.restaurant_tables.where(area: "Floor 1").order(:position)
+    floor1 = @restaurant.restaurant_tables.where(area: "Floor 1").order(:id)
     assert_equal [ "#{I18n.t('owner.tables.bulk.table_word')} 1",
                    "#{I18n.t('owner.tables.bulk.table_word')} 2",
                    "#{I18n.t('owner.tables.bulk.table_word')} 3" ], floor1.map(&:name)
-    assert_equal [ 1, 2, 3 ], floor1.map(&:position)
     assert floor1.all?(&:active?)
     assert floor1.all? { |t| t.token.present? }
   end
@@ -32,7 +31,7 @@ class TableBulkGenerationTest < ActiveSupport::TestCase
                                   floor_label: "", name_pattern: "number_only")
     assert gen.save
     assert_equal [ nil ], @restaurant.restaurant_tables.distinct.pluck(:area)
-    assert_equal [ "1", "2" ], @restaurant.restaurant_tables.order(:position).map(&:name)
+    assert_equal [ "1", "2" ], @restaurant.restaurant_tables.order(:id).map(&:name)
   end
 
   test "single floor with label uses label verbatim as area" do
@@ -48,8 +47,8 @@ class TableBulkGenerationTest < ActiveSupport::TestCase
     gen = TableBulkGeneration.new(restaurant: @restaurant, floors_count: 2, tables_per_floor: 2,
                                   floor_label: "Piano", name_pattern: "floor_table")
     assert gen.save
-    assert_equal [ "1-1", "1-2" ], @restaurant.restaurant_tables.where(area: "Piano 1").order(:position).map(&:name)
-    assert_equal [ "2-1", "2-2" ], @restaurant.restaurant_tables.where(area: "Piano 2").order(:position).map(&:name)
+    assert_equal [ "1-1", "1-2" ], @restaurant.restaurant_tables.where(area: "Piano 1").order(:id).map(&:name)
+    assert_equal [ "2-1", "2-2" ], @restaurant.restaurant_tables.where(area: "Piano 2").order(:id).map(&:name)
   end
 
   test "skips tables whose name already exists in the same area (case-insensitive)" do

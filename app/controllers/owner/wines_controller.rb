@@ -4,7 +4,7 @@ module Owner
     before_action :set_wine, only: %i[edit update destroy]
 
     def index
-      @wines = @restaurant.wines.by_position
+      @wines = @restaurant.wines.in_display_order
     end
 
     def new
@@ -69,7 +69,7 @@ module Owner
         :region, :description, :bottle_size_ml,
         :price_bottle_cents, :price_75ml_cents, :price_100ml_cents,
         :price_125ml_cents, :price_150ml_cents,
-        :available_glasses, :position, :active,
+        :available_glasses, :active,
         :abv, :style, :short_description,
         :body, :tannins, :acidity, :sweetness,
         :organic, :natural_wine, :vegan, :biodynamic,

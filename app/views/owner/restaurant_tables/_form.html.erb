@@ -18,21 +18,14 @@
       <%= f.text_field :name, required: true, class: "input w-full font-body", placeholder: t("owner.tables.form.name_placeholder") %>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-[1fr_auto]">
-      <div class="field">
-        <%= f.label :area, t("owner.tables.form.area"), class: "field-label" %>
-        <%= f.text_field :area, class: "input w-full font-body", placeholder: t("owner.tables.form.area_placeholder"), list: "table-areas" %>
-        <datalist id="table-areas">
-          <% @restaurant.restaurant_tables.distinct.pluck(:area).compact_blank.each do |area| %>
-            <option value="<%= area %>"></option>
-          <% end %>
-        </datalist>
-      </div>
-
-      <div class="field">
-        <%= f.label :position, t("owner.tables.form.position"), class: "field-label" %>
-        <%= f.number_field :position, min: 0, class: "input w-28 font-body num" %>
-      </div>
+    <div class="field">
+      <%= f.label :area, t("owner.tables.form.area"), class: "field-label" %>
+      <%= f.text_field :area, class: "input w-full font-body", placeholder: t("owner.tables.form.area_placeholder"), list: "table-areas" %>
+      <datalist id="table-areas">
+        <% @restaurant.restaurant_tables.distinct.pluck(:area).compact_blank.each do |area| %>
+          <option value="<%= area %>"></option>
+        <% end %>
+      </datalist>
     </div>
 
     <label class="field-toggle min-h-11">

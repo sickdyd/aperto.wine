@@ -8,7 +8,6 @@ it:
     # Reso da layouts/application per ogni pagina pubblica, non solo per la
     # landing page da cui è partito.
     skip_to_content: "Vai al contenuto"
-    save: "Salva"
     cancel: "Annulla"
     confirm: "Conferma"
     edit: "Modifica"
@@ -218,7 +217,6 @@ it:
         availability: "Disponibilità"
         available_glasses: "Calici Disponibili"
         suggested: "Suggeriti"
-        position: "Ordinamento"
         active_label: "Il vino è disponibile per l'ordine"
         character: "Carattere e Degustazione"
         abv: "Gradazione Alcolica"
@@ -260,12 +258,10 @@ it:
         name_placeholder: "es. Selezione Estiva"
         season: "Stagione / Tema"
         season_placeholder: "es. Estate"
-        position: "Ordinamento"
       members:
         title: "Vini in questa lista"
         intro: "Scegli i vini dal tuo catalogo condiviso — lo stesso vino può apparire in qualsiasi numero di liste. La disponibilità dipende sempre dalle bottiglie — i vini in evidenza ma esauriti appaiono come non disponibili."
         empty: "Nessun vino in questa lista."
-        position: "Ordinamento"
         added: "Vino aggiunto alla lista."
         removed: "Vino rimosso dalla lista."
         reordered: "Ordine della lista aggiornato."
@@ -279,8 +275,10 @@ it:
         go_to_wines: "Vai ai miei vini"
         available_title: "Vini disponibili"
         add_to_list: "Aggiungi alla lista"
+        remove_from_list: "Rimuovi dalla lista"
+        sort_alphabetically: "Ordina A–Z"
         drag_label: "Trascina per riordinare"
-        drag_hint: "Trascina un vino sul suo gruppo di colore per aggiungerlo, oppure trascina le righe per riordinarle all'interno di un colore. Preferisci la tastiera? Usa i pulsanti \"Aggiungi alla lista\" e i controlli dell'ordine."
+        drag_hint: "Trascina un vino sul suo gruppo di colore per aggiungerlo, oppure trascina le righe per riordinarle all'interno di un colore. Preferisci la tastiera? Usa \"Aggiungi alla lista\" per aggiungere un vino, \"Rimuovi dalla lista\" per toglierlo e \"Ordina A–Z\" per ordinare tutta la lista per nome."
         empty_color: "Trascina qui un vino di questo colore."
         reorder_failed: "Impossibile salvare il nuovo ordine. Riprova."
         add_failed: "Impossibile aggiungere quel vino. Riprova."
@@ -351,7 +349,6 @@ it:
         name_placeholder: "es. Tavolo 1"
         area: "Sala / Zona"
         area_placeholder: "es. Sala principale, Dehors"
-        position: "Ordinamento"
         active_label: "Attivo (il QR porta a questo tavolo)"
     qr_code:
       title: "Codice QR"
@@ -463,7 +460,6 @@ it:
         # attributes so the error verb agrees: "Numero di calici disponibili deve
         # essere …" rather than the plural label clashing with singular "deve".
         available_glasses: "Numero di calici disponibili"
-        position: "Ordinamento"
         abv: "Gradazione alcolica"
         tannins: "Livello di tannini"
         acidity: "Acidità"
@@ -479,7 +475,6 @@ it:
       wine_list:
         name: "Nome"
         season: "Stagione"
-        position: "Ordinamento"
         restaurant: "Ristorante"
       wine_list_item:
         wine: "Vino"
@@ -488,7 +483,6 @@ it:
       restaurant_table:
         name: "Nome"
         area: "Sala"
-        position: "Ordinamento"
         restaurant: "Ristorante"
       user:
         email: "Email"

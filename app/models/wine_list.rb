@@ -15,7 +15,8 @@ class WineList < ApplicationRecord
   validates :season, length: { maximum: 50 }
 
   scope :published, -> { where(published: true) }
-  scope :by_position, -> { order(:position, :name) }
+  # See Wine.in_display_order — `position` is no longer settable and is not read.
+  scope :in_display_order, -> { order(:name) }
 
   # Makes this the restaurant's one public list. Unpublishing the incumbent
   # first is what keeps the partial unique index satisfied, and the

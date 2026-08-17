@@ -90,6 +90,22 @@ module Owner
       assert_not @table.active?
     end
 
+    # See the matching test in wines_controller_test — :position is no longer
+    # permitted anywhere in the owner area.
+    test "update ignores a position submitted in the params" do
+      sign_in_as @owner
+      original_position = @table.position
+
+      patch owner_restaurant_table_path(restaurant_id: @restaurant, id: @table), params: {
+        restaurant_table: { name: "Tavolo 1b", position: 42 }
+      }
+
+      assert_redirected_to owner_restaurant_tables_path(restaurant_id: @restaurant)
+      @table.reload
+      assert_equal "Tavolo 1b", @table.name
+      assert_equal original_position, @table.position
+    end
+
     test "update with invalid params re-renders edit" do
       sign_in_as @owner
       patch owner_restaurant_table_path(restaurant_id: @restaurant, id: @table), params: {

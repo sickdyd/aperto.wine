@@ -108,12 +108,23 @@ class WineListTest < ActiveSupport::TestCase
     assert_nil restaurants(:osteria).reload.published_wine_list
   end
 
-  test "by_position orders by position then name" do
+  test "in_display_order orders by name" do
     osteria = restaurants(:osteria)
-    a = osteria.wine_lists.create!(name: "Zeta", position: 5)
-    b = osteria.wine_lists.create!(name: "Alpha", position: 5)
-    ordered = osteria.wine_lists.by_position.to_a
-    assert ordered.index(b) < ordered.index(a), "same position should tie-break by name"
+    a = osteria.wine_lists.create!(name: "Zeta")
+    b = osteria.wine_lists.create!(name: "Alpha")
+    ordered = osteria.wine_lists.in_display_order.to_a
+    assert ordered.index(b) < ordered.index(a), "lists should be ordered by name"
     assert ordered.index(wine_lists(:summer)) < ordered.index(a)
+  end
+
+  # The `position` column is no longer written by any form and is dropped in a
+  # later deploy; until then a stale value must not perturb the display order.
+  test "in_display_order ignores a stale position value" do
+    osteria = restaurants(:osteria)
+    zeta  = osteria.wine_lists.create!(name: "Zeta", position: 1)
+    alpha = osteria.wine_lists.create!(name: "Alpha", position: 99)
+    ordered = osteria.wine_lists.in_display_order.to_a
+
+    assert_operator ordered.index(alpha), :<, ordered.index(zeta)
   end
 end

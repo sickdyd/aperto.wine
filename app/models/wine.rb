@@ -55,7 +55,11 @@ class Wine < ApplicationRecord
 
   scope :active, -> { where(active: true) }
   scope :featured, -> { where(featured: true) }
-  scope :by_position, -> { order(:color, :position, :name) }
+  # The owner's cellar listing. Colour first (the enum's own order), then name.
+  # There is no manual sort any more: the `position` column is no longer
+  # settable from any form and is dropped in a later deploy, so nothing reads
+  # it here.
+  scope :in_display_order, -> { order(:color, :name) }
 
   def suggested_glasses(glass_size_ml)
     return 0 unless glass_size_ml.positive?

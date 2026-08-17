@@ -76,26 +76,31 @@ module Owner
       assert_match I18n.t("owner.wine_lists.members.already_added"), response.body
     end
 
-    # --- UPDATE (reorder) ---
+    # --- UPDATE is gone ---
+    #
+    # The action existed only to serve the per-row "Sort order" number field,
+    # which the editor no longer has: ordering is drag-and-drop plus Sort A–Z.
 
-    test "updates an item position" do
+    test "there is no update route for a wine list item" do
       sign_in_as @owner
       item = wine_list_items(:winter_gavi)
-      patch owner_restaurant_wine_list_wine_list_item_path(restaurant_id: @restaurant, wine_list_id: @wine_list, id: item),
-        params: { wine_list_item: { position: 9 } }
-      assert_redirected_to edit_owner_restaurant_wine_list_path(restaurant_id: @restaurant, id: @wine_list)
-      assert_equal 9, item.reload.position
-    end
+      original_position = item.position
 
-    test "updates an item position via turbo_stream" do
-      sign_in_as @owner
-      item = wine_list_items(:winter_gavi)
-      patch owner_restaurant_wine_list_wine_list_item_path(restaurant_id: @restaurant, wine_list_id: @wine_list, id: item),
-        params: { wine_list_item: { position: 9 } },
-        headers: { "Accept" => TURBO_STREAM_ACCEPT }
-      assert_response :success
-      assert_equal Mime[:turbo_stream], response.media_type
-      assert_equal 9, item.reload.position
+      assert_raises ActionController::RoutingError do
+        Rails.application.routes.recognize_path(
+          owner_restaurant_wine_list_wine_list_item_path(
+            restaurant_id: @restaurant, wine_list_id: @wine_list, id: item
+          ),
+          method: :patch
+        )
+      end
+
+      patch owner_restaurant_wine_list_wine_list_item_path(
+        restaurant_id: @restaurant, wine_list_id: @wine_list, id: item
+      ), params: { wine_list_item: { position: 9 } }
+
+      assert_response :not_found
+      assert_equal original_position, item.reload.position
     end
 
     # --- DESTROY (remove from list) ---
@@ -238,6 +243,92 @@ module Owner
       assert_equal original_second_position, second.reload.position
     end
 
+    # --- SORT_ALPHABETICALLY ---
+
+    test "sort_alphabetically requires authentication" do
+      post sort_alphabetically_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: @wine_list
+      )
+      assert_redirected_to sign_in_path
+    end
+
+    test "sort_alphabetically writes a flat 1..n sequence following colour then name" do
+      sign_in_as @owner
+      list = wine_lists(:osteria_list)
+
+      post sort_alphabetically_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: list
+      )
+
+      assert_redirected_to edit_owner_restaurant_wine_list_path(restaurant_id: @restaurant, id: list)
+
+      ordered = list.reload.wine_list_items.by_position.includes(:wine)
+      assert_equal (1..ordered.size).to_a, ordered.map(&:position)
+      # red (0) < white (1) < rose (2) < sparkling (3), names alphabetical inside.
+      assert_equal [
+        "Barolo Riserva",       # red
+        "Sold Out Wine",        # red
+        "Gavi di Gavi",         # white
+        "Amphora Rosato",       # rose
+        "Cellar Reserve Magnum" # sparkling
+      ], ordered.map { |item| item.wine.name }
+    end
+
+    test "sort_alphabetically compares names case-insensitively" do
+      sign_in_as @owner
+      list = @restaurant.wine_lists.create!(name: "Case Check")
+      lower = @restaurant.wines.create!(name: "apple red", color: :red, bottle_size_ml: 750, available_glasses: 1)
+      upper = @restaurant.wines.create!(name: "Banana red", color: :red, bottle_size_ml: 750, available_glasses: 1)
+      # Seeded in the wrong order, so a no-op would fail the assertion.
+      list.wine_list_items.create!(wine: upper, position: 1)
+      list.wine_list_items.create!(wine: lower, position: 2)
+
+      post sort_alphabetically_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: list
+      )
+
+      assert_equal [ lower, upper ],
+        list.reload.wine_list_items.by_position.includes(:wine).map(&:wine)
+    end
+
+    test "sort_alphabetically on an empty list is a no-op, not a 500" do
+      sign_in_as @owner
+      empty = @restaurant.wine_lists.create!(name: "Nothing Here")
+
+      post sort_alphabetically_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: empty
+      )
+
+      assert_redirected_to edit_owner_restaurant_wine_list_path(restaurant_id: @restaurant, id: empty)
+      assert_empty empty.reload.wine_list_items
+    end
+
+    test "sort_alphabetically via turbo_stream repaints the members container" do
+      sign_in_as @owner
+      list = wine_lists(:osteria_list)
+
+      post sort_alphabetically_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: @restaurant, wine_list_id: list
+      ), headers: { "Accept" => TURBO_STREAM_ACCEPT }
+
+      assert_response :success
+      assert_equal Mime[:turbo_stream], response.media_type
+      assert_match "wine_list_members", response.body
+    end
+
+    test "sort_alphabetically for a restaurant the signed-in owner does not own is rejected (404)" do
+      sign_in_as @owner
+      other_list = wine_lists(:trattoria_list)
+      before = other_list.wine_list_items.order(:id).pluck(:position)
+
+      post sort_alphabetically_owner_restaurant_wine_list_wine_list_items_path(
+        restaurant_id: restaurants(:trattoria), wine_list_id: other_list
+      )
+
+      assert_response :not_found
+      assert_equal before, other_list.reload.wine_list_items.order(:id).pluck(:position)
+    end
+
     # --- CREATE_ALL (add every available wine at once) ---
 
     test "create_all requires authentication" do
@@ -263,11 +354,11 @@ module Owner
       assert_equal @restaurant.wines.count, @wine_list.reload.wines.count
     end
 
-    test "create_all appends after existing items in wine position order" do
+    test "create_all appends after existing items in wine display order" do
       sign_in_as @owner
       existing = wine_list_items(:winter_gavi)
       expected_order = @restaurant.wines
-                                  .by_position
+                                  .in_display_order
                                   .where.not(id: @wine_list.wines.select(:id))
                                   .to_a
 

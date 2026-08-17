@@ -223,6 +223,23 @@ module Owner
       assert_equal "Barolo Riserva DOCG", @wine.reload.name
     end
 
+    # The "Sort Order" field is gone from the form and :position is no longer
+    # permitted, so a hand-rolled request carrying it must be ignored rather
+    # than quietly reintroducing a sort key nothing reads any more.
+    test "PATCH ignores a position submitted in the params" do
+      sign_in_as @owner
+      original_position = @wine.position
+
+      patch owner_restaurant_wine_path(restaurant_id: @restaurant, id: @wine), params: {
+        wine: { name: "Barolo Riserva DOCG", position: 42 }
+      }
+
+      assert_redirected_to owner_restaurant_wines_path(restaurant_id: @restaurant)
+      @wine.reload
+      assert_equal "Barolo Riserva DOCG", @wine.name
+      assert_equal original_position, @wine.position
+    end
+
     test "PATCH /owner/restaurants/:id/wines/:id with invalid params re-renders edit form" do
       sign_in_as @owner
       patch owner_restaurant_wine_path(restaurant_id: @restaurant, id: @wine), params: {
