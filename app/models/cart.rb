@@ -42,6 +42,9 @@ class Cart
   #   :cart_full           - adding a new distinct line would exceed
   #                          MAX_DISTINCT_ITEMS (incrementing an existing
   #                          line is still allowed at the cap)
+  #   :insufficient_stock  - the line's resulting quantity would exceed the
+  #                          wine's available_glasses (0 available_glasses is
+  #                          :wine_unavailable instead — see Wine#available?)
   Result = Struct.new(:success, :error, keyword_init: true) do
     def success?
       success
@@ -96,9 +99,13 @@ class Cart
     requested_quantity = clamp_quantity(quantity.to_i)
 
     if index
-      new_lines = replace_line(lines, index, quantity: clamp_quantity(lines[index]["quantity"] + requested_quantity))
+      new_quantity = clamp_quantity(lines[index]["quantity"] + requested_quantity)
+      return failure(:insufficient_stock) if new_quantity > wine.available_glasses
+
+      new_lines = replace_line(lines, index, quantity: new_quantity)
     else
       return failure(:cart_full) if lines.size >= MAX_DISTINCT_ITEMS
+      return failure(:insufficient_stock) if requested_quantity > wine.available_glasses
 
       new_lines = lines + [ new_line(wine.id, glass_size, requested_quantity) ]
     end
@@ -115,7 +122,11 @@ class Cart
     new_lines = if quantity.to_i <= 0
       remove_line(lines, index)
     else
-      replace_line(lines, index, quantity: clamp_quantity(quantity.to_i))
+      new_quantity = clamp_quantity(quantity.to_i)
+      wine = restaurant.wines.find_by(id: wine_id.to_i)
+      return failure(:insufficient_stock) if wine && new_quantity > wine.available_glasses
+
+      replace_line(lines, index, quantity: new_quantity)
     end
 
     persist(new_lines)
@@ -156,6 +167,15 @@ class Cart
   # #items/#dropped_items do.
   def any_lines?
     stored_lines.any?
+  end
+
+  # True when the cart, as it reads right now, could actually be placed:
+  # nothing was dropped on this read, and no surviving line's quantity
+  # outruns the wine's current available_glasses. Distinct from #empty?
+  # (line count only) — a cart can hold nothing but resolvable lines and
+  # still be unorderable because stock fell out from under one of them.
+  def orderable?
+    dropped_items.empty? && items.none?(&:exceeds_stock?)
   end
 
   private

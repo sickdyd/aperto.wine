@@ -549,6 +549,7 @@ en:
       invalid_glass_size: "That is not a valid glass size."
       price_unavailable: "That wine has no price set for that glass size."
       cart_full: "Your cart is full — remove an item before adding another."
+      insufficient_stock: "Not enough of that wine is left — lower the quantity."
   orders:
     form:
       guest_name: "Your name (optional)"

@@ -550,6 +550,7 @@ it:
       invalid_glass_size: "Formato di calice non valido."
       price_unavailable: "Questo vino non ha un prezzo per questo formato."
       cart_full: "Il carrello è pieno — rimuovi un vino prima di aggiungerne un altro."
+      insufficient_stock: "Non c'è più abbastanza disponibilità di quel vino — riduci la quantità."
   orders:
     form:
       guest_name: "Il tuo nome (facoltativo)"
