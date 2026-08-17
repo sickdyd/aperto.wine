@@ -145,11 +145,14 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   # is the one that trips.
   test "the IP rate limit trips across distinct sessions, closing the session-only bypass" do
     # Stock now reserves one glass per order placed (Task 2). This loop
-    # places IP_RATE_LIMIT orders of one glass each purely to exercise the
-    # rate limiter, so the wine needs at least that many glasses on hand —
-    # otherwise placement starts failing with :insufficient_stock partway
-    # through, which is a different code path than the one under test here.
-    @barolo.update!(available_glasses: OrdersController::IP_RATE_LIMIT)
+    # places IP_RATE_LIMIT orders of one glass each, then one more beyond
+    # that to trip the limiter — so the wine needs at least IP_RATE_LIMIT+1
+    # glasses on hand. Exactly IP_RATE_LIMIT would let the loop empty the
+    # wine, leaving the final "this trips the limit" request with nothing
+    # to add to its cart: it would 404/no-op on :wine_unavailable instead of
+    # reaching the rate limiter, making assert_no_difference "Order.count"
+    # trivially true for the wrong reason.
+    @barolo.update!(available_glasses: OrdersController::IP_RATE_LIMIT + 1)
 
     assert_difference "Order.count", OrdersController::IP_RATE_LIMIT do
       OrdersController::IP_RATE_LIMIT.times do

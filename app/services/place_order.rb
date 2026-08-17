@@ -38,6 +38,15 @@ class PlaceOrder
   # turns it into an ordinary failure(:insufficient_stock) Result.
   InsufficientStock = Class.new(StandardError)
 
+  # Raised when a wine the cart's items reference is gone by the time
+  # #reserve_stock! locks it — it existed for Cart#items's live read a
+  # moment earlier but was deleted before this transaction's SELECT. Without
+  # this, that race surfaces as an unhandled KeyError (or, further down, an
+  # FK violation from order_items.create!) — a 500 either way. It maps onto
+  # :items_unavailable, which already means exactly this: a line that
+  # failed a live re-check.
+  WineGoneAtLock = Class.new(StandardError)
+
   def self.call(cart:, restaurant:, table:, customer:, guest_name:)
     new(cart: cart, restaurant: restaurant, table: table, customer: customer, guest_name: guest_name).call
   end
@@ -68,6 +77,8 @@ class PlaceOrder
     failure(:order_invalid)
   rescue InsufficientStock
     failure(:insufficient_stock)
+  rescue WineGoneAtLock
+    failure(:items_unavailable)
   end
 
   private
@@ -99,7 +110,8 @@ class PlaceOrder
     locked_wines = Wine.where(id: wine_ids).order(:id).lock.index_by(&:id)
 
     cart.items.each do |item|
-      wine = locked_wines.fetch(item.wine.id)
+      wine = locked_wines[item.wine.id]
+      raise WineGoneAtLock if wine.nil?
       raise InsufficientStock if wine.available_glasses < item.quantity
 
       # Same in-memory wine object across a diner's lines for the same

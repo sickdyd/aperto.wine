@@ -37,8 +37,11 @@ class Order < ApplicationRecord
 
     transaction do
       update!(status: :cancelled)
-      # Release the reservation held since placement
-      order_items.each do |item|
+      # Release the reservation held since placement. Ordered by wine_id —
+      # PlaceOrder locks wines in id order when reserving, so a cancel and a
+      # placement touching the same two wines must acquire their row locks
+      # in that same order too, or Postgres can deadlock one of them.
+      order_items.includes(:wine).order(:wine_id).each do |item|
         item.wine.increment!(:available_glasses, item.quantity)
       end
     end

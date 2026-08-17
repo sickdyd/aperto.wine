@@ -235,6 +235,46 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal glasses_before + 2, wine.reload.available_glasses
   end
 
+  # PlaceOrder locks wines in ascending id order when reserving (see
+  # PlaceOrder#reserve_stock!). If cancel! released them in a different
+  # order — order_items' own order, say — a cancel and a placement racing
+  # over the same two wines could acquire their row locks in opposite
+  # orders and deadlock in Postgres. This pins the release itself to
+  # ascending wine_id, independent of the order the order_items were
+  # created in, by inserting them in the reverse of wine-id order and
+  # asserting the UPDATE statements against "wines" still fire lowest-id
+  # first.
+  test "cancel! releases wines in ascending wine_id order, not order_items order" do
+    order = Order.create!(valid_attributes)
+    lower_id_wine, higher_id_wine = [ wines(:barolo), wines(:gavi) ].sort_by(&:id)
+    assert_operator lower_id_wine.id, :<, higher_id_wine.id
+
+    # Created higher-id wine first, so order_items' own (creation) order is
+    # the opposite of ascending wine_id — proves the release sorts
+    # explicitly rather than happening to follow insertion order.
+    order.order_items.create!(wine: higher_id_wine, glass_size_ml: 125, quantity: 1, unit_price_cents: 2200)
+    order.order_items.create!(wine: lower_id_wine, glass_size_ml: 100, quantity: 1, unit_price_cents: 900)
+
+    touched_wine_ids = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      next unless payload[:name] == "Wine Update All"
+
+      # increment!'s UPDATE binds "id" as its final parameter in the test
+      # environment (prepared statements); fall back to an inlined literal
+      # in case a different environment's adapter config inlines it instead.
+      id_bind = payload[:binds]&.find { |bind| bind.name == "id" }
+      touched_wine_ids << (id_bind ? id_bind.value : payload[:sql][/"wines"\."id" = (\d+)/, 1].to_i)
+    end
+
+    begin
+      order.cancel!
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
+
+    assert_equal [ lower_id_wine.id, higher_id_wine.id ], touched_wine_ids
+  end
+
   test "cancel! from completed restores nothing" do
     order = Order.create!(valid_attributes.merge(status: :completed))
     wine  = wines(:barolo)

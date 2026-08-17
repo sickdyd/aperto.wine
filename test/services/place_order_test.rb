@@ -206,6 +206,31 @@ class PlaceOrderTest < ActiveSupport::TestCase
     assert_equal 10, @barolo.reload.available_glasses
   end
 
+  # Cart#items is read once at the top of #call and memoized; the locked
+  # re-check happens later, in its own query, inside build_order!'s
+  # transaction. That gap is a real window: the wine can be deleted after
+  # Cart#items already resolved it but before the lock query runs. Force
+  # that ordering by loading cart.items first (so the CartItem's wine
+  # reference is already resolved from the pre-deletion state), then delete
+  # the row, then place. #franciacorta is used here specifically because,
+  # unlike @barolo/@gavi, no order_items fixture references it, so the FK
+  # constraint doesn't block the delete.
+  test "a wine deleted between the cart's read and the locked re-check fails cleanly, not with a 500" do
+    cart = cart_for(@trattoria)
+    cart.add(wine_id: @franciacorta.id, glass_size_ml: 125, quantity: 1)
+    cart.items
+
+    @franciacorta.destroy!
+
+    assert_no_difference [ "Order.count", "OrderItem.count" ] do
+      result = PlaceOrder.call(cart: cart, restaurant: @trattoria, table: nil, customer: nil, guest_name: "Jane")
+
+      assert_not result.success?
+      assert_equal :items_unavailable, result.error
+      assert_nil result.order
+    end
+  end
+
   test "calculate_total! is applied so the order total reflects its items" do
     cart = cart_for(@osteria)
     cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
