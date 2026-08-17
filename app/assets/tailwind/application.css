@@ -210,14 +210,20 @@
     color: var(--color-ox-1);
   }
 
-  /* One focus treatment everywhere: a single 2px oxblood ring, held close to
-     the control rather than floating off it. 2px on the ledger's grounds
-     clears WCAG 2.2 SC 2.4.13 for both thickness and contrast, and :focus-
-     visible rather than :focus means a mouse press on a button does not leave
-     a ring behind while keyboard tabbing and typing into a field still do.
-     The offset is deliberately small: at 3px the ring on an underline-only
-     field read as a second, competing border floating around the rule instead
-     of as one indicator. Deep grounds flip it to the tint. */
+  /* The ring: a single 2px oxblood outline, held close to the control rather
+     than floating off it. 2px on the ledger's grounds clears WCAG 2.2 SC
+     2.4.13 for both thickness and contrast, and :focus-visible rather than
+     :focus means a mouse press on a button does not leave a ring behind while
+     keyboard tabbing still does. The offset is deliberately small: at 3px the
+     ring read as a second border floating around the control instead of as one
+     indicator. Deep grounds flip it to the tint.
+
+     This is the treatment for things that are *boxes* — buttons, links,
+     summaries. A ruled field is not a box, and it does not get a ring: the
+     daisyUI reskins at the bottom of this file give `.input`/`.textarea`/
+     `.select`/`.file-input` a focus treatment drawn on their own rule, for the
+     reason spelled out there. `input, select, textarea` stay in this list for
+     the bare, un-daisyUI'd controls (the `.search-field` box, for one). */
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-ox-2);
     outline-offset: 2px;
@@ -644,6 +650,19 @@
     border: 1.5px solid var(--color-ox-2);
     background-color: transparent;
     color: var(--color-ox-2);
+    /* `@apply btn` above drags daisyUI's own
+       `outline-color: var(--btn-color, var(--color-base-content))` in with the
+       layout, and it lands in @layer components — ahead of the zero-specificity
+       ring rule in @layer base. So every ledger button was quietly ringing in
+       ink black. Restated here, in the same block that pulled it in. */
+    outline-color: var(--color-ox-2);
+  }
+
+  /* On a deep ground the ring flips to the tint, exactly as the base rule does
+       for bare controls — restated because the declaration above outranks it. */
+  .on-deep :is(.btn-wine, .btn-wine-outline, .btn-wine-quiet, .btn-wine-deep),
+  .masthead :is(.btn-wine, .btn-wine-outline, .btn-wine-quiet, .btn-wine-deep) {
+    outline-color: var(--color-ox-5);
   }
 
   /* The primary action: oxblood block, paper type. */
@@ -1843,6 +1862,69 @@
   padding: 0;
 }
 
+/* Focus on a ruled field, drawn on the rule.
+
+   daisyUI's own treatment was doing two things wrong at once. It paints
+   `outline: 2px solid var(--input-color)` where `--input-color` resolves to
+   `--color-base-content` — near-black ink, a colour this palette gives to body
+   copy and to nothing structural — and it adds a matching black `box-shadow`
+   under the control. And it hangs both on plain `:focus`, so a mouse click on a
+   field drew a black rectangle around an underline-only blank: two competing
+   shapes where the design has one line.
+
+   `:focus-visible` is not the escape hatch here that it is for a button. A text
+   field matches `:focus-visible` on a *pointer* press too — it accepts keyboard
+   input, so the UA heuristic always considers the ring warranted. Suppressing
+   the ring for mouse focus only is therefore not expressible on a field; the
+   indicator itself has to change.
+
+   So the ledger's own instrument carries it: the blank takes a shaded stock and
+   its rule deepens from medium to heavy. Two signals, both in the vocabulary the
+   design system already uses to say "this line is the live one" — the select has
+   worn a ground at rest for the same reason. It clears WCAG 2.2 SC 2.4.7, and
+   the heavy rule is 12:1 against the stock it sits on (SC 1.4.11) — without a
+   box, and without a shadow, which `test/deploy/ledger_theme_test.rb` forbids
+   outright: depth here comes from stock and overlap, never elevation. Weight was
+   the first instinct and is the wrong one for a second reason too — these
+   controls are `border-box`, so a wider border either steals from the content
+   box or grows the field, and either way the value under the cursor moves. A
+   ground costs no layout at all.
+
+   `box-shadow: none` is not decoration: daisyUI hangs a black `0 1px` shadow on
+   the same `:focus`, and the reskin's own `shadow-none` above only covers rest.
+
+   Unlayered, like every rule in this section — see the header above.
+
+   The selector list mirrors daisyUI's own, `:focus-within` included. Every one
+   of these classes is on a leaf control in this app, where `:focus-within` can
+   never fire without `:focus`, so today it is inert. It is kept because daisyUI
+   documents `.input` as usable as a *wrapper* around an icon and an input, and
+   the day one is written that way daisyUI's black ring fires on `:focus-within`
+   — an override that had dropped the state would lose that field silently. */
+.input.input:focus,
+.input.input:focus-visible,
+.input.input:focus-within,
+.textarea.textarea:focus,
+.textarea.textarea:focus-visible,
+.textarea.textarea:focus-within,
+.select.select:focus,
+.select.select:focus-visible,
+.select.select:focus-within,
+.file-input.file-input:focus,
+.file-input.file-input:focus-visible,
+.file-input.file-input:focus-within {
+  outline: none;
+  box-shadow: none;
+  border-bottom-color: var(--color-rule-heavy);
+  /* A flat, fully opaque stock — never a translucent wash, even though these
+     fields are transparent at rest. Chrome's customizable-select model paints a
+     drop-down with the control's own background, and a select stays focused for
+     as long as its picker is open, so a wash here shows the page through the
+     option list. That is the bug the select is grouped apart above to avoid, and
+     the focused state is precisely when it would bite. */
+  background-color: var(--color-stock);
+}
+
 .ledger-admin :is(.input.input, .select.select, .textarea.textarea, .file-input.file-input) {
   font-size: 1rem;
 }
@@ -1871,6 +1953,17 @@
 .radio.radio {
   @apply shadow-none;
   border-color: var(--color-ox-4);
+}
+
+/* These three are boxes, so the ring is right for them — but daisyUI draws it
+   with `var(--input-color, currentColor)`, which lands on ink black. Only the
+   colour is corrected, and only `outline-color`: `--input-color` itself is
+   overloaded here (it also carries the checked ground and the border), so
+   redefining the variable would repaint the control, not just its ring. */
+.checkbox.checkbox:focus-visible,
+.radio.radio:focus-visible,
+.toggle.toggle:focus-visible {
+  outline-color: var(--color-ox-2);
 }
 
 /* daisyUI moves the toggle's knob between states, but with every radius at 0
