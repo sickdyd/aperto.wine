@@ -210,15 +210,29 @@
     color: var(--color-ox-1);
   }
 
-  /* one focus treatment everywhere; deep grounds flip it to the tint */
+  /* One focus treatment everywhere: a single 2px oxblood ring, held close to
+     the control rather than floating off it. 2px on the ledger's grounds
+     clears WCAG 2.2 SC 2.4.13 for both thickness and contrast, and :focus-
+     visible rather than :focus means a mouse press on a button does not leave
+     a ring behind while keyboard tabbing and typing into a field still do.
+     The offset is deliberately small: at 3px the ring on an underline-only
+     field read as a second, competing border floating around the rule instead
+     of as one indicator. Deep grounds flip it to the tint. */
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-ox-2);
-    outline-offset: 3px;
+    outline-offset: 2px;
   }
 
   .on-deep :where(a, button, input):focus-visible,
   .masthead :where(a, button, input):focus-visible {
     outline-color: var(--color-ox-5);
+  }
+
+  /* The UA tap flash is a translucent blue-black plate that belongs to no part
+     of this palette. Replaced rather than removed — a touch still has to
+     acknowledge itself on a phone, where there is no hover to do it. */
+  html {
+    -webkit-tap-highlight-color: rgb(142 42 54 / 0.14);
   }
 
   ::selection {
@@ -791,6 +805,22 @@
     -webkit-appearance: none;
   }
 
+  /* The ring belongs to the field, not to the bare input inside it. Drawn on
+     the input it boxed only the input: it started to the right of the
+     magnifier, overhung the right end of the rule, and its bottom edge cut
+     across the field's own underline — two competing borders where there
+     should be one indicator. On the field, the icon, the value and the rule
+     all sit inside a single box. */
+  .search-field:focus-within {
+    outline: 2px solid var(--color-ox-2);
+    outline-offset: 3px;
+  }
+
+  .search-field input:focus,
+  .search-field input:focus-visible {
+    outline: none;
+  }
+
   /* Address autocomplete results (stimulus-autocomplete) — a sheet on a rule. */
   .address-suggestions {
     @apply absolute inset-x-0 top-full z-20 max-h-64 list-none overflow-y-auto p-0;
@@ -909,10 +939,84 @@
 
   .chip:hover,
   .chip[aria-current],
-  .chip[aria-pressed="true"] {
+  .chip[aria-pressed="true"],
+  .chip[aria-expanded="true"] {
     background-color: var(--color-ox-2);
     border-color: var(--color-ox-2);
     color: var(--color-paper);
+  }
+
+  /* A jump target, not a state. The facet chips and the section links carry
+     the same words in the same box, so the one that only moves the page is
+     given the quiet stock ground and a hairline: it reads as somewhere to go
+     rather than as something already set. Box, type and target size are all
+     inherited from .chip — this is a variant, not a second chip. */
+  .chip-jump {
+    background-color: var(--color-stock-pale);
+    border-color: var(--color-rule-hair);
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     THE MENU FILTER BAR — one line of chrome, then the wine
+
+     The facets used to print four chip rows above the list, filling a phone
+     screen before a single wine showed. They now sit in a disclosure panel
+     behind a single trigger, leaving one line: the search field and the
+     trigger. Collapsed is the default, so the list is what a diner meets
+     first; the trigger carries a count so a filtered list is never a
+     mystery.
+     ═════════════════════════════════════════════════════════════════════════ */
+
+  .filter-bar {
+    @apply flex items-center gap-3;
+  }
+
+  /* .chip is the base — this adds only the count badge's spacing and keeps
+     the trigger from being squeezed by the search field beside it. */
+  .filter-toggle {
+    @apply shrink-0 gap-2 px-3;
+  }
+
+  .filter-count {
+    @apply inline-flex items-center justify-center;
+    min-width: 1.35rem;
+    padding-inline: 0.2rem;
+    background-color: var(--color-ox-2);
+    color: var(--color-paper);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.35;
+  }
+
+  /* Inverted while the trigger itself is filled, so the badge stays legible
+     against the pressed ground rather than disappearing into it. */
+  .filter-toggle[aria-expanded="true"] .filter-count {
+    background-color: var(--color-paper);
+    color: var(--color-ox-2);
+  }
+
+  /* The panel: ruled off from the bar above it rather than boxed, in the
+     ledger's own idiom. Vertical rhythm is tight — this is a control surface,
+     not a section of the menu. */
+  .filter-panel {
+    @apply mt-3 flex flex-col gap-3 pt-3;
+    border-top: 1px solid var(--color-rule-hair);
+  }
+
+  .filter-group {
+    @apply flex flex-col gap-1.5;
+  }
+
+  .filter-group-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide-caps);
+    color: var(--color-ox-3);
+  }
+
+  .filter-group-chips {
+    @apply flex flex-wrap gap-1.5;
   }
 
   /* daisyUI badges, rethemed in place: printed annotations, not pills. The
@@ -1664,7 +1768,6 @@
    outright — renaming is the only clean fix for those three.
    ────────────────────────────────────────────────────────────────────────── */
 .input.input,
-.select.select,
 .textarea.textarea,
 .file-input.file-input {
   @apply shadow-none;
@@ -1674,7 +1777,7 @@
   font-family: var(--font-body);
   font-size: var(--text-name);
   color: var(--color-ink);
-  outline-offset: 4px;
+  outline-offset: 2px;
   /* daisyUI sizes controls to 2.5rem — 40px, under the 44px interactive-target
      floor. Overriding height alone is not enough: it must go to auto, or the
      fixed value keeps winning over min-height. 46px matches .btn-wine so a
@@ -1685,6 +1788,59 @@
      the label above it and with the left end of its own rule. daisyUI's
      12px inset would indent every value away from the column edge. */
   padding-inline: 0;
+}
+
+/* The select is the one ruled control that cannot be transparent.
+   daisyUI 5 sets `appearance: base-select`, which opts Chrome into the
+   customizable-select model: the drop-down stops being an OS-drawn, always
+   opaque popup and becomes an author-painted element that inherits this
+   control's own background. Under the shared `background-color: transparent`
+   above, the open option list therefore rendered see-through with the page
+   showing between the numbers, and the closed control had no field ground at
+   all. Selects are grouped apart for exactly that reason: same rule, same
+   type, same 46px box as a text field — on a ground of its own, a shaded
+   blank on the form. The inline padding is what a ground earns; the element
+   box still starts flush with the column, so its rule lines up with the
+   fields above and below it. */
+.select.select {
+  @apply shadow-none;
+  border: 0;
+  border-bottom: 1.5px solid var(--color-rule-medium);
+  background-color: var(--color-stock-pale);
+  font-family: var(--font-body);
+  font-size: var(--text-name);
+  color: var(--color-ink);
+  outline-offset: 2px;
+  height: auto;
+  min-height: 46px;
+  padding-inline: 0.55rem;
+}
+
+/* Belt and braces across both rendering models: `option` is a real, styleable
+   element inside a base-select picker, and carries at least its ground and ink
+   in the native popup on the platforms that honour them. Neither inherits the
+   control's own colours, so both are stated. */
+.select.select option,
+.select.select optgroup {
+  background-color: var(--color-sheet);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.select.select option:checked {
+  background-color: var(--color-ox-5);
+  color: var(--color-ox-1);
+}
+
+/* The base-select drop-down, painted as the ledger paints every other surface
+   that lifts off its ground: a lighter sheet, a hairline, a medium rule at the
+   seam. Unknown to engines without customizable-select support, where the rule
+   is simply dropped and the OS popup keeps its own opaque chrome. */
+.select.select::picker(select) {
+  background-color: var(--color-sheet);
+  border: 1px solid var(--color-ox-4);
+  border-top: 1.5px solid var(--color-rule-medium);
+  padding: 0;
 }
 
 .ledger-admin :is(.input.input, .select.select, .textarea.textarea, .file-input.file-input) {
@@ -1702,6 +1858,12 @@
 .textarea.textarea:disabled {
   border-bottom-style: dotted;
   color: var(--color-quiet);
+}
+
+/* A disabled select keeps a ground, held back to the page's own stock so it
+   reads as a blank that cannot be written in rather than one left empty. */
+.select.select:disabled {
+  background-color: var(--color-paper);
 }
 
 .checkbox.checkbox,

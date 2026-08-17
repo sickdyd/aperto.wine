@@ -1,0 +1,100 @@
+<%#
+  The menu's one line of filter chrome: a search field and a trigger, with
+  every facet folded behind the trigger.
+
+  Four chip rows printed above the list used to fill a phone screen before a
+  single wine appeared, and the last of them sat directly above the section
+  jump-nav, which names the same colours in the same chip — one row read as
+  two. Collapsing the facets is what separates them: closed, the colour words
+  are on the page once, as the jump links. See ".filter-bar" for the
+  vocabulary and MenusHelper#menu_filter_facets for where the facets come
+  from.
+
+  This is presentation only. The chips, their data-facet-* attributes and
+  list_filter_controller.js's matching are untouched; the controller gained
+  nothing but the disclosure and the count.
+
+  Locals:
+    filters - MenusHelper#menu_filter_facets output (required)
+%>
+<% facets = filters[:groups] %>
+
+<div class="filter-bar mt-6">
+  <%# The magnifier and the placeholder carry the field for the eye, so the
+      label is set for assistive technology only — a printed "SEARCH THE LIST"
+      caption above it cost a line of the very chrome this is trimming. %>
+  <label for="menu_search" class="sr-only"><%= t("menu.search_label") %></label>
+  <div class="search-field min-w-0 flex-1">
+    <%= icon "magnifying-glass", class: "size-4", "aria-hidden": "true" %>
+    <input type="search"
+           id="menu_search"
+           placeholder="<%= t('menu.search_placeholder') %>"
+           autocomplete="off"
+           spellcheck="false"
+           data-list-filter-target="input"
+           data-action="input->list-filter#filter">
+  </div>
+
+  <% if facets.any? %>
+    <%# A disclosure, not a dialog: the panel follows this button in the DOM,
+        so a keyboard user simply tabs into it and there is nothing to trap or
+        restore. aria-expanded is the state; the count is the applied tally,
+        and is what keeps a collapsed panel from hiding an active filter. %>
+    <button type="button"
+            class="chip filter-toggle"
+            aria-expanded="false"
+            aria-controls="menu-filter-panel"
+            data-list-filter-target="disclosure"
+            data-action="click->list-filter#toggleFilters">
+      <%= icon "faders-horizontal", class: "size-4 shrink-0", "aria-hidden": "true" %>
+      <span><%= t("menu.filters.toggle") %></span>
+      <%# The badge is aria-hidden and the sr-only span carries the tally in
+          words, because both live inside the button and a button's accessible
+          name is built from all of its text. Left readable, the numeral would
+          be announced on its own ("Filters 2 applied: 2"). The sr-only copy is
+          a suffix for the same reason — it does not repeat the word "Filters"
+          that is already sitting beside it. The controller writes both
+          together, so they can never disagree. %>
+      <span class="filter-count" hidden aria-hidden="true" data-list-filter-target="count"></span>
+      <span class="sr-only" data-list-filter-target="countLabel"></span>
+    </button>
+  <% end %>
+</div>
+
+<% if facets.any? %>
+  <div id="menu-filter-panel" class="filter-panel" hidden data-list-filter-target="panel">
+    <% facets.each do |group| %>
+      <%# The visible caption and the group's accessible name are the same
+          words, so the caption is hidden from the reading order to keep it
+          from being announced twice. %>
+      <div class="filter-group" role="group" aria-label="<%= group[:label] %>">
+        <span class="filter-group-label" aria-hidden="true"><%= group[:label] %></span>
+        <div class="filter-group-chips">
+          <% group[:options].each do |option| %>
+            <button type="button"
+                    class="chip min-w-11 justify-center"
+                    aria-pressed="false"
+                    data-list-filter-target="facet"
+                    data-facet-name="<%= group[:name] %>"
+                    data-facet-value="<%= option[:value] %>"
+                    data-action="click->list-filter#toggleFacet">
+              <%= option[:label] %>
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# Shown only once a term or a chip is active — toggled by the
+        controller's #apply, never rendered visible here. %>
+    <div>
+      <button type="button"
+              class="link-mono"
+              hidden
+              data-list-filter-target="clear"
+              data-action="click->list-filter#clearAll">
+        <%= t("menu.filters.clear_all") %>
+      </button>
+    </div>
+  </div>
+<% end %>

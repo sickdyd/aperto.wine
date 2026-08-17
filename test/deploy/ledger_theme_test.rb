@@ -275,6 +275,72 @@ class LedgerThemeTest < ActiveSupport::TestCase
       "so the .input::placeholder reskin never reaches it — it needs its own")
   end
 
+  # daisyUI 5 sets `appearance: base-select` on .select, which opts Chrome into
+  # the customizable-select model: the drop-down is then an author-painted
+  # element that inherits the control's own background rather than an
+  # OS-drawn, always-opaque popup. The ledger's underline field style set that
+  # background to transparent, so the open option list rendered see-through
+  # with the page bleeding through it, and the closed control had no field
+  # ground at all. A select has to keep an opaque ground for exactly that
+  # reason, so it is no longer grouped with the ruled text fields.
+  test "a select paints an opaque ground so its option list is never see-through" do
+    block = @css[/^\.select\.select\s*\{[^}]*\}/m]
+    assert block, "the unlayered .select reskin is missing from the stylesheet"
+    refute_match(/background-color:\s*transparent/, block,
+      "a transparent .select renders a transparent drop-down under Chrome's " \
+      "appearance: base-select — the option list must sit on an opaque ground")
+    assert_match(/background-color:\s*var\(--color-[a-z-]+\)/, block,
+      "the select's ground has to come from the ledger palette")
+
+    refute_match(/^\.input\.input,\n(?:\.[a-z-]+\.[a-z-]+,\n)*\.select\.select[,\s]/, @css,
+      "the select must not share the ruled text fields' transparent ground")
+
+    assert_match(/^\.select\.select option[\s,{]/, @css,
+      "option text needs its own ground and ink; it does not inherit the " \
+      "control's in either the native or the base-select rendering")
+  end
+
+  # WCAG 2.2 SC 2.4.13: one indicator, at least 2 CSS px thick, contrasting
+  # against what it sits on. It also has to be ONE indicator — the ring used to
+  # be drawn on the bare <input> inside .search-field, so it boxed the input
+  # only, cut across the field's own underline and overhung the icon. The ring
+  # belongs to the whole field.
+  test "the focus ring is a single indicator at least 2px thick" do
+    base = @css[/:where\(a, button, input, select, textarea, summary, \[tabindex\]\):focus-visible\s*\{[^}]*\}/m]
+    assert base, "the shared focus-visible treatment is missing"
+    thickness = base[/outline:\s*(\d+(?:\.\d+)?)px/, 1]
+    assert thickness, "the focus outline must declare an explicit thickness"
+    assert_operator thickness.to_f, :>=, 2.0,
+      "WCAG 2.2 SC 2.4.13 wants a focus indicator at least 2 CSS px thick"
+    assert_match(/outline:\s*[\d.]+px solid var\(--color-ox-2\)/, base,
+      "the indicator is inked from the oxblood ramp, not a browser default")
+
+    assert_match(/\.search-field:focus-within\s*\{[^}]*outline:\s*[\d.]+px solid/m, @css,
+      "the search field owns its focus ring, so the icon, the input and the " \
+      "field's underline are all inside one box")
+    assert_match(/\.search-field input:focus(?:-visible)?[^{]*\{[^}]*outline:\s*none/m, @css,
+      "with the ring on the field, the inner input must not draw a second one")
+  end
+
+  # The default iOS/Android tap flash is a translucent black-blue plate with no
+  # relation to the palette. It is replaced, not removed: a tap still has to
+  # acknowledge itself.
+  test "the mobile tap flash is inked from the ledger, not the browser default" do
+    assert_match(/-webkit-tap-highlight-color:\s*rgb\(142 42 54/, @css,
+      "the tap highlight must be an oxblood wash rather than the UA default")
+    refute_match(/-webkit-tap-highlight-color:\s*transparent/, @css,
+      "removing the tap flash outright leaves a touch unacknowledged")
+  end
+
+  # The menu's facet chips and its section jump links carry the same words in
+  # the same chip shape. They are different controls and must not be able to
+  # read as one row printed twice.
+  test "jump chips are a variant of the chip base, not a duplicate of it" do
+    assert_match(/\.chip-jump[\s,{:]/, @css, "the jump-chip variant is missing")
+    refute_match(/^\s*\.chip-jump\s*\{[^}]*min-height/m, @css,
+      "the variant must inherit its box from .chip rather than restate it")
+  end
+
   test "flash bands fill their column rather than shrink-wrapping" do
     assert_match(/^\.alert\.alert\s*\{[^}]*width:\s*100%/m, @css,
       "daisyUI sets .alert to width: fit-content, which shrink-wraps a flash " \
