@@ -40,12 +40,12 @@ class TableBulkGeneration
                          .map { |area, name| [ area, name.downcase ] }.to_set
 
     RestaurantTable.transaction do
-      each_table do |area, name, position|
+      each_table do |area, name|
         if existing.include?([ area, name.downcase ])
           @skipped_count += 1
         else
           begin
-            restaurant.restaurant_tables.create!(name:, area:, position:, active: true)
+            restaurant.restaurant_tables.create!(name:, area:, active: true)
             @created_count += 1
           rescue ActiveRecord::RecordInvalid
             # A duplicate (area, name) committed between the snapshot above and
@@ -62,10 +62,14 @@ class TableBulkGeneration
 
   private
 
+  # The running number is a naming input only. It used to be yielded as a
+  # `position` too, but nothing reads that column any more — tables display in
+  # (area, name) order — so writing it would have left a value no screen could
+  # show and no form could correct.
   def each_table
     (1..floors_count).each do |floor|
       (1..tables_per_floor).each do |number|
-        yield area_for(floor), name_for(floor, number), number
+        yield area_for(floor), name_for(floor, number)
       end
     end
   end
