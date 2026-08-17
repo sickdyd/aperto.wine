@@ -20,7 +20,7 @@
           24-hour cookie, so this link comes and goes with it. %>
       <% if @order_history.any? %>
         <p class="mt-2">
-          <a href="<%= orders_path(restaurant_id: @restaurant) %>" class="link-mono gap-2">
+          <a href="<%= orders_path(restaurant_slug: @restaurant.slug) %>" class="link-mono gap-2">
             <%= icon "receipt", class: "size-3.5" %>
             <%= t("orders.history.title") %>
           </a>

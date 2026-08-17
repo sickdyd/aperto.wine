@@ -1,54 +1,59 @@
+# A restaurant publishes exactly one list at a time (partial unique index on
+# wine_lists.restaurant_id WHERE published), so each restaurant below has one
+# `published: true` fixture and any number of drafts.
+
+# Osteria's published list — the public-menu tests that expect Barolo and Gavi
+# to render (grouped by colour) target this list.
 osteria_list:
   restaurant: osteria
   name: Wine List
+  slug: wine-list
   position: 1
-  active: true
+  published: true
 
 summer:
   restaurant: osteria
   name: Summer Selection
+  slug: summer-selection
   season: Summer
   position: 2
-  active: false
+  published: false
 
 winter:
   restaurant: osteria
   name: Winter Selection
+  slug: winter-selection
   season: Winter
   position: 3
-  active: false
+  published: false
 
 trattoria_list:
   restaurant: trattoria
   name: House Picks
+  slug: house-picks
   position: 1
-  active: true
+  published: true
 
-# Trattoria's second active list — holds only trattoria_franciacorta, kept out
-# of trattoria_list so it never joins that list's red colour group (several
-# menus_helper/public_menu tests assert trattoria_list's red group is exactly
-# [chianti, trattoria_sold_out]). Exists purely so cart specs have a second
-# restaurant with a *published* purchasable wine (Task 6: the cart now only
-# admits wines reachable through an active list). Its wine is sparkling, not
-# red or white — trattoria_list already renders Red and White nav chips, so a
-# second list holding another red or white wine would render a duplicate
-# same-coloured chip and make public_menu_test.rb's `click_link "Red"` calls
-# ambiguous.
+# Trattoria's draft — unpublished, so it drives the "a draft list's URL
+# redirects to the published one" menu tests. Deliberately holds no items:
+# every purchasable trattoria wine lives on trattoria_list, since only a
+# published list's wines can reach the cart.
 trattoria_reserve:
   restaurant: trattoria
   name: Reserve Selection
+  slug: reserve-selection
   position: 2
-  active: true
+  published: false
 
-# Inactive — never queried by the controller. Exists only so the helper unit
-# tests can prove colour grouping follows Wine's color enum order rather than
-# alphabetical order or item position order: its item positions (white
+# Unpublished — never queried by the controller. Exists only so the helper
+# unit tests can prove colour grouping follows Wine's color enum order rather
+# than alphabetical order or item position order: its item positions (white
 # first, dessert second, red last) deliberately contradict enum order
 # (red: 0, white: 1, dessert: 4), and its colours (dessert, red, white)
-# deliberately contradict alphabetical order (dessert, red, white — which
-# happens to differ from enum order only in where "dessert" lands).
+# deliberately contradict alphabetical order.
 mixed_order_list:
   restaurant: osteria
   name: Mixed Order Check
+  slug: mixed-order-check
   position: 4
-  active: false
+  published: false

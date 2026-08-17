@@ -46,7 +46,7 @@ module Owner
     end
 
     def restaurant_params
-      params.require(:restaurant).permit(:name, :address, :description, :latitude, :longitude, :proximity_radius_meters, :active)
+      params.require(:restaurant).permit(:name, :slug, :address, :description, :latitude, :longitude, :proximity_radius_meters, :active)
     end
   end
 end

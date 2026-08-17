@@ -31,7 +31,7 @@
         two or more dropped lines sharing a size, and possibly no wine name
         at all once a wine is deleted, "Remove" alone would leave every
         control indistinguishable to a screen-reader user. %>
-    <%= button_to cart_items_path(restaurant_id: restaurant), method: :delete,
+    <%= button_to cart_items_path(restaurant_slug: restaurant.slug), method: :delete,
           params: { wine_id: dropped.wine_id, glass_size_ml: dropped.glass_size_ml },
           class: "btn-wine-outline shrink-0",
           "aria-label": wine_name ? t("cart.remove_item", wine: wine_name) :

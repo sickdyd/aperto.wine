@@ -35,7 +35,7 @@ class OrdersController < ApplicationController
   # collapse every such visitor onto the same blank-string bucket.
   rate_limit to: 5, within: 1.minute, only: :create,
              by: -> { session.id.to_s.presence || request.remote_ip },
-             with: -> { redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.rate_limited") }
+             with: -> { redirect_to cart_path(restaurant_slug: @restaurant.slug), alert: t("orders.errors.rate_limited") }
 
   # IP-scoped: closes the bypass above. Placing an order always requires a
   # session-backed cart (see #set_cart / Cart), so by the time #create runs
@@ -47,7 +47,7 @@ class OrdersController < ApplicationController
   # diner may legitimately retry a few seconds later.
   rate_limit to: IP_RATE_LIMIT, within: 1.minute, only: :create, name: "orders_ip",
              by: -> { request.remote_ip },
-             with: -> { redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.rate_limited") }
+             with: -> { redirect_to cart_path(restaurant_slug: @restaurant.slug), alert: t("orders.errors.rate_limited") }
 
   def create
     return honeypot_response if honeypot_tripped?
@@ -65,7 +65,7 @@ class OrdersController < ApplicationController
       @order_history.record(result.order)
       redirect_to order_status_path(public_token: result.order.public_token)
     else
-      redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.#{result.error}")
+      redirect_to cart_path(restaurant_slug: @restaurant.slug), alert: t("orders.errors.#{result.error}")
     end
   end
 
@@ -122,6 +122,6 @@ class OrdersController < ApplicationController
   # honeypot only withholds anything actionable (an order, a token, a
   # success message) from an automated submission.
   def honeypot_response
-    redirect_to menu_path(id: @restaurant)
+    redirect_to menu_path_for(@restaurant)
   end
 end

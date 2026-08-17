@@ -131,6 +131,8 @@ it:
         section_service: "Servizio"
         name: "Nome Ristorante"
         name_placeholder: "es. Osteria del Borgo"
+        slug: "Indirizzo Web della Carta"
+        slug_hint: "I clienti raggiungono la tua carta su %{url}. Cambiarlo invalida tutti i codici QR già stampati."
         address: "Indirizzo"
         address_placeholder: "es. Via Roma 42, Milano"
         address_suggestions_attribution: "© contributori di OpenStreetMap"
@@ -198,9 +200,11 @@ it:
         aria_label: Nome del vino con suggerimenti automatici
     wine_lists:
       title: "Carte dei Vini"
-      intro: "La carta pubblica mostra ogni lista attiva. Crea liste selezionate e attivale o disattivale qui."
+      intro: "Crea tutte le liste che vuoi; una sola alla volta è pubblicata per i clienti. I tuoi codici QR aprono sempre quella pubblicata, quindi cambiare carta non richiede mai di ristamparli."
       manage_wines: "Gestisci vini"
-      toggle_label: "Mostra sulla carta pubblica"
+      publish: "Pubblica"
+      published_hint: "È la lista che aprono i tuoi codici QR."
+      published_notice: "%{name} è ora la carta pubblicata."
       add: "Aggiungi Lista"
       add_first: "Crea la tua prima lista"
       new_title: "Nuova Lista"
@@ -223,7 +227,6 @@ it:
         season: "Stagione / Tema"
         season_placeholder: "es. Estate"
         position: "Ordinamento"
-        active_label: "Pubblicata (visibile sulla carta pubblica)"
       members:
         title: "Vini in questa lista"
         intro: "Scegli i vini dal tuo catalogo condiviso — lo stesso vino può apparire in qualsiasi numero di liste. La disponibilità dipende sempre dalle bottiglie — i vini in evidenza ma esauriti appaiono come non disponibili."

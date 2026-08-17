@@ -139,7 +139,7 @@ class OwnerRestaurantsTest < ApplicationSystemTestCase
     visit owner_restaurant_path(id: restaurant.id)
 
     link = find_link(I18n.t("owner.restaurants.preview_menu"))
-    assert_equal menu_path(id: restaurant.id), URI.parse(link[:href]).path
+    assert_equal restaurant_menu_path(restaurant_slug: restaurant.slug), URI.parse(link[:href]).path
     assert_equal "_blank", link[:target]
     assert_includes link[:rel], "noopener"
   end

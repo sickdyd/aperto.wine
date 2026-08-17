@@ -18,6 +18,19 @@
       <%= f.text_field :name, required: true, class: "input w-full font-body", placeholder: t("owner.restaurants.form.name_placeholder") %>
     </div>
 
+    <%# Only offered once the restaurant exists: on the new form the slug is
+        still being derived from the name, and showing an empty field would
+        invite owners to fill it in before they have seen what it defaults to. %>
+    <% unless restaurant.new_record? %>
+      <div class="field">
+        <%= f.label :slug, t("owner.restaurants.form.slug"), class: "field-label" %>
+        <%= f.text_field :slug, class: "input w-full font-mono", placeholder: restaurant.slug %>
+        <p class="field-hint">
+          <%= t("owner.restaurants.form.slug_hint", url: restaurant_menu_url(restaurant_slug: restaurant.slug)) %>
+        </p>
+      </div>
+    <% end %>
+
     <%# The address drives stimulus-autocomplete: the controller names, targets
         and actions below are load-bearing — restyle around them, never rename. %>
     <div class="field relative"

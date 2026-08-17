@@ -6,7 +6,7 @@ class PublicMenuTest < ApplicationSystemTestCase
   # assertions match case-insensitively rather than hard-coding the transform.
   test "visitor can view public menu for a restaurant" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     assert_selector "h1", text: restaurant.name
     assert_selector ".sheet-address", text: /#{Regexp.escape(restaurant.address)}/i
@@ -14,7 +14,7 @@ class PublicMenuTest < ApplicationSystemTestCase
 
   test "menu shows available wines" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     assert_text "Barolo Riserva"
     assert_text "Gavi di Gavi"
@@ -22,7 +22,7 @@ class PublicMenuTest < ApplicationSystemTestCase
 
   test "menu displays wine producer and grape variety details" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     assert_text "Giacomo Conterno"
     assert_text "Nebbiolo"
@@ -32,7 +32,7 @@ class PublicMenuTest < ApplicationSystemTestCase
 
   test "menu shows glass size labels for available wines" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     # barolo has price_75ml_cents: 1500
     assert_selector ".price-size", text: /75\s*ml/i
@@ -40,14 +40,14 @@ class PublicMenuTest < ApplicationSystemTestCase
 
   test "sold out wine shows unavailable tag" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     assert_selector ".tag-out", text: /#{Regexp.escape(I18n.t("menu.unavailable"))}/i
   end
 
   test "menu marks each wine with a color dot" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     # barolo is a red wine
     assert_selector ".wine-dot.wine-dot-red"
@@ -57,14 +57,14 @@ class PublicMenuTest < ApplicationSystemTestCase
 
   test "menu has a search field" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     assert_selector "input[type='search']"
   end
 
   test "menu shows powered by aperto.wine footer" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     assert_selector ".sheet-foot", text: /#{Regexp.escape(I18n.t("menu.powered_by"))}/i
     assert_link "aperto.wine"
@@ -72,14 +72,14 @@ class PublicMenuTest < ApplicationSystemTestCase
 
   test "menu is accessible without authentication" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     assert_selector "h1", text: restaurant.name
   end
 
   test "aperto.wine link in menu footer points to root" do
     restaurant = restaurants(:osteria)
-    visit menu_path(id: restaurant.id)
+    visit restaurant_menu_path(restaurant_slug: restaurant.slug)
 
     click_link "aperto.wine"
     assert_current_path root_path
@@ -95,7 +95,7 @@ class PublicMenuTest < ApplicationSystemTestCase
     # trattoria_list ("House Picks") holds both red and white wines, so it
     # renders two colour sections — enough for jump-nav chips to appear.
     list = wine_lists(:trattoria_list)
-    visit menu_path(id: restaurants(:trattoria).id)
+    visit restaurant_menu_path(restaurant_slug: restaurants(:trattoria).slug)
 
     within section_nav_selector do
       assert_link I18n.t("owner.wines.colors.red")
@@ -108,7 +108,7 @@ class PublicMenuTest < ApplicationSystemTestCase
 
   test "clicking a jump chip navigates to that section anchor" do
     list = wine_lists(:trattoria_list)
-    visit menu_path(id: restaurants(:trattoria).id)
+    visit restaurant_menu_path(restaurant_slug: restaurants(:trattoria).slug)
 
     within section_nav_selector do
       click_link I18n.t("owner.wines.colors.red")
@@ -119,11 +119,10 @@ class PublicMenuTest < ApplicationSystemTestCase
   end
 
   test "menu with a single section shows no jump navigation" do
-    # A restaurant with exactly one active list holding wines of a single
-    # colour renders one section — too few for jump-nav chips to appear.
-    wine_lists(:osteria_list).update!(active: false)
-    wine_lists(:summer).update!(active: true) # summer holds only red wines
-    visit menu_path(id: restaurants(:osteria).id)
+    # A published list holding wines of a single colour renders one section —
+    # too few for jump-nav chips to appear.
+    wine_lists(:summer).publish! # summer holds only red wines
+    visit restaurant_menu_path(restaurant_slug: restaurants(:osteria).slug)
 
     assert_text "Summer Selection"
     assert_no_selector section_nav_selector
@@ -132,14 +131,14 @@ class PublicMenuTest < ApplicationSystemTestCase
   # --- Curated lists ---
 
   test "restaurant with an active list shows its curated list" do
-    visit menu_path(id: restaurants(:trattoria).id)
+    visit restaurant_menu_path(restaurant_slug: restaurants(:trattoria).slug)
 
     assert_text "House Picks"
     assert_text "Chianti Classico"
   end
 
   test "a featured but sold-out wine appears as currently unavailable" do
-    visit menu_path(id: restaurants(:trattoria).id)
+    visit restaurant_menu_path(restaurant_slug: restaurants(:trattoria).slug)
 
     assert_text "Reserve Barbaresco"
     assert_selector ".tag-out", text: /#{Regexp.escape(I18n.t("menu.unavailable"))}/i

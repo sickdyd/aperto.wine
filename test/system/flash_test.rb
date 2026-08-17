@@ -97,7 +97,7 @@ class FlashTest < ApplicationSystemTestCase
   # overlap — rather than the number itself, which may legitimately change.
   test "a toast never lands on the menu's cart bar" do
     barolo = wines(:barolo)
-    visit menu_path(id: restaurants(:osteria))
+    visit restaurant_menu_path(restaurant_slug: restaurants(:osteria).slug)
 
     find("button[aria-label='#{I18n.t("menu.add_to_cart", wine: barolo.name, size: 125)}']").click
 

@@ -17,8 +17,67 @@ class OwnerWineListsTest < ApplicationSystemTestCase
     visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
     assert_text I18n.t("owner.wine_lists.title"), wait: 5
     link = find_link(I18n.t("owner.restaurants.preview_menu"))
-    assert_equal menu_path(id: restaurant.id), URI.parse(link[:href]).path
+    assert_equal restaurant_menu_path(restaurant_slug: restaurant.slug), URI.parse(link[:href]).path
     assert_equal "_blank", link[:target]
+  end
+
+  # The feature this whole design exists for: the owner swaps which list
+  # diners see, and the URL the printed QR codes carry does not move.
+  test "owner publishes a different list and the QR address still opens it" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+    qr_address = restaurant_menu_path(restaurant_slug: restaurant.slug)
+
+    visit qr_address
+    assert_text "Wine List", wait: 5
+    assert_no_text "Summer Selection"
+
+    visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.wine_lists.title"), wait: 5
+
+    within(:xpath, "//tr[td//span[text()='Summer Selection']]") do
+      click_button I18n.t("owner.wine_lists.publish")
+    end
+    assert_text I18n.t("owner.wine_lists.published_notice", name: "Summer Selection"), wait: 5
+
+    # Same address a diner's QR code carries, now resolving to the new list.
+    visit qr_address
+    assert_text "Summer Selection", wait: 5
+    assert_no_text "Gavi di Gavi" # only on the list that was just retired
+  end
+
+  test "exactly one list is marked published at a time" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+
+    visit owner_restaurant_wine_lists_path(restaurant_id: restaurant)
+    assert_text I18n.t("owner.wine_lists.title"), wait: 5
+    assert_selector ".stamp", text: /#{I18n.t("owner.wine_lists.published")}/i, count: 1
+
+    within(:xpath, "//tr[td//span[text()='Winter Selection']]") do
+      click_button I18n.t("owner.wine_lists.publish")
+    end
+    assert_text I18n.t("owner.wine_lists.published_notice", name: "Winter Selection"), wait: 5
+
+    assert_selector ".stamp", text: /#{I18n.t("owner.wine_lists.published")}/i, count: 1
+    within(:xpath, "//tr[td//span[text()='Winter Selection']]") do
+      assert_selector ".stamp", text: /#{I18n.t("owner.wine_lists.published")}/i
+    end
+  end
+
+  test "owner can change the public menu address" do
+    sign_in_as_owner
+    restaurant = restaurants(:osteria)
+
+    visit edit_owner_restaurant_path(id: restaurant)
+    assert_text I18n.t("owner.restaurants.edit_title"), wait: 5
+
+    fill_in I18n.t("owner.restaurants.form.slug"), with: "da-gino"
+    find("input[type='submit']").click
+    assert_text I18n.t("owner.restaurants.updated"), wait: 5
+
+    visit "/da-gino"
+    assert_text restaurant.name, wait: 5
   end
 
   test "owner can create a curated wine list and add a wine to it" do

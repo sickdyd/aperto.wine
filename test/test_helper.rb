@@ -32,12 +32,28 @@ module PhotonStubs
   end
 end
 
+# The public menu has one canonical URL — the published list's slug — that
+# the restaurant slug and every draft list slug redirect to. Tests asserting
+# on menu *content* want to start there rather than following a redirect on
+# every request; tests asserting on the redirect itself use the raw helpers.
+module PublicMenuPaths
+  def published_menu_path(restaurant)
+    published = restaurant.published_wine_list
+    raise ArgumentError, "#{restaurant.name} has no published wine list" if published.nil?
+
+    Rails.application.routes.url_helpers.wine_list_menu_path(
+      restaurant_slug: restaurant.slug, wine_list_slug: published.slug
+    )
+  end
+end
+
 module ActiveSupport
   class TestCase
     parallelize(workers: :number_of_processors)
     fixtures :all
 
     include PhotonStubs
+    include PublicMenuPaths
 
     # Default: Photon knows nothing, and no cache/rate-limit state leaks
     # between tests. Tests needing suggestions declare their own

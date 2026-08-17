@@ -63,7 +63,7 @@ class HttpBasicAuthTest < ActionDispatch::IntegrationTest
     ENV["HTTP_AUTH_USER"] = "admin"
     ENV["HTTP_AUTH_PASSWORD"] = "secret"
 
-    get menu_path(id: restaurants(:osteria).id)
+    get published_menu_path(restaurants(:osteria))
     assert_response :unauthorized
 
     get owner_restaurants_path

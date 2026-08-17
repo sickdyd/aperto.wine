@@ -131,6 +131,8 @@ en:
         section_service: "Service"
         name: "Restaurant Name"
         name_placeholder: "e.g. Osteria del Borgo"
+        slug: "Menu Web Address"
+        slug_hint: "Diners reach your menu at %{url}. Changing it invalidates every QR code you have already printed."
         address: "Address"
         address_placeholder: "e.g. Via Roma 42, Milano"
         address_suggestions_attribution: "© OpenStreetMap contributors"
@@ -198,9 +200,11 @@ en:
         aria_label: Wine name with autocomplete suggestions
     wine_lists:
       title: "Wine Lists"
-      intro: "Your public menu shows every enabled list. Build curated lists and toggle them on and off here."
+      intro: "Build as many lists as you like; exactly one is published to diners at a time. Your QR codes always open the published one, so swapping menus never means reprinting them."
       manage_wines: "Manage wines"
-      toggle_label: "Show on public menu"
+      publish: "Publish"
+      published_hint: "This is the list your QR codes open."
+      published_notice: "%{name} is now the published menu."
       add: "Add List"
       add_first: "Create your first list"
       new_title: "New Wine List"
@@ -223,7 +227,6 @@ en:
         season: "Season / Theme"
         season_placeholder: "e.g. Summer"
         position: "Sort Order"
-        active_label: "Published (visible on the public menu)"
       members:
         title: "Wines on this list"
         intro: "Hand-pick wines from your shared catalog — the same wine can appear on any number of lists. Availability is still driven by your bottles — featured wines that are sold out show as currently unavailable."
