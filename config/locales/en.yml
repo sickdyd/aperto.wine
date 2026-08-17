@@ -402,6 +402,7 @@ en:
         name: "Name"
         address: "Address"
         proximity_radius_meters: "Order proximity radius"
+        geofence_enabled: "Proximity check"
         description: "Description"
         user: "Owner"
       wine:
@@ -503,6 +504,10 @@ en:
           attributes:
             wine:
               wrong_restaurant: "must belong to the same restaurant as the list"
+        restaurant:
+          attributes:
+            geofence_enabled:
+              requires_coordinates: "can't be enabled without the restaurant's coordinates"
         user:
           attributes:
             password:
@@ -569,6 +574,11 @@ en:
     errors:
       empty_cart: "Your cart is empty."
       items_unavailable: "Some items in your cart are no longer available. Please review your cart before ordering."
+      # Deliberately does not say how far outside the radius the diner is.
+      # A message carrying the measured distance is a range oracle: a sender
+      # can move a claimed position around and bisect the replies to recover
+      # the restaurant's stored coordinates and radius.
+      location_out_of_range: "You need to be at the restaurant to place an order."
       order_invalid: "Your order could not be placed. Please review your cart and try again."
       rate_limited: "You're placing orders too quickly. Please wait a moment and try again."
     status:

@@ -18,6 +18,11 @@ class PlaceOrder
   #   :order_invalid      - the order or one of its lines failed to save for
   #                         a reason not caught above (defensive: nothing
   #                         in the current model surface should reach this).
+  #   :location_out_of_range - the diner's device reported a position outside
+  #                         the restaurant's radius. No order is placed and
+  #                         the cart is left untouched, so a diner who moves
+  #                         closer can retry with the order they already
+  #                         built.
   #
   # `dropped_items` is only ever populated alongside :items_unavailable —
   # the Cart::DroppedItem list that caused the abort, so the caller can tell
@@ -29,16 +34,28 @@ class PlaceOrder
     end
   end
 
-  def self.call(cart:, restaurant:, table:, customer:, guest_name:)
-    new(cart: cart, restaurant: restaurant, table: table, customer: customer, guest_name: guest_name).call
+  # latitude/longitude/accuracy are the diner's device's own claim about where
+  # it is, straight off the browser Geolocation API. They default to nil, and
+  # nil is a first-class answer rather than a missing argument: most callers
+  # supply no fix at all (the geofence is off by default, and a diner may
+  # refuse the browser prompt), and Geofence treats "no usable fix" as a
+  # verdict of its own.
+  def self.call(cart:, restaurant:, table:, customer:, guest_name:, latitude: nil, longitude: nil, accuracy: nil)
+    new(
+      cart: cart, restaurant: restaurant, table: table, customer: customer, guest_name: guest_name,
+      latitude: latitude, longitude: longitude, accuracy: accuracy
+    ).call
   end
 
-  def initialize(cart:, restaurant:, table:, customer:, guest_name:)
+  def initialize(cart:, restaurant:, table:, customer:, guest_name:, latitude: nil, longitude: nil, accuracy: nil)
     @cart = cart
     @restaurant = restaurant
     @table = table
     @customer = customer
     @guest_name = guest_name
+    @latitude = latitude
+    @longitude = longitude
+    @accuracy = accuracy
   end
 
   def call
@@ -52,7 +69,20 @@ class PlaceOrder
     return failure(:items_unavailable, dropped_items: cart.dropped_items) if cart.dropped_items.any?
     return failure(:empty_cart) if cart.items.empty?
 
-    order = build_order!
+    # Deliberately last of the three guards. A diner whose cart went stale
+    # should hear about the cart — that is the problem they can act on — and an
+    # empty cart cannot be ordered from at any distance, so neither of those
+    # answers should be displaced by a location complaint.
+    #
+    # Note the ordering also means an out-of-range diner never reaches
+    # cart.clear below: the early return leaves the cart exactly as they built
+    # it, which is what makes "walk closer and retry" work.
+    location = Geofence.call(
+      restaurant: restaurant, latitude: latitude, longitude: longitude, accuracy: accuracy
+    )
+    return failure(:location_out_of_range) unless location.allowed?
+
+    order = build_order!(location)
     cart.clear
     success(order)
   rescue ActiveRecord::RecordInvalid
@@ -61,12 +91,18 @@ class PlaceOrder
 
   private
 
-  attr_reader :cart, :restaurant, :table, :customer, :guest_name
+  attr_reader :cart, :restaurant, :table, :customer, :guest_name, :latitude, :longitude, :accuracy
 
-  def build_order!
+  # The verdict is stamped inside the same transaction as the lines, so an
+  # order never exists without the location claim that admitted it. Only the
+  # derived distance is recorded, never the diner's coordinates — see the
+  # migration for why.
+  def build_order!(location)
     ActiveRecord::Base.transaction do
       order = restaurant.orders.create!(
-        status: :pending, restaurant_table: table, customer: customer, guest_name: guest_name
+        status: :pending, restaurant_table: table, customer: customer, guest_name: guest_name,
+        location_status: location.status, distance_meters: location.distance_meters,
+        location_accuracy_meters: location.accuracy_meters
       )
       cart.items.each { |item| create_order_item!(order, item) }
       order.calculate_total!

@@ -243,4 +243,100 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     get order_status_path(public_token: order.public_token)
     assert_response :not_found
   end
+
+  # --- geofencing ---
+  #
+  # The geofence ships off, so osteria's fixture leaves it disabled and the
+  # tests that want it on turn it on themselves — flipping the fixture would
+  # change behaviour across the whole suite.
+
+  # Derived from a real distance measurement rather than a hardcoded latitude,
+  # for the reason spelled out in GeofenceTest#point_at.
+  def point_at(restaurant, meters)
+    origin = [ restaurant.latitude.to_f, restaurant.longitude.to_f ]
+    probe = 0.001
+    meters_per_degree = (Geocoder::Calculations.distance_between(origin, [ origin.first + probe, origin.last ], units: :km) * 1000) / probe
+    [ origin.first + (meters / meters_per_degree), origin.last ]
+  end
+
+  test "an in-range fix against a geofenced restaurant places the order and lands on the status page" do
+    @osteria.update!(geofence_enabled: true)
+    add_barolo_to_cart
+    point = point_at(@osteria, 5)
+
+    post orders_path(restaurant_slug: @osteria.slug), params: {
+      guest_name: "Jane", latitude: point.first, longitude: point.last, accuracy: 12
+    }
+
+    order = last_order
+    assert_redirected_to order_status_path(public_token: order.public_token)
+    assert order.location_status_verified?
+    assert_equal 5, order.distance_meters
+    assert_equal 12, order.location_accuracy_meters
+  end
+
+  test "an out-of-range fix creates no order and redirects back to the cart with a flash" do
+    @osteria.update!(geofence_enabled: true)
+    add_barolo_to_cart
+    point = point_at(@osteria, 4000)
+
+    assert_no_difference "Order.count" do
+      post orders_path(restaurant_slug: @osteria.slug), params: {
+        guest_name: "Jane", latitude: point.first, longitude: point.last, accuracy: 12
+      }
+    end
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+
+    # No number of any kind reaches the diner. A message naming the measured
+    # distance would be a range oracle: a sender could move a claimed position
+    # around and bisect the replies to recover the restaurant's stored
+    # coordinates and radius.
+    assert_no_match(/\d/, flash[:alert])
+
+    follow_redirect!
+    assert_match ERB::Util.html_escape(I18n.t("orders.errors.location_out_of_range")), response.body
+  end
+
+  test "a geofenced restaurant still accepts an order with no location params at all" do
+    @osteria.update!(geofence_enabled: true)
+    add_barolo_to_cart
+
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
+
+    order = last_order
+    assert_redirected_to order_status_path(public_token: order.public_token)
+    assert order.location_status_unverified?
+  end
+
+  test "a restaurant with the geofence off is unaffected by a location it is sent" do
+    add_barolo_to_cart
+    point = point_at(@osteria, 4000)
+
+    post orders_path(restaurant_slug: @osteria.slug), params: {
+      guest_name: "Jane", latitude: point.first, longitude: point.last, accuracy: 12
+    }
+
+    order = last_order
+    assert_redirected_to order_status_path(public_token: order.public_token)
+    assert order.location_status_not_checked?
+    assert_nil order.distance_meters
+  end
+
+  test "garbage location params never raise and are treated as no fix" do
+    # Two shapes at once: a non-numeric scalar, which Geofence rejects, and a
+    # non-scalar, which Strong Parameters drops to nil before Geofence ever
+    # sees it. Both must land on "no usable fix", not a 500.
+    @osteria.update!(geofence_enabled: true)
+
+    [ { latitude: "abc", longitude: "def", accuracy: "ghi" },
+      { latitude: [ 1 ], longitude: { a: 2 }, accuracy: [ 3 ] } ].each do |junk|
+      add_barolo_to_cart
+
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }.merge(junk)
+
+      order = last_order
+      assert_redirected_to order_status_path(public_token: order.public_token)
+      assert order.location_status_unverified?, junk.inspect
+    end
+  end
 end

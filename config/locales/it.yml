@@ -406,6 +406,7 @@ it:
         name: "Nome"
         address: "Indirizzo"
         proximity_radius_meters: "Raggio di prossimità ordini"
+        geofence_enabled: "Verifica di prossimità"
         description: "Descrizione"
         user: "Proprietario"
       wine:
@@ -497,6 +498,11 @@ it:
           attributes:
             wine:
               wrong_restaurant: "deve appartenere allo stesso ristorante della lista"
+        # "Verifica" is feminine, so the participle agrees ("attivata").
+        restaurant:
+          attributes:
+            geofence_enabled:
+              requires_coordinates: "non può essere attivata senza le coordinate del ristorante"
         # Password and Email are feminine (rails-i18n itself ships
         # password_too_long: "è troppo lunga"; Email < posta elettronica), so
         # their blank/too_short/invalid halves agree in gender.
@@ -566,6 +572,10 @@ it:
     errors:
       empty_cart: "Il tuo carrello è vuoto."
       items_unavailable: "Alcuni vini nel carrello non sono più disponibili. Controlla il carrello prima di ordinare."
+      # Non indica di quanto il cliente sia fuori dal raggio: vedi il commento
+      # in en.yml — una distanza nel messaggio permetterebbe di risalire per
+      # tentativi alle coordinate e al raggio del ristorante.
+      location_out_of_range: "Devi essere al ristorante per inviare un ordine."
       order_invalid: "Non è stato possibile inviare l'ordine. Controlla il carrello e riprova."
       rate_limited: "Stai inviando ordini troppo velocemente. Attendi un momento e riprova."
     status:
