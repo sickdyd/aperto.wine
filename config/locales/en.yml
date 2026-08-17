@@ -581,6 +581,16 @@ en:
         approved: "Approved — your wine is on its way."
         cancelled: "This order was cancelled."
         completed: "This order has been completed."
+    # The device-local order list. It is held in a signed 24-hour cookie, not
+    # in an account, and "retention" is the line that says so — keep the two
+    # facts (this device, 24 hours) in any rewording of it.
+    history:
+      title: "Your Orders"
+      link: "Your orders"
+      other_orders: "All your orders"
+      empty: "No orders placed from this device yet."
+      retention: "Orders placed on this device, kept for 24 hours."
+      view_order: "Order of %{time}"
   pwa:
     # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
     description: "aperto.wine — wine by the glass, by choice."

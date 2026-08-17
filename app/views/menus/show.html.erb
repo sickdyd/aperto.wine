@@ -14,6 +14,18 @@
             The page's one ink stamp — see the vocabulary's ".stamp". %>
         <p class="mt-4"><span class="stamp"><%= @restaurant_table.name %></span></p>
       <% end %>
+
+      <%# Only once this device has actually ordered here: a first-time diner
+          must find nothing new on the sheet. The list itself lives in a signed
+          24-hour cookie, so this link comes and goes with it. %>
+      <% if @order_history.any? %>
+        <p class="mt-2">
+          <a href="<%= orders_path(restaurant_id: @restaurant) %>" class="link-mono gap-2">
+            <%= icon "receipt", class: "size-3.5" %>
+            <%= t("orders.history.link") %>
+          </a>
+        </p>
+      <% end %>
     </header>
 
     <%# Render every enabled curated list, each grouped into colour sections in

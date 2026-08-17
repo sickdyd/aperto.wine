@@ -582,6 +582,16 @@ it:
         approved: "Approvato — il tuo vino sta arrivando."
         cancelled: "Questo ordine è stato annullato."
         completed: "Questo ordine è stato completato."
+    # L'elenco degli ordini di questo dispositivo. Vive in un cookie firmato di
+    # 24 ore, non in un account: "retention" è la riga che lo dice, e in ogni
+    # riscrittura devono restare entrambi i fatti (questo dispositivo, 24 ore).
+    history:
+      title: "I tuoi ordini"
+      link: "I tuoi ordini"
+      other_orders: "Tutti i tuoi ordini"
+      empty: "Nessun ordine inviato da questo dispositivo."
+      retention: "Ordini inviati da questo dispositivo, conservati per 24 ore."
+      view_order: "Ordine del %{time}"
   pwa:
     # Rendered into pwa/manifest.json.erb; keep it a single plain sentence.
     description: "aperto.wine — vino al calice, per scelta."

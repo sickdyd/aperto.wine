@@ -1,8 +1,65 @@
-<%# Placeholder only — Task 3 replaces this wholesale with the real
-    "your orders" template. Exists here solely so the integration tests in
-    Task 2 have something to render. %>
-<main id="main">
-  <% @orders.each do |order| %>
-    <p><%= order.public_token %></p>
-  <% end %>
+<% content_for(:title) { "#{@restaurant.name} — #{t('orders.history.title')}" } %>
+
+<%# The device's own stub book: the counterfoils of every order this browser
+    placed here, on the same sheet as the menu, the cart and the receipt. One
+    ruled line per order — when it was sent, what it came to, where it stands
+    — each line a way back to its full receipt. Nothing on this page is an
+    action; it only remembers. %>
+<main id="main" class="band-stock flex-1">
+  <div class="sheet mx-auto w-full max-w-2xl">
+    <header>
+      <a href="<%= menu_path(id: @restaurant) %>" class="link-mono gap-2">
+        <%= icon "arrow-left", class: "size-3.5" %>
+        <%= t("orders.status.back_to_menu") %>
+      </a>
+
+      <p class="mono-label mt-3 text-ox-3"><%= @restaurant.name %></p>
+      <h1 class="display-2 mt-1"><%= t("orders.history.title") %></h1>
+    </header>
+
+    <hr class="rule-section mt-6 mb-6">
+
+    <% if @orders.any? %>
+      <ul class="group-body">
+        <% @orders.each do |order| %>
+          <li>
+            <%# The stub itself is the link, as it is on the owner's board: a
+                "link-mono" carries the 44x44 CSS px WCAG 2.1 AA tap target and
+                the sheet's one hover treatment without this page inventing
+                either. The aria-label names what the date alone would leave
+                opaque link-to-link, and still reads the visible date verbatim
+                and in order, per WCAG 2.5.3. %>
+            <p class="leader-row">
+              <a href="<%= order_status_path(public_token: order.public_token) %>"
+                 class="link-mono shrink-0 justify-start gap-2"
+                 aria-label="<%= t("orders.history.view_order", time: l(order.created_at, format: :short)) %>">
+                <%= icon "receipt", class: "size-3.5 shrink-0" %>
+                <%= l(order.created_at, format: :short) %>
+              </a>
+              <span class="leader" aria-hidden="true"></span>
+              <span class="leader-value">
+                <span class="sr-only"><%= t("orders.status.total") %></span>
+                <%= format_cents(order.total_amount_cents) %>
+              </span>
+            </p>
+
+            <%# Hangs under the date, past the icon column, the way a wine's
+                meta line hangs under its name. Named in words, never by
+                colour. %>
+            <p class="mono-label pl-[var(--indent)] text-ox-2">
+              <%= t("orders.status.statuses.#{order.status}") %>
+            </p>
+          </li>
+        <% end %>
+      </ul>
+
+      <hr class="rule-medium mt-8 mb-4">
+    <% else %>
+      <p class="empty-state py-14"><%= t("orders.history.empty") %></p>
+    <% end %>
+
+    <%# Expectation-setting, not a footnote: without it the diner reads this
+        list as a permanent account history rather than what it is. %>
+    <p class="note"><%= t("orders.history.retention") %></p>
+  </div>
 </main>
