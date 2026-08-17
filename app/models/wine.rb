@@ -100,4 +100,34 @@ class Wine < ApplicationRecord
   def available?
     glasses_available? || bottle_available?
   end
+
+  # aromas/food_pairings are Postgres string arrays, which a plain text_field
+  # can't bind to directly. These give the owner form a single comma-separated
+  # string to read and write instead, so the raw array attribute is never
+  # itself part of wine_params (permitting an array attribute from a form is
+  # how mass-assignment surprises happen — see Owner::WinesController).
+  def aromas_list
+    aromas.join(", ")
+  end
+
+  def aromas_list=(value)
+    self.aromas = split_comma_list(value)
+  end
+
+  def food_pairings_list
+    food_pairings.join(", ")
+  end
+
+  def food_pairings_list=(value)
+    self.food_pairings = split_comma_list(value)
+  end
+
+  private
+
+  # Splits on commas, strips surrounding whitespace, and drops blanks — so
+  # "Cherry,  , Vanilla ," yields ["Cherry", "Vanilla"], not ["Cherry", "",
+  # "Vanilla", ""], and a whitespace-only field yields [] rather than [""].
+  def split_comma_list(value)
+    value.to_s.split(",").map(&:strip).reject(&:blank?)
+  end
 end

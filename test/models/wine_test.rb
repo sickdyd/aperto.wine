@@ -404,4 +404,63 @@ class WineTest < ActiveSupport::TestCase
       wine.destroy
     end
   end
+
+  # --- aromas_list / food_pairings_list (Task 3) ---
+
+  test "aromas_list reads the array as a comma-joined string" do
+    wine = Wine.new(valid_attributes.merge(aromas: [ "cherry", "vanilla" ]))
+    assert_equal "cherry, vanilla", wine.aromas_list
+  end
+
+  test "aromas_list reads an empty array as an empty string" do
+    wine = Wine.new(valid_attributes)
+    assert_equal "", wine.aromas_list
+  end
+
+  test "aromas_list= splits on commas and strips surrounding whitespace" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "cherry,  vanilla ,  leather"
+    assert_equal [ "cherry", "vanilla", "leather" ], wine.aromas
+  end
+
+  test "aromas_list= drops blank entries" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "cherry,,  , vanilla"
+    assert_equal [ "cherry", "vanilla" ], wine.aromas
+  end
+
+  test "aromas_list= on whitespace-only input yields an empty array" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "   "
+    assert_equal [], wine.aromas
+  end
+
+  test "aromas_list= on a single value with no comma yields a one-element array" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "cherry"
+    assert_equal [ "cherry" ], wine.aromas
+  end
+
+  test "aromas_list= on a blank string yields an empty array" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = ""
+    assert_equal [], wine.aromas
+  end
+
+  test "food_pairings_list reads the array as a comma-joined string" do
+    wine = Wine.new(valid_attributes.merge(food_pairings: [ "red meat", "aged cheese" ]))
+    assert_equal "red meat, aged cheese", wine.food_pairings_list
+  end
+
+  test "food_pairings_list= splits, strips, and drops blanks" do
+    wine = Wine.new(valid_attributes)
+    wine.food_pairings_list = "red meat,  , aged cheese ,"
+    assert_equal [ "red meat", "aged cheese" ], wine.food_pairings
+  end
+
+  test "food_pairings_list= on whitespace-only input yields an empty array" do
+    wine = Wine.new(valid_attributes)
+    wine.food_pairings_list = "   "
+    assert_equal [], wine.food_pairings
+  end
 end
