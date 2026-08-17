@@ -49,6 +49,44 @@
           </div>
         </div>
 
+        <%# Filter chips, one row per facet, derived from the wines actually
+            rendered below — never a hardcoded list — and only for a facet
+            with at least two distinct values among them (a chip row where
+            every chip matches everything is noise). Region and grape are
+            deliberately left out: on a real list they run to dozens of
+            values each, and the search field above already reaches both, so
+            a chip row for either would be scroll-length filter-bar chrome
+            rather than a shortcut. %>
+        <% filters = menu_filter_facets(rendered_lists) %>
+        <% if filters[:groups].any? %>
+          <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <% filters[:groups].each do |group| %>
+              <div role="group" aria-label="<%= group[:label] %>" class="flex flex-wrap gap-1.5">
+                <% group[:options].each do |option| %>
+                  <button type="button"
+                          class="chip min-w-11 justify-center"
+                          aria-pressed="false"
+                          data-list-filter-target="facet"
+                          data-facet-name="<%= group[:name] %>"
+                          data-facet-value="<%= option[:value] %>"
+                          data-action="click->list-filter#toggleFacet">
+                    <%= option[:label] %>
+                  </button>
+                <% end %>
+              </div>
+            <% end %>
+            <%# Shown only once a term or a chip is active — toggled by the
+                controller's #apply, never rendered visible here. %>
+            <button type="button"
+                    class="link-mono"
+                    hidden
+                    data-list-filter-target="clear"
+                    data-action="click->list-filter#clearAll">
+              <%= t("menu.filters.clear_all") %>
+            </button>
+          </div>
+        <% end %>
+
         <% nav_sections = menu_nav_sections(rendered_lists) %>
         <% if nav_sections.size > 1 %>
           <%= render "section_nav", sections: nav_sections %>
@@ -85,7 +123,8 @@
 
                 <ul class="group-body">
                   <% items.each do |item| %>
-                    <%= render "wine_row", wine: item.wine, restaurant: @restaurant, unavailable_label: t("menu.unavailable") %>
+                    <%= render "wine_row", wine: item.wine, restaurant: @restaurant, unavailable_label: t("menu.unavailable"),
+                          facet_values: filters[:wine_values].fetch(item.wine, {}) %>
                   <% end %>
                 </ul>
               </section>

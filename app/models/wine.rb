@@ -8,8 +8,20 @@ class Wine < ApplicationRecord
   enum :color, { red: 0, white: 1, rose: 2, sparkling: 3, dessert: 4 }
 
   GLASS_SIZES = [ 75, 100, 125, 150 ].freeze
+  # The single source of truth for what a serving can be: Cart#add validates
+  # a requested serving against this array, and OrderItem's `serving` enum is
+  # derived from it (index -> integer), so the two can never disagree. Append
+  # only — reordering or removing an entry renumbers/orphans existing
+  # OrderItem rows. See OrderItem's `enum :serving` for the DB check
+  # constraint this also has to stay in step with.
+  SERVINGS = %w[glass bottle].freeze
   TASTING_SCALE = (0..5).freeze
   TASTING_ATTRIBUTES = %i[tannins acidity sweetness body].freeze
+  # Display order for the four axes — deliberately different from
+  # TASTING_ATTRIBUTES above, which groups them for validation only. Menu row
+  # and owner form both read this one constant, so a future reorder is a
+  # single edit rather than two that can silently disagree.
+  TASTING_DISPLAY_ORDER = %i[body tannins acidity sweetness].freeze
   CERTIFICATION_LABELS = %i[organic natural_wine vegan biodynamic].freeze
   IMAGE_CONTENT_TYPES = %w[image/jpeg image/png image/webp].freeze
   MAX_IMAGE_BYTES = 5.megabytes
@@ -60,7 +72,73 @@ class Wine < ApplicationRecord
     end
   end
 
-  def available?
+  # "Has a glass to pour right now." This used to be #available?'s whole
+  # meaning; it was renamed once #available? widened to cover bottles too.
+  def glasses_available?
     active? && available_glasses.positive?
+  end
+
+  # There is no bottle stock column — a positive bottle price is the owner's
+  # signal that whole bottles are sold. A wine can be bottle-available with
+  # zero glasses left; that's the point of the feature. Zero and nil both
+  # mean "not offered", matching how Cart#positive_price? already treats
+  # glass prices.
+  def bottle_available?
+    active? && price_bottle_cents.to_i.positive?
+  end
+
+  def price_for(serving:, glass_size_ml: nil)
+    case serving.to_s
+    when "bottle" then price_bottle_cents
+    when "glass" then price_for_glass(glass_size_ml)
+    end
+  end
+
+  def available_for?(serving:, glass_size_ml: nil)
+    case serving.to_s
+    when "bottle" then bottle_available?
+    when "glass" then glasses_available?
+    else false
+    end
+  end
+
+  # "Orderable in some form" — by the glass, by the bottle, or both. This is
+  # what the menu's sold-out tag means. It is NOT "has a glass to pour": a
+  # caller that only ever offers glasses (i.e. hasn't been made
+  # serving-aware yet) must use #glasses_available? instead, or a wine with
+  # zero glasses but a bottle price will read as available for glass pours
+  # it cannot actually serve.
+  def available?
+    glasses_available? || bottle_available?
+  end
+
+  # aromas/food_pairings are Postgres string arrays, which a plain text_field
+  # can't bind to directly. These give the owner form a single comma-separated
+  # string to read and write instead, so the raw array attribute is never
+  # itself part of wine_params (permitting an array attribute from a form is
+  # how mass-assignment surprises happen — see Owner::WinesController).
+  def aromas_list
+    aromas.join(", ")
+  end
+
+  def aromas_list=(value)
+    self.aromas = split_comma_list(value)
+  end
+
+  def food_pairings_list
+    food_pairings.join(", ")
+  end
+
+  def food_pairings_list=(value)
+    self.food_pairings = split_comma_list(value)
+  end
+
+  private
+
+  # Splits on commas, strips surrounding whitespace, and drops blanks — so
+  # "Cherry,  , Vanilla ," yields ["Cherry", "Vanilla"], not ["Cherry", "",
+  # "Vanilla", ""], and a whitespace-only field yields [] rather than [""].
+  def split_comma_list(value)
+    value.to_s.split(",").map(&:strip).reject(&:blank?)
   end
 end

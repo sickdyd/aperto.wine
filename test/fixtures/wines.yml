@@ -120,3 +120,56 @@ unlisted_wine:
   available_glasses: 5
   position: 100
   active: true
+
+# Carries every Task 3 attribute at once — short_description (which must
+# replace description as the row's note), style, abv, all four tasting
+# axes, all four certifications, aromas, and food_pairings — so a single
+# integration test can assert every one renders. Colour is rose,
+# deliberately distinct from osteria's existing red/white wines so it never
+# interacts with tests scoped to those two colour groups.
+full_character_wine:
+  restaurant: osteria
+  name: Amphora Rosato
+  producer: Cascina Roera
+  color: 2
+  region: Piemonte
+  style: Skin-contact
+  description: A longer tasting note that short_description should replace.
+  short_description: A savoury skin-contact rosé with a bright, mineral finish.
+  bottle_size_ml: 750
+  price_bottle_cents: 8500
+  price_125ml_cents: 900
+  available_glasses: 6
+  position: 101
+  active: true
+  abv: 12.5
+  body: 3
+  tannins: 2
+  acidity: 4
+  sweetness: 1
+  organic: true
+  natural_wine: true
+  vegan: false
+  biodynamic: false
+  aromas: [ "wild strawberry", "orange peel", "sea salt" ]
+  food_pairings: [ "grilled fish", "soft cheese" ]
+
+# Bottle-priced but zero glasses — drives "a wine with bottles but no
+# glasses renders orderable rather than sold out" (Task 1 widened
+# Wine#available? for exactly this case). Colour is sparkling, distinct from
+# both the red/white groups and full_character_wine's rose.
+#
+# sweetness: 0 (not nil) while the other three axes are left unset — proves
+# an axis explicitly at the bottom of the scale still renders its row, its
+# all-unfilled pips, and its sr-only reading, distinct from an axis that was
+# simply never entered.
+bottle_only_wine:
+  restaurant: osteria
+  name: Cellar Reserve Magnum
+  color: 3
+  bottle_size_ml: 1500
+  price_bottle_cents: 18000
+  available_glasses: 0
+  position: 102
+  active: true
+  sweetness: 0

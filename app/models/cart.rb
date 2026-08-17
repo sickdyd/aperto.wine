@@ -8,9 +8,20 @@
 #
 #   session[:carts] = {
 #     "42" => [
-#       { "wine_id" => 7, "glass_size_ml" => 125, "quantity" => 2 }
+#       { "wine_id" => 7, "serving" => "glass", "glass_size_ml" => 125, "quantity" => 2 },
+#       { "wine_id" => 9, "serving" => "bottle", "glass_size_ml" => nil, "quantity" => 1 }
 #     ]
 #   }
+#
+# Line identity is the triple (wine_id, serving, glass_size_ml), so the same
+# wine can sit in the cart as a bottle and as two different pours at once.
+#
+# Legacy fallback: lines written before the "serving" key existed have no
+# such key at all. Every read path (#items, #dropped_items, and the
+# wine_id/serving/glass_size_ml lookups behind #update_quantity and #remove)
+# treats a keyless line as "glass" — see #normalized_serving, the single
+# place this happens. This is a read-time interpretation only: it never
+# rewrites the stored line to add the key (see #items).
 #
 # The session is serialized to JSON, so only string keys and integer
 # values are ever written or trusted back out of it. Prices are never
@@ -33,15 +44,23 @@ class Cart
   #                          active wine lists (deliberately not distinguished
   #                          from "does not exist" — that would leak which
   #                          wines the owner has chosen not to show)
-  #   :wine_unavailable    - the wine exists but Wine#available? is false
+  #   :invalid_serving     - serving is not one of Wine::SERVINGS (including
+  #                          missing or blank)
+  #   :wine_unavailable    - the wine exists but Wine#available_for? is false
+  #                          for the requested serving (no glasses left for a
+  #                          glass line, or no bottle price set for a bottle
+  #                          line — see Wine#glasses_available?/#bottle_available?)
   #   :invalid_glass_size  - glass_size_ml is not one of Wine::GLASS_SIZES
-  #   :price_unavailable   - the wine has no positive price for that glass
-  #                          size — nil and zero mean the same thing, "not
-  #                          offered" (the same gesture the wine row already
-  #                          reads that way; see Wine#price_for_glass)
+  #                          (glass servings only; a bottle's glass_size_ml is
+  #                          always coerced to nil, never validated)
+  #   :price_unavailable   - the wine has no positive price for that serving —
+  #                          nil and zero mean the same thing, "not offered"
+  #                          (the same gesture the wine row already reads that
+  #                          way; see Wine#price_for)
   #   :cart_full           - adding a new distinct line would exceed
   #                          MAX_DISTINCT_ITEMS (incrementing an existing
-  #                          line is still allowed at the cap)
+  #                          line is still allowed at the cap; a bottle line
+  #                          is one distinct item like any other)
   Result = Struct.new(:success, :error, keyword_init: true) do
     def success?
       success
@@ -55,7 +74,7 @@ class Cart
   # wine was deleted, un-published, or never belonged to this restaurant) —
   # a view rendering a dropped line must handle the nil case with a neutral
   # fallback rather than crash.
-  DroppedItem = Struct.new(:wine_id, :glass_size_ml, :quantity, :reason, :wine, keyword_init: true)
+  DroppedItem = Struct.new(:wine_id, :serving, :glass_size_ml, :quantity, :reason, :wine, keyword_init: true)
 
   def initialize(session:, restaurant:)
     @session = session
@@ -65,7 +84,7 @@ class Cart
   # Array of CartItem, in insertion order. Silently skips lines whose wine
   # no longer exists, no longer belongs to this restaurant, is no longer
   # published on an active wine list, is no longer available, or has lost
-  # its price for that size — see #dropped_items. Never rewrites the
+  # its price for that serving — see #dropped_items. Never rewrites the
   # session: a read has no side effects.
   def items
     load_cart_data
@@ -79,17 +98,27 @@ class Cart
     @dropped_items
   end
 
-  def add(wine_id:, glass_size_ml:, quantity: 1)
-    glass_size = glass_size_ml.to_i
-    return failure(:invalid_glass_size) unless Wine::GLASS_SIZES.include?(glass_size)
+  def add(wine_id:, serving:, glass_size_ml: nil, quantity: 1)
+    serving_value = serving.to_s
+    return failure(:invalid_serving) unless Wine::SERVINGS.include?(serving_value)
+
+    if serving_value == "bottle"
+      # Coerced regardless of what the caller passed — a request smuggling
+      # both a bottle serving and a glass size must not store a bottle line
+      # carrying a stray glass size.
+      glass_size = nil
+    else
+      glass_size = normalize_glass_size(glass_size_ml)
+      return failure(:invalid_glass_size) unless Wine::GLASS_SIZES.include?(glass_size)
+    end
 
     wine = published_wines.find_by(id: wine_id)
     return failure(:wine_not_found) if wine.nil?
-    return failure(:wine_unavailable) unless wine.available?
-    return failure(:price_unavailable) unless positive_price?(wine, glass_size)
+    return failure(:wine_unavailable) unless wine.available_for?(serving: serving_value, glass_size_ml: glass_size)
+    return failure(:price_unavailable) unless positive_price?(wine, serving_value, glass_size)
 
     lines = stored_lines
-    index = line_index(lines, wine.id, glass_size)
+    index = line_index(lines, wine.id, serving_value, glass_size)
     # Clamp the raw input itself, not just the resulting sum — otherwise a
     # negative quantity (however it reached here) reads as a silent
     # decrement of an existing line instead of "add at least one".
@@ -100,16 +129,16 @@ class Cart
     else
       return failure(:cart_full) if lines.size >= MAX_DISTINCT_ITEMS
 
-      new_lines = lines + [ new_line(wine.id, glass_size, requested_quantity) ]
+      new_lines = lines + [ new_line(wine.id, serving_value, glass_size, requested_quantity) ]
     end
 
     persist(new_lines)
     success
   end
 
-  def update_quantity(wine_id:, glass_size_ml:, quantity:)
+  def update_quantity(wine_id:, serving:, glass_size_ml:, quantity:)
     lines = stored_lines
-    index = line_index(lines, wine_id.to_i, glass_size_ml.to_i)
+    index = line_index(lines, wine_id.to_i, serving.to_s, normalize_glass_size(glass_size_ml))
     return failure(:wine_not_found) if index.nil?
 
     new_lines = if quantity.to_i <= 0
@@ -122,9 +151,9 @@ class Cart
     success
   end
 
-  def remove(wine_id:, glass_size_ml:)
+  def remove(wine_id:, serving:, glass_size_ml:)
     lines = stored_lines
-    index = line_index(lines, wine_id.to_i, glass_size_ml.to_i)
+    index = line_index(lines, wine_id.to_i, serving.to_s, normalize_glass_size(glass_size_ml))
     persist(index ? remove_line(lines, index) : lines)
     success
   end
@@ -190,12 +219,28 @@ class Cart
     @cart_data_loaded = false
   end
 
-  def line_index(lines, wine_id, glass_size)
-    lines.find_index { |line| line["wine_id"] == wine_id && line["glass_size_ml"] == glass_size }
+  # The single place a stored line with no "serving" key (written before
+  # this key existed) is read as a glass — every read path funnels through
+  # here, so a legacy keyless line is still found by a "glass" lookup and
+  # rendered as a glass line. Never used to rewrite the stored line itself.
+  def normalized_serving(line)
+    line["serving"] || "glass"
   end
 
-  def new_line(wine_id, glass_size, quantity)
-    { "wine_id" => wine_id, "glass_size_ml" => glass_size, "quantity" => quantity }
+  def normalize_glass_size(glass_size_ml)
+    glass_size_ml.nil? ? nil : glass_size_ml.to_i
+  end
+
+  def line_index(lines, wine_id, serving, glass_size_ml)
+    lines.find_index do |line|
+      line["wine_id"] == wine_id &&
+        normalized_serving(line) == serving &&
+        line["glass_size_ml"] == glass_size_ml
+    end
+  end
+
+  def new_line(wine_id, serving, glass_size_ml, quantity)
+    { "wine_id" => wine_id, "serving" => serving, "glass_size_ml" => glass_size_ml, "quantity" => quantity }
   end
 
   def replace_line(lines, index, quantity:)
@@ -232,14 +277,15 @@ class Cart
     dropped = []
     lines.each do |line|
       wine = wines_by_id[line["wine_id"]]
-      reason = drop_reason(wine, line["glass_size_ml"])
+      serving = normalized_serving(line)
+      reason = drop_reason(wine, serving, line["glass_size_ml"])
       if reason
         dropped << DroppedItem.new(
-          wine_id: line["wine_id"], glass_size_ml: line["glass_size_ml"],
+          wine_id: line["wine_id"], serving: serving, glass_size_ml: line["glass_size_ml"],
           quantity: line["quantity"], reason: reason, wine: wine
         )
       else
-        kept << CartItem.new(wine: wine, glass_size_ml: line["glass_size_ml"], quantity: line["quantity"])
+        kept << CartItem.new(wine: wine, serving: serving, glass_size_ml: line["glass_size_ml"], quantity: line["quantity"])
       end
     end
 
@@ -250,20 +296,20 @@ class Cart
 
   # nil means the line still qualifies; otherwise the symbol is the reason
   # it was dropped (see DroppedItem).
-  def drop_reason(wine, glass_size_ml)
+  def drop_reason(wine, serving, glass_size_ml)
     return :wine_not_found if wine.nil?
-    return :wine_unavailable unless wine.available?
-    return :price_unavailable unless positive_price?(wine, glass_size_ml)
+    return :wine_unavailable unless wine.available_for?(serving: serving, glass_size_ml: glass_size_ml)
+    return :price_unavailable unless positive_price?(wine, serving, glass_size_ml)
 
     nil
   end
 
-  # A zero price means exactly the same thing as no price at all: this size
-  # is not offered. Treating them differently is what let a stale line with
-  # a zeroed-out price render blank and silently drop out of the total
-  # instead of being reported to the diner.
-  def positive_price?(wine, glass_size_ml)
-    price = wine.price_for_glass(glass_size_ml)
+  # A zero price means exactly the same thing as no price at all: this
+  # serving is not offered. Treating them differently is what let a stale
+  # line with a zeroed-out price render blank and silently drop out of the
+  # total instead of being reported to the diner.
+  def positive_price?(wine, serving, glass_size_ml)
+    price = wine.price_for(serving: serving, glass_size_ml: glass_size_ml)
     price.present? && price.positive?
   end
 end

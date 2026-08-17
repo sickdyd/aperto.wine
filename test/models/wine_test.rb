@@ -139,28 +139,107 @@ class WineTest < ActiveSupport::TestCase
     assert_nil wine.price_for_glass(200)
   end
 
-  # --- available? ---
+  # --- SERVINGS constant ---
 
-  test "available? returns true when active and has glasses" do
-    wine = wines(:barolo) # active: true, available_glasses: 10
+  test "SERVINGS lists glass and bottle" do
+    assert_equal %w[glass bottle], Wine::SERVINGS
+  end
+
+  # --- glasses_available? / bottle_available? / available? ---
+  #
+  # Matrix: inactive; active with glasses and no bottle price; active with a
+  # bottle price and zero glasses; active with both; active with neither;
+  # bottle price of 0 (must read as not available, same as nil — mirrors how
+  # Cart#positive_price? already treats glass prices).
+
+  test "glasses_available? and available? are true when active with glasses and no bottle price" do
+    wine = Wine.new(valid_attributes.merge(active: true, available_glasses: 5, price_bottle_cents: nil))
+    assert wine.glasses_available?
+    assert_not wine.bottle_available?
     assert wine.available?
   end
 
-  test "available? returns false when active but zero glasses" do
-    wine = wines(:sold_out_wine) # active: true, available_glasses: 0
+  test "bottle_available? and available? are true when active with a bottle price and zero glasses" do
+    wine = Wine.new(valid_attributes.merge(active: true, available_glasses: 0, price_bottle_cents: 12_000))
+    assert_not wine.glasses_available?
+    assert wine.bottle_available?
+    assert wine.available?
+  end
+
+  test "glasses_available?, bottle_available? and available? are all true when active with both" do
+    wine = Wine.new(valid_attributes.merge(active: true, available_glasses: 5, price_bottle_cents: 12_000))
+    assert wine.glasses_available?
+    assert wine.bottle_available?
+    assert wine.available?
+  end
+
+  test "glasses_available?, bottle_available? and available? are all false when active with neither" do
+    wine = Wine.new(valid_attributes.merge(active: true, available_glasses: 0, price_bottle_cents: nil))
+    assert_not wine.glasses_available?
+    assert_not wine.bottle_available?
     assert_not wine.available?
   end
 
-  test "available? returns false when inactive even with glasses" do
+  test "all availability predicates are false when inactive, regardless of glasses or bottle price" do
+    wine = Wine.new(valid_attributes.merge(active: false, available_glasses: 5, price_bottle_cents: 12_000))
+    assert_not wine.glasses_available?
+    assert_not wine.bottle_available?
+    assert_not wine.available?
+  end
+
+  test "bottle_available? treats a bottle price of 0 the same as nil (not available)" do
+    wine = Wine.new(valid_attributes.merge(active: true, available_glasses: 0, price_bottle_cents: 0))
+    assert_not wine.bottle_available?
+    assert_not wine.available?
+  end
+
+  # --- price_for ---
+
+  test "price_for dispatches to price_bottle_cents for bottle" do
     wine = wines(:barolo)
-    wine.update!(active: false)
-    assert_not wine.available?
+    assert_equal wine.price_bottle_cents, wine.price_for(serving: "bottle")
   end
 
-  test "available? returns false when both inactive and zero glasses" do
-    wine = wines(:sold_out_wine)
-    wine.update!(active: false)
-    assert_not wine.available?
+  test "price_for dispatches to price_for_glass for glass" do
+    wine = wines(:barolo)
+    assert_equal wine.price_for_glass(100), wine.price_for(serving: "glass", glass_size_ml: 100)
+  end
+
+  test "price_for returns nil for an unrecognised serving" do
+    wine = wines(:barolo)
+    assert_nil wine.price_for(serving: "magnum")
+  end
+
+  test "price_for returns nil for glass with a nil glass size" do
+    wine = wines(:barolo)
+    assert_nil wine.price_for(serving: "glass", glass_size_ml: nil)
+  end
+
+  # --- available_for? ---
+
+  test "available_for? bottle mirrors bottle_available?" do
+    available = Wine.new(valid_attributes.merge(active: true, available_glasses: 0, price_bottle_cents: 12_000))
+    unavailable = Wine.new(valid_attributes.merge(active: true, available_glasses: 0, price_bottle_cents: nil))
+    assert available.available_for?(serving: "bottle")
+    assert_not unavailable.available_for?(serving: "bottle")
+  end
+
+  test "available_for? glass mirrors glasses_available?" do
+    available = Wine.new(valid_attributes.merge(active: true, available_glasses: 5, price_bottle_cents: nil))
+    unavailable = Wine.new(valid_attributes.merge(active: true, available_glasses: 0, price_bottle_cents: nil))
+    assert available.available_for?(serving: "glass", glass_size_ml: 100)
+    assert_not unavailable.available_for?(serving: "glass", glass_size_ml: 100)
+  end
+
+  test "available_for? returns false for an unrecognised serving" do
+    wine = Wine.new(valid_attributes.merge(active: true, available_glasses: 5, price_bottle_cents: 12_000))
+    assert_not wine.available_for?(serving: "magnum")
+  end
+
+  test "available_for? returns false when inactive, regardless of serving" do
+    wine = Wine.new(valid_attributes.merge(active: false, available_glasses: 5, price_bottle_cents: 12_000))
+    assert_not wine.available_for?(serving: "glass", glass_size_ml: 100)
+    assert_not wine.available_for?(serving: "bottle")
   end
 
   # --- abv ---
@@ -324,5 +403,64 @@ class WineTest < ActiveSupport::TestCase
     assert_difference "WineBottle.count", -1 do
       wine.destroy
     end
+  end
+
+  # --- aromas_list / food_pairings_list (Task 3) ---
+
+  test "aromas_list reads the array as a comma-joined string" do
+    wine = Wine.new(valid_attributes.merge(aromas: [ "cherry", "vanilla" ]))
+    assert_equal "cherry, vanilla", wine.aromas_list
+  end
+
+  test "aromas_list reads an empty array as an empty string" do
+    wine = Wine.new(valid_attributes)
+    assert_equal "", wine.aromas_list
+  end
+
+  test "aromas_list= splits on commas and strips surrounding whitespace" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "cherry,  vanilla ,  leather"
+    assert_equal [ "cherry", "vanilla", "leather" ], wine.aromas
+  end
+
+  test "aromas_list= drops blank entries" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "cherry,,  , vanilla"
+    assert_equal [ "cherry", "vanilla" ], wine.aromas
+  end
+
+  test "aromas_list= on whitespace-only input yields an empty array" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "   "
+    assert_equal [], wine.aromas
+  end
+
+  test "aromas_list= on a single value with no comma yields a one-element array" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = "cherry"
+    assert_equal [ "cherry" ], wine.aromas
+  end
+
+  test "aromas_list= on a blank string yields an empty array" do
+    wine = Wine.new(valid_attributes)
+    wine.aromas_list = ""
+    assert_equal [], wine.aromas
+  end
+
+  test "food_pairings_list reads the array as a comma-joined string" do
+    wine = Wine.new(valid_attributes.merge(food_pairings: [ "red meat", "aged cheese" ]))
+    assert_equal "red meat, aged cheese", wine.food_pairings_list
+  end
+
+  test "food_pairings_list= splits, strips, and drops blanks" do
+    wine = Wine.new(valid_attributes)
+    wine.food_pairings_list = "red meat,  , aged cheese ,"
+    assert_equal [ "red meat", "aged cheese" ], wine.food_pairings
+  end
+
+  test "food_pairings_list= on whitespace-only input yields an empty array" do
+    wine = Wine.new(valid_attributes)
+    wine.food_pairings_list = "   "
+    assert_equal [], wine.food_pairings
   end
 end

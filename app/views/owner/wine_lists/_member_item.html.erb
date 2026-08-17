@@ -20,6 +20,10 @@
         nothing. %>
     <div class="min-w-0">
       <span class="wine-name block truncate"><%= item.wine.name %></span>
+      <%# Widened to #available? — a bottle-only wine (no glasses, a bottle
+          price) is orderable now that the menu offers bottle controls, so
+          labelling it "unavailable" here would be wrong for the same reason
+          it would be on the menu. %>
       <% unless item.wine.available? %>
         <span class="tag-out mt-1 whitespace-nowrap"><%= t("menu.unavailable") %></span>
       <% end %>
