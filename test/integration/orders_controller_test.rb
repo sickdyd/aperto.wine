@@ -264,7 +264,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     add_barolo_to_cart
     point = point_at(@osteria, 5)
 
-    post orders_path(restaurant_id: @osteria), params: {
+    post orders_path(restaurant_slug: @osteria.slug), params: {
       guest_name: "Jane", latitude: point.first, longitude: point.last, accuracy: 12
     }
 
@@ -281,11 +281,11 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     point = point_at(@osteria, 4000)
 
     assert_no_difference "Order.count" do
-      post orders_path(restaurant_id: @osteria), params: {
+      post orders_path(restaurant_slug: @osteria.slug), params: {
         guest_name: "Jane", latitude: point.first, longitude: point.last, accuracy: 12
       }
     end
-    assert_redirected_to cart_path(restaurant_id: @osteria)
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     # No number of any kind reaches the diner. A message naming the measured
     # distance would be a range oracle: a sender could move a claimed position
@@ -301,7 +301,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     @osteria.update!(geofence_enabled: true)
     add_barolo_to_cart
 
-    post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+    post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }
 
     order = last_order
     assert_redirected_to order_status_path(public_token: order.public_token)
@@ -312,7 +312,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     add_barolo_to_cart
     point = point_at(@osteria, 4000)
 
-    post orders_path(restaurant_id: @osteria), params: {
+    post orders_path(restaurant_slug: @osteria.slug), params: {
       guest_name: "Jane", latitude: point.first, longitude: point.last, accuracy: 12
     }
 
@@ -332,7 +332,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
       { latitude: [ 1 ], longitude: { a: 2 }, accuracy: [ 3 ] } ].each do |junk|
       add_barolo_to_cart
 
-      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }.merge(junk)
+      post orders_path(restaurant_slug: @osteria.slug), params: { guest_name: "Jane" }.merge(junk)
 
       order = last_order
       assert_redirected_to order_status_path(public_token: order.public_token)
