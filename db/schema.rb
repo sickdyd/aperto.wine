@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_073410) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_024338) do
     t.index ["customer_id", "status"], name: "index_orders_on_customer_id_and_status"
     t.index ["customer_id"], name: "index_orders_on_customer_id"
     t.index ["public_token"], name: "index_orders_on_public_token", unique: true
+    t.index ["restaurant_id", "created_at", "id"], name: "index_orders_on_restaurant_id_and_recency", order: { created_at: :desc, id: :desc }
     t.index ["restaurant_id", "status"], name: "index_orders_on_restaurant_id_and_status"
     t.index ["restaurant_id"], name: "index_orders_on_restaurant_id"
     t.index ["restaurant_table_id"], name: "index_orders_on_restaurant_table_id"

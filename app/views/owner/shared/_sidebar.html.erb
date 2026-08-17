@@ -111,9 +111,14 @@
 
         <ul>
           <li>
+            <%# The tally rides the entry it belongs to rather than sitting on
+                its own: the badge is only ever read as "orders waiting". %>
             <%= link_to owner_restaurant_orders_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("orders")) do %>
               <%= icon "receipt", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.orders") %>
+              <%= render "owner/orders/badge",
+                         id: Owner::OrdersHelper::BADGE_IDS[:sidebar],
+                         count: owner_pending_orders_count(@restaurant) %>
             <% end %>
           </li>
           <li>

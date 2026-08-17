@@ -111,6 +111,53 @@ class OrderTest < ActiveSupport::TestCase
     assert result.index(newer) < result.index(older)
   end
 
+  # The owner's poller compares the ids in this window against the ones it has
+  # already announced, so the window has to be bounded, newest first, and the
+  # same set for the same data every time it is asked. Every case below builds
+  # on `enoteca`, which carries no order fixtures — the window is ordered by
+  # created_at, and fixtures are all stamped at load time.
+  def enoteca_order(created_at)
+    Order.create!(valid_attributes.merge(restaurant: restaurants(:enoteca), created_at: created_at))
+  end
+
+  test "notification_window is bounded by NOTIFICATION_WINDOW" do
+    (Order::NOTIFICATION_WINDOW + 2).times { |index| enoteca_order(index.minutes.ago) }
+
+    assert_equal Order::NOTIFICATION_WINDOW,
+      restaurants(:enoteca).orders.notification_window.count
+  end
+
+  test "notification_window returns the newest orders first" do
+    older = enoteca_order(2.days.ago)
+    newer = enoteca_order(1.minute.ago)
+
+    assert_equal [ newer, older ], restaurants(:enoteca).orders.notification_window.to_a
+  end
+
+  # Two orders placed in the same instant would otherwise swap places between
+  # two polls, and an order that comes back into the window is announced twice.
+  test "notification_window breaks created_at ties on id" do
+    stamp = 1.minute.ago
+    pair = [ enoteca_order(stamp), enoteca_order(stamp) ]
+
+    assert_equal pair.max_by(&:id), restaurants(:enoteca).orders.notification_window.first
+  end
+
+  # This scope runs on a timer for every owner page anyone has open, so it is
+  # the one query in the app that must never fall back to sorting a restaurant's
+  # whole order history. Only an index matching the ORDER BY — both columns,
+  # both descending — turns it into a five-row walk.
+  test "notification_window is backed by an index that matches its ordering" do
+    index = ActiveRecord::Base.connection.indexes(:orders).find do |candidate|
+      candidate.columns == %w[restaurant_id created_at id]
+    end
+
+    assert index, "no index covers Order.notification_window's filter and sort"
+    # Postgres reports only the columns that depart from the default ascending.
+    assert_equal({ "created_at" => :desc, "id" => :desc }, index.orders,
+      "the index has to descend exactly as the scope does, or Postgres sorts anyway")
+  end
+
   # --- calculate_total! ---
 
   test "calculate_total! sums order items" do

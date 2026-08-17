@@ -65,6 +65,13 @@ Rails.application.routes.draw do
           end
         end
         resources :orders, only: [ :index, :show ] do
+          # Polled by every open owner page for this restaurant — see
+          # Owner::OrdersController#notifications. A collection route rather
+          # than a member one: the question is "what has arrived", which no
+          # single order can answer.
+          collection do
+            get :notifications
+          end
           member do
             patch :approve
             patch :cancel

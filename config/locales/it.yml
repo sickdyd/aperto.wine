@@ -351,6 +351,11 @@ it:
       view_order: "Vedi ordine #%{id}"
       empty_filtered_title: "Niente al momento"
       empty_filtered_description: "Nessun ordine con questo stato. Prova un altro filtro."
+      new_order: "Nuovo ordine"
+      new_order_detail: "Ordine #%{id} — %{table}"
+      pending_count:
+        one: "%{count} ordine in attesa di approvazione"
+        other: "%{count} ordini in attesa di approvazione"
       order_count:
         zero: "Nessun ordine"
         one: "1 ordine"

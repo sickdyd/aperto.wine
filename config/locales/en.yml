@@ -351,6 +351,15 @@ en:
       view_order: "View order #%{id}"
       empty_filtered_title: "Nothing here right now"
       empty_filtered_description: "No orders with this status. Try another filter."
+      # The live announcement: the band's mono caps label, then the order
+      # itself, which is also the link to it.
+      new_order: "New order"
+      new_order_detail: "Order #%{id} — %{table}"
+      # Read out in place of the sidebar badge's bare figure, which says
+      # nothing on its own beside a nav label.
+      pending_count:
+        one: "%{count} order awaiting approval"
+        other: "%{count} orders awaiting approval"
       order_count:
         zero: "No orders"
         one: "1 order"

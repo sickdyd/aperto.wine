@@ -188,9 +188,28 @@ class FlashToastTest < ActiveSupport::TestCase
   # it reads as something new having just happened.
   test "the stack is dropped from Turbo's cached snapshot" do
     [ [ @public_flash, "public" ], [ @owner_flash, "owner" ] ].each do |partial, name|
-      assert_match(/<div class="toast-stack" data-turbo-temporary>/, partial,
+      stack = partial[/<div class="toast-stack"[^>]*>/]
+
+      assert stack, "#{name} flash: the stack is gone"
+      assert_match(/data-turbo-temporary/, stack,
         "#{name} flash: without this the toast replays on back/forward")
     end
+  end
+
+  # The owner stack is not only the flash's home: arriving orders are appended
+  # to it by the poller. A stack that exists only when there happens to be a
+  # flash is a stack the first order of the evening lands beside rather than in,
+  # and a Turbo Stream with no target is dropped without a word.
+  test "the owner stack is rendered whether or not there is anything to say" do
+    stack_at = @owner_flash.index('<div class="toast-stack"')
+    assert stack_at, "owner flash: the stack is gone"
+
+    before = @owner_flash[0...stack_at].gsub(/<%#.*?%>/m, "")
+    refute_match(/<%\s*if\b/, before,
+      "the owner stack is the append target for live order notifications; " \
+      "wrapping it in a conditional silently drops the first order that arrives")
+    assert_match(/<div class="toast-stack"[^>]*id="owner-toast-stack"/, @owner_flash,
+      "owner/orders/notifications appends to #owner-toast-stack by id")
   end
 
   # The wrapper is the Turbo Stream target, so unlike the stack it has to
