@@ -311,12 +311,19 @@ class CartTest < ActiveSupport::TestCase
     assert_empty cart.items
   end
 
-  # Wine#bottle_available? folds a positive price into availability itself
-  # (there is no separate bottle stock column), so a bottle with no
-  # price_bottle_cents fails Cart#add's availability check (step 4) before
-  # the price check (step 5) is ever reached — it reads as :wine_unavailable,
-  # not :price_unavailable. This mirrors the inactive-wine case below; both
-  # go through the same Wine#available_for? gate.
+  # :wine_unavailable, not :price_unavailable, is the correct symbol here —
+  # not an oversight. Unlike a glass, a bottle has no separate stock column;
+  # a positive price_bottle_cents is the *only* signal that the restaurant
+  # sells this wine by the bottle at all, so Wine#bottle_available? folds
+  # price into availability itself. Cart#add's availability check (step 4)
+  # therefore always fails before the price check (step 5) is ever reached
+  # for a priceless bottle, making :price_unavailable structurally
+  # unreachable here — it reads as :wine_unavailable, the same as the
+  # inactive-wine case below (both go through the same
+  # Wine#available_for? gate). The existing cart.errors.price_unavailable
+  # copy is independent evidence this is intentional: "That wine has no
+  # price set for that glass size." is glass-specific and would be wrong
+  # copy for a bottle.
   test "add rejects a bottle whose wine has no bottle price set" do
     cart = cart_for(@osteria)
 
@@ -340,6 +347,26 @@ class CartTest < ActiveSupport::TestCase
     assert_not result.success?
     assert_equal :wine_unavailable, result.error
     assert_empty cart.items
+  end
+
+  # Same conflation as #add above, on the post-add re-check path this time:
+  # drop_reason has the identical step ordering (available_for? before
+  # price_for), so a bottle already in the cart whose price is cleared or
+  # zeroed afterwards also drops as :wine_unavailable, never
+  # :price_unavailable. This is the path PlaceOrder relies on to abort a
+  # placement when a bottle loses its price between add and checkout.
+  test "a bottle line whose price is cleared after being added is dropped as wine_unavailable, not price_unavailable" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, serving: "bottle", quantity: 1)
+
+    @barolo.update!(price_bottle_cents: 0)
+
+    assert_empty cart.items
+    assert_equal 1, cart.dropped_items.size
+    dropped = cart.dropped_items.first
+    assert_equal @barolo.id, dropped.wine_id
+    assert_equal "bottle", dropped.serving
+    assert_equal :wine_unavailable, dropped.reason
   end
 
   test "add rejects a bottle on an inactive wine" do
