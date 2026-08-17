@@ -18,6 +18,9 @@ class PlaceOrder
   #   :order_invalid      - the order or one of its lines failed to save for
   #                         a reason not caught above (defensive: nothing
   #                         in the current model surface should reach this).
+  #   :insufficient_stock - a locked re-check at placement found a line's
+  #                         quantity exceeds the wine's available_glasses.
+  #                         No order is placed and nothing is reserved.
   #
   # `dropped_items` is only ever populated alongside :items_unavailable —
   # the Cart::DroppedItem list that caused the abort, so the caller can tell
@@ -28,6 +31,12 @@ class PlaceOrder
       success
     end
   end
+
+  # Raised inside the transaction to unwind it (rolling back any reservation
+  # already made this call) without ever letting a bare business-rule
+  # failure escape as an unhandled exception — #call rescues it below and
+  # turns it into an ordinary failure(:insufficient_stock) Result.
+  InsufficientStock = Class.new(StandardError)
 
   def self.call(cart:, restaurant:, table:, customer:, guest_name:)
     new(cart: cart, restaurant: restaurant, table: table, customer: customer, guest_name: guest_name).call
@@ -57,6 +66,8 @@ class PlaceOrder
     success(order)
   rescue ActiveRecord::RecordInvalid
     failure(:order_invalid)
+  rescue InsufficientStock
+    failure(:insufficient_stock)
   end
 
   private
@@ -65,12 +76,37 @@ class PlaceOrder
 
   def build_order!
     ActiveRecord::Base.transaction do
+      reserve_stock!
+
       order = restaurant.orders.create!(
         status: :pending, restaurant_table: table, customer: customer, guest_name: guest_name
       )
       cart.items.each { |item| create_order_item!(order, item) }
       order.calculate_total!
       order
+    end
+  end
+
+  # The moment of truth: locks every wine the cart touches — in id order, so
+  # two concurrent placements over overlapping wines can't deadlock each
+  # other — then checks and reserves against those locked rows before any
+  # Order or OrderItem exists. Cart's own filtering (dropped_items) already
+  # ruled out 0-glass wines; this is the only check for a line whose
+  # quantity exceeds what's left, and it must run here, under the lock, not
+  # be assumed already done by the caller.
+  def reserve_stock!
+    wine_ids = cart.items.map { |item| item.wine.id }.uniq
+    locked_wines = Wine.where(id: wine_ids).order(:id).lock.index_by(&:id)
+
+    cart.items.each do |item|
+      wine = locked_wines.fetch(item.wine.id)
+      raise InsufficientStock if wine.available_glasses < item.quantity
+
+      # Same in-memory wine object across a diner's lines for the same
+      # wine (two glass sizes drawing from one pool) — decrement! updates
+      # its in-memory attribute too, so the next line's check sees the
+      # running total, not a stale snapshot.
+      wine.decrement!(:available_glasses, item.quantity)
     end
   end
 

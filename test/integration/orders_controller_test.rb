@@ -144,6 +144,13 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   # request) all succeed, and the next one — still a brand-new session —
   # is the one that trips.
   test "the IP rate limit trips across distinct sessions, closing the session-only bypass" do
+    # Stock now reserves one glass per order placed (Task 2). This loop
+    # places IP_RATE_LIMIT orders of one glass each purely to exercise the
+    # rate limiter, so the wine needs at least that many glasses on hand —
+    # otherwise placement starts failing with :insufficient_stock partway
+    # through, which is a different code path than the one under test here.
+    @barolo.update!(available_glasses: OrdersController::IP_RATE_LIMIT)
+
     assert_difference "Order.count", OrdersController::IP_RATE_LIMIT do
       OrdersController::IP_RATE_LIMIT.times do
         reset!
@@ -173,6 +180,20 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     follow_redirect!
     assert_match I18n.t("orders.errors.empty_cart"), response.body
+  end
+
+  # --- insufficient stock ---
+
+  test "a cart quantity beyond available stock is refused and the diner sees a flash" do
+    add_barolo_to_cart(quantity: @barolo.available_glasses + 1)
+
+    assert_no_difference "Order.count" do
+      post orders_path(restaurant_id: @osteria), params: { guest_name: "Jane" }
+    end
+    assert_redirected_to cart_path(restaurant_id: @osteria)
+
+    follow_redirect!
+    assert_match I18n.t("orders.errors.insufficient_stock"), response.body
   end
 
   # --- show ---

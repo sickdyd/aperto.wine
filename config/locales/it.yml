@@ -558,6 +558,7 @@ it:
     errors:
       empty_cart: "Il tuo carrello è vuoto."
       items_unavailable: "Alcuni vini nel carrello non sono più disponibili. Controlla il carrello prima di ordinare."
+      insufficient_stock: "Alcuni vini nel carrello non sono più disponibili nella quantità richiesta. Controlla il carrello prima di ordinare."
       order_invalid: "Non è stato possibile inviare l'ordine. Controlla il carrello e riprova."
       rate_limited: "Stai inviando ordini troppo velocemente. Attendi un momento e riprova."
     status:

@@ -163,7 +163,7 @@ class PlaceOrderTest < ActiveSupport::TestCase
     end
   end
 
-  test "stock is not decremented at placement" do
+  test "stock is decremented by the line quantity at placement" do
     cart = cart_for(@osteria)
     cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 2)
     available_before = @barolo.available_glasses
@@ -171,7 +171,39 @@ class PlaceOrderTest < ActiveSupport::TestCase
     result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
 
     assert result.success?
-    assert_equal available_before, @barolo.reload.available_glasses
+    assert_equal available_before - 2, @barolo.reload.available_glasses
+  end
+
+  test "a line short of stock aborts the whole placement and reserves nothing" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: @barolo.available_glasses + 1)
+
+    assert_no_difference [ "Order.count", "OrderItem.count" ] do
+      result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
+
+      assert_not result.success?
+      assert_equal :insufficient_stock, result.error
+      assert_nil result.order
+    end
+    assert_equal 10, @barolo.reload.available_glasses
+  end
+
+  # The lock check must run against the running total for a wine, not each
+  # cart line in isolation — two lines for the same wine at different glass
+  # sizes both draw from the same available_glasses pool, so a naive
+  # per-line comparison against the pre-loop snapshot would let this through.
+  test "two lines for the same wine at different glass sizes are checked against their combined quantity" do
+    cart = cart_for(@osteria)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 100, quantity: 6)
+    cart.add(wine_id: @barolo.id, glass_size_ml: 125, quantity: 6)
+
+    assert_no_difference [ "Order.count", "OrderItem.count" ] do
+      result = PlaceOrder.call(cart: cart, restaurant: @osteria, table: nil, customer: nil, guest_name: "Jane")
+
+      assert_not result.success?
+      assert_equal :insufficient_stock, result.error
+    end
+    assert_equal 10, @barolo.reload.available_glasses
   end
 
   test "calculate_total! is applied so the order total reflects its items" do
