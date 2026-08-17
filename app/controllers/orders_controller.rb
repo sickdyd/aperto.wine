@@ -12,7 +12,8 @@ class OrdersController < ApplicationController
   # route never carries) does not apply here. set_restaurant is opt-in per
   # action (see CustomerScoped), so #show simply never declares it rather
   # than declaring it for every action and skipping it back off.
-  before_action :set_restaurant, only: :create
+  before_action :set_restaurant, only: [ :create, :index ]
+  before_action :set_order_history, only: [ :create, :index ]
   before_action :set_cart, only: :create
 
   # IP-scoped ceiling: comfortably clears a large table of diners (roughly
@@ -57,10 +58,23 @@ class OrdersController < ApplicationController
     )
 
     if result.success?
+      # Recorded on success only, before the redirect — this is the sole
+      # place an order enters the device's history. #show deliberately
+      # never calls #record (see its comment below): recording happens at
+      # placement, not at every later view of the token.
+      @order_history.record(result.order)
       redirect_to order_status_path(public_token: result.order.public_token)
     else
       redirect_to cart_path(restaurant_id: @restaurant), alert: t("orders.errors.#{result.error}")
     end
+  end
+
+  # The device's own "your orders" list for this restaurant — resolved
+  # entirely from the signed cookie, no session or account involved. Reads
+  # never rewrite the cookie (see OrderHistory#orders), so repeat visits are
+  # side-effect free and, unlike #create, carry no rate limit.
+  def index
+    @orders = @order_history.orders
   end
 
   # Public capability lookup: the public_token is the only key. Never falls
@@ -70,8 +84,14 @@ class OrdersController < ApplicationController
   # restaurant the owner has since deactivated 404s rather than staying
   # reachable — the token is still the capability, but consistency with the
   # rest of the public surface wins.
+  #
+  # Deliberately does not call @order_history.record(@order): someone
+  # opening a status link a diner handed them (or their own link from a
+  # different device) must not silently get that order added to this
+  # device's list. Only #create records — see the comment there.
   def show
     @order = Order.joins(:restaurant).merge(Restaurant.active).find_by!(public_token: params[:public_token])
+    @order_history = OrderHistory.new(cookies: cookies, restaurant: @order.restaurant)
   end
 
   private

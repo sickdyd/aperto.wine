@@ -51,6 +51,14 @@ module CustomerScoped
     @cart = Cart.new(session: session, restaurant: @restaurant)
   end
 
+  # One OrderHistory per request (it memoizes #orders — see OrderHistory),
+  # shared by every controller that needs it. Depends on @restaurant, so
+  # like set_cart it is opt-in per action, declared only where a restaurant
+  # has already been resolved.
+  def set_order_history
+    @order_history = OrderHistory.new(cookies: cookies, restaurant: @restaurant)
+  end
+
   # The table this session has attached to @restaurant, if any — used by the
   # cart (and, in a later task, order placement) so a request carrying only
   # a restaurant id can still be attributed to a table remembered from an

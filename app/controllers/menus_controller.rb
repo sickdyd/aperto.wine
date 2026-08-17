@@ -2,6 +2,12 @@ class MenusController < ApplicationController
   include CustomerScoped
 
   before_action :set_restaurant
+  # Depends on @restaurant, so it comes after set_restaurant. Building an
+  # OrderHistory does no query on its own (#any?/#orders only hit the
+  # database once the cookie actually has tokens for this restaurant — see
+  # OrderHistory), so a first-time visitor with no order_tokens cookie
+  # costs the menu, the hottest page in the app, nothing extra.
+  before_action :set_order_history
   before_action :set_cart, only: :show
 
   def show

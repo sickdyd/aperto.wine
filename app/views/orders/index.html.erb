@@ -1,0 +1,8 @@
+<%# Placeholder only — Task 3 replaces this wholesale with the real
+    "your orders" template. Exists here solely so the integration tests in
+    Task 2 have something to render. %>
+<main id="main">
+  <% @orders.each do |order| %>
+    <p><%= order.public_token %></p>
+  <% end %>
+</main>
