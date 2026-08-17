@@ -34,58 +34,17 @@
     <% rendered_lists = renderable_wine_lists(@wine_lists) %>
 
     <% if rendered_lists.any? %>
-      <div data-controller="list-filter">
-        <div class="mt-6">
-          <label for="menu_search" class="mono-label mb-2 block text-ox-2"><%= t("menu.search_label") %></label>
-          <div class="search-field">
-            <%= icon "magnifying-glass", class: "size-4", "aria-hidden": "true" %>
-            <input type="search"
-                   id="menu_search"
-                   placeholder="<%= t('menu.search_placeholder') %>"
-                   autocomplete="off"
-                   spellcheck="false"
-                   data-list-filter-target="input"
-                   data-action="input->list-filter#filter">
-          </div>
-        </div>
-
-        <%# Filter chips, one row per facet, derived from the wines actually
-            rendered below — never a hardcoded list — and only for a facet
-            with at least two distinct values among them (a chip row where
-            every chip matches everything is noise). Region and grape are
-            deliberately left out: on a real list they run to dozens of
-            values each, and the search field above already reaches both, so
-            a chip row for either would be scroll-length filter-bar chrome
-            rather than a shortcut. %>
+      <div data-controller="list-filter"
+           data-list-filter-applied-label-value="<%= t("menu.filters.applied_count", count: "%{count}") %>">
+        <%# Facets are derived from the wines actually rendered below — never a
+            hardcoded list — and a facet with fewer than two distinct values
+            among them earns no row at all (a chip row where every chip matches
+            everything is noise). Region and grape are deliberately left out:
+            on a real list they run to dozens of values each, and the search
+            field already reaches both, so a chip row for either would be
+            scroll-length filter chrome rather than a shortcut. %>
         <% filters = menu_filter_facets(rendered_lists) %>
-        <% if filters[:groups].any? %>
-          <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <% filters[:groups].each do |group| %>
-              <div role="group" aria-label="<%= group[:label] %>" class="flex flex-wrap gap-1.5">
-                <% group[:options].each do |option| %>
-                  <button type="button"
-                          class="chip min-w-11 justify-center"
-                          aria-pressed="false"
-                          data-list-filter-target="facet"
-                          data-facet-name="<%= group[:name] %>"
-                          data-facet-value="<%= option[:value] %>"
-                          data-action="click->list-filter#toggleFacet">
-                    <%= option[:label] %>
-                  </button>
-                <% end %>
-              </div>
-            <% end %>
-            <%# Shown only once a term or a chip is active — toggled by the
-                controller's #apply, never rendered visible here. %>
-            <button type="button"
-                    class="link-mono"
-                    hidden
-                    data-list-filter-target="clear"
-                    data-action="click->list-filter#clearAll">
-              <%= t("menu.filters.clear_all") %>
-            </button>
-          </div>
-        <% end %>
+        <%= render "filters", filters: filters %>
 
         <% nav_sections = menu_nav_sections(rendered_lists) %>
         <% if nav_sections.size > 1 %>

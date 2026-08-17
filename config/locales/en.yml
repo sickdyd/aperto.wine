@@ -585,6 +585,17 @@ en:
         between: "%{low}–%{high}"
         over: "Over %{amount}"
       clear_all: "Clear filters"
+      # The disclosure that holds every facet chip. Kept to one word: it shares
+      # its line with the search field on a 390px sheet.
+      toggle: "Filters"
+      # Read out beside the trigger's count badge, which is a bare numeral on
+      # its own. This is a SUFFIX, not a sentence: it is rendered immediately
+      # after the trigger's own "Filters" label and inside the same button, so
+      # the composed accessible name reads "Filters applied: 2". Repeating the
+      # word here would have it announced twice. Phrased so it stays correct
+      # for any number — the count is only known once a chip is pressed, so it
+      # is interpolated in list_filter_controller.js rather than pluralised.
+      applied_count: "applied: %{count}"
     cart_bar:
       item_count:
         one: "1 item"

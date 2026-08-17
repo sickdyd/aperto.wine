@@ -10,7 +10,10 @@
     <% sections.each do |dom_id, label| %>
       <%# min-w-11: short labels ("Red") would otherwise fall under the 44px
           minimum tap target that ".chip" already holds vertically. %>
-      <li><a href="#<%= dom_id %>" class="chip min-w-11 justify-center"><%= label %></a></li>
+      <%# .chip-jump: these anchors name the same colours as the colour facet
+          chips and wear the same box. The variant's quiet stock ground is what
+          keeps a jump target from reading as a filter that is already set. %>
+      <li><a href="#<%= dom_id %>" class="chip chip-jump min-w-11 justify-center"><%= label %></a></li>
     <% end %>
   </ul>
 </nav>

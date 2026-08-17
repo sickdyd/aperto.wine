@@ -21,11 +21,30 @@ const DEBOUNCE_MS = 150
 // once none of its items match. `clear` is an optional control shown only
 // while a text term or a facet selection is active.
 //
+// On the public menu the facet chips sit inside a collapsed disclosure —
+// `panel`, toggled by the `disclosure` button — so the wine list rather than a
+// screenful of filter chrome is what a diner meets first. `count` and
+// `countLabel` are the applied tally the trigger carries: the visible badge
+// and its screen-reader wording, written together, so collapsing the panel
+// never hides the fact that a filter is on. The disclosure is a disclosure and
+// not a dialog — the panel follows its trigger in the DOM, so there is nothing
+// to trap and no focus to restore.
+//
 // A page with no `facet`/`clear` targets and no `data-facet-*` attributes
 // behaves exactly as before: `activeFacetsByName` returns an empty map, so
-// every item passes the (vacuous) facet check.
+// every item passes the (vacuous) facet check. The disclosure targets are
+// equally optional — the owner pages that share this controller have none.
 export default class extends Controller {
-  static targets = ["input", "item", "group", "empty", "facet", "clear"]
+  static targets = [
+    "input", "item", "group", "empty", "facet", "clear",
+    "disclosure", "panel", "count", "countLabel"
+  ]
+
+  // The screen-reader wording for the applied tally, e.g. "Filters applied:
+  // %{count}". Interpolated here rather than pluralised in the view because
+  // the count is only known once a chip is pressed; the phrasing is chosen in
+  // both locales to read correctly for any number, one included.
+  static values = { appliedLabel: { type: String, default: "" } }
 
   connect() {
     this.timeout = null
@@ -54,6 +73,17 @@ export default class extends Controller {
     this.apply()
   }
 
+  // Opens or closes the facet panel. Only visibility and aria-expanded change:
+  // a collapsed panel keeps whatever is pressed inside it, which is why the
+  // trigger has to carry the count.
+  toggleFilters() {
+    if (!this.hasPanelTarget || !this.hasDisclosureTarget) return
+
+    const expanded = this.disclosureTarget.getAttribute("aria-expanded") === "true"
+    this.disclosureTarget.setAttribute("aria-expanded", expanded ? "false" : "true")
+    this.panelTarget.hidden = expanded
+  }
+
   apply() {
     const term = this.hasInputTarget ? this.inputTarget.value.trim().toLowerCase() : ""
     const activeFacets = this.activeFacetsByName()
@@ -79,6 +109,31 @@ export default class extends Controller {
     if (this.hasClearTarget) {
       const anyActive = term !== "" || activeFacets.size > 0
       this.clearTarget.hidden = !anyActive
+    }
+
+    this.renderAppliedCount()
+  }
+
+  // The tally on the disclosure trigger: how many facet chips are pressed,
+  // counted across every facet rather than per facet, because that is the
+  // question a collapsed panel leaves open. The text term is deliberately not
+  // counted — it is still visible in the search field beside the trigger.
+  renderAppliedCount() {
+    if (!this.hasCountTarget) return
+
+    const pressed = this.facetTargets.filter(
+      (chip) => chip.getAttribute("aria-pressed") === "true"
+    ).length
+
+    this.countTarget.hidden = pressed === 0
+    this.countTarget.textContent = pressed === 0 ? "" : String(pressed)
+
+    if (this.hasCountLabelTarget) {
+      // replaceAll, not replace: a locale is free to repeat the placeholder,
+      // and substituting only the first one would leave "%{count}" to be read
+      // out verbatim. textContent, never innerHTML — the label is text.
+      this.countLabelTarget.textContent =
+        pressed === 0 ? "" : this.appliedLabelValue.replaceAll("%{count}", String(pressed))
     }
   }
 

@@ -574,6 +574,8 @@ it:
         between: "%{low}–%{high}"
         over: "Oltre %{amount}"
       clear_all: "Cancella filtri"
+      toggle: "Filtri"
+      applied_count: "attivi: %{count}"
     cart_bar:
       item_count:
         one: "1 vino"
