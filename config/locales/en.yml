@@ -20,6 +20,13 @@ en:
     flash_error: "Error"
     # Accessible name for the icon-only close button on every flash toast.
     flash_dismiss: "Dismiss message"
+    serving:
+      # The one bottle-serving label shared by every surface that renders a
+      # bottle line (cart, and the menu once Task 3 lands) — %{size} is the
+      # wine's bottle_size_ml. Explicit "Bottle" word plus the size, not a
+      # bare "750 ml": next to a glass pour's "125 ml" in the same column, a
+      # bare size reads as a very large pour, not a different serving.
+      bottle: "Bottle %{size} ml"
   auth:
     sign_in: "Sign In"
     sign_up: "Create Account"
@@ -556,6 +563,12 @@ en:
       unknown_wine: "Unavailable wine"
       unavailable: "Unavailable"
       remove_unknown: "Remove unavailable item #%{wine_id} (%{size} ml)"
+      # The wine itself is gone (deleted outright — the only case this
+      # renders, see #wine_name in _dropped_cart_item), so there is no
+      # bottle_size_ml left to report; %{wine_id} alone is what still
+      # distinguishes a bottle line from a same-wine glass line dropped
+      # alongside it.
+      remove_unknown_bottle: "Remove unavailable bottle #%{wine_id}"
       reasons:
         wine_not_found: "This wine is no longer on the menu."
         wine_unavailable: "This wine is currently unavailable."

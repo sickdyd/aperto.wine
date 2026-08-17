@@ -30,12 +30,19 @@
     <%# The accessible name must identify which line this removes — with
         two or more dropped lines sharing a size, and possibly no wine name
         at all once a wine is deleted, "Remove" alone would leave every
-        control indistinguishable to a screen-reader user. %>
+        control indistinguishable to a screen-reader user. Once wine is nil
+        (the wine itself was deleted — the only branch that reaches the
+        remove_unknown fallback) there is no bottle_size_ml left to report
+        for a bottle line, so the bottle fallback drops the size entirely
+        and names the serving instead; wine_id is still what tells two
+        such lines apart. %>
     <%= button_to cart_items_path(restaurant_slug: restaurant.slug), method: :delete,
-          params: { wine_id: dropped.wine_id, glass_size_ml: dropped.glass_size_ml },
+          params: { wine_id: dropped.wine_id, serving: dropped.serving, glass_size_ml: dropped.glass_size_ml },
           class: "btn-wine-outline shrink-0",
           "aria-label": wine_name ? t("cart.remove_item", wine: wine_name) :
-            t("cart.dropped_item.remove_unknown", wine_id: dropped.wine_id, size: dropped.glass_size_ml) do %>
+            (dropped.serving == "bottle" ?
+              t("cart.dropped_item.remove_unknown_bottle", wine_id: dropped.wine_id) :
+              t("cart.dropped_item.remove_unknown", wine_id: dropped.wine_id, size: dropped.glass_size_ml)) do %>
       <%= icon "trash", class: "size-4" %>
     <% end %>
   </div>

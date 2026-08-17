@@ -20,6 +20,11 @@ it:
     flash_error: "Errore"
     # Nome accessibile del pulsante di chiusura di ogni messaggio flash.
     flash_dismiss: "Chiudi messaggio"
+    serving:
+      # L'unica etichetta per la bottiglia condivisa da ogni superficie che
+      # mostra una riga bottiglia (carrello, e il menu quando arriverà il
+      # Task 3) — %{size} è il bottle_size_ml del vino.
+      bottle: "Bottiglia %{size} ml"
   auth:
     sign_in: "Accedi"
     sign_up: "Crea Account"
@@ -554,6 +559,7 @@ it:
       unknown_wine: "Vino non disponibile"
       unavailable: "Non disponibile"
       remove_unknown: "Rimuovi vino non disponibile #%{wine_id} (%{size} ml)"
+      remove_unknown_bottle: "Rimuovi bottiglia non disponibile #%{wine_id}"
       reasons:
         wine_not_found: "Questo vino non è più nel menu."
         wine_unavailable: "Questo vino non è al momento disponibile."

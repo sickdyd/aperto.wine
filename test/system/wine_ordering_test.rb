@@ -77,7 +77,7 @@ class WineOrderingTest < ApplicationSystemTestCase
     # Bump barolo from 1 to 2 glasses. Each cart line is one <li> of the
     # bill's ruled list (see carts/_cart_item).
     within(find("li", text: barolo.name)) do
-      select "2", from: "cart_item_#{barolo.id}_125_quantity"
+      select "2", from: "cart_item_#{barolo.id}_glass_125_quantity"
       click_button I18n.t("cart.update_quantity")
     end
 

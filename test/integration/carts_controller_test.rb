@@ -137,6 +137,70 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_match @barolo.name, response.body
   end
 
+  test "a bottle line on the cart page renders the shared bottle label, not a bare size" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 1 }
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_match I18n.t("shared.serving.bottle", size: @barolo.bottle_size_ml), response.body
+  end
+
+  test "a bottle line and a glass pour of the same wine render as two distinct lines with working controls" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "li", text: /#{Regexp.escape(@barolo.name)}/, count: 2
+  end
+
+  test "updating a bottle line's quantity from the cart page's own form works" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 1 }
+    patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 3 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_match format_price(@barolo.price_bottle_cents * 3), response.body
+  end
+
+  test "removing a bottle line from the cart page works" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 1 }
+    delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle" }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_no_match @barolo.name, response.body
+    assert_match I18n.t("cart.empty"), response.body
+  end
+
+  # A bottle and a glass pour of the same wine must not collide: removing
+  # the bottle line must leave the glass line (and its own quantity) intact.
+  test "removing a bottle line does not disturb a coexisting glass line for the same wine" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 1 }
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 2 }
+
+    delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle" }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_no_match I18n.t("shared.serving.bottle", size: @barolo.bottle_size_ml), response.body
+    assert_match format_price(@barolo.price_for_glass(125) * 2), response.body
+  end
+
+  test "a dropped bottle line whose wine was deleted renders the bottle-specific remove label, with no size interpolated" do
+    doomed_wine = @osteria.wines.create!(
+      name: "Doomed Bottle Wine", color: :red, bottle_size_ml: 750,
+      price_bottle_cents: 5000, available_glasses: 5, active: true, position: 992
+    )
+    wine_lists(:osteria_list).wine_list_items.create!(wine: doomed_wine, position: doomed_wine.position)
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: doomed_wine.id, serving: "bottle", quantity: 1 }
+    doomed_wine.destroy!
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_select "button[aria-label=?]", I18n.t("cart.dropped_item.remove_unknown_bottle", wine_id: doomed_wine.id)
+  end
+
   test "an add with a bad serving fails cleanly and adds nothing to the cart" do
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "keg", glass_size_ml: 125, quantity: 1 }
     assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
