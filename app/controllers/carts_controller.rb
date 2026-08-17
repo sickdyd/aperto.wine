@@ -20,12 +20,7 @@ class CartsController < ApplicationController
   # redirects to the cart page instead, where the error has full context —
   # see #flash_error.
   def add_item
-    # serving is read as a raw string and handed to Cart unvalidated —
-    # integer_param would coerce junk to nil, and a nil serving that
-    # defaulted to something would let a malformed request place an order
-    # the diner did not build. Cart owns the validation and returns
-    # :invalid_serving.
-    result = @cart.add(wine_id: integer_param(:wine_id), serving: params[:serving],
+    result = @cart.add(wine_id: integer_param(:wine_id), serving: serving_param,
                         glass_size_ml: integer_param(:glass_size_ml),
                         quantity: integer_param(:quantity) || 1)
     if result.success?
@@ -37,7 +32,7 @@ class CartsController < ApplicationController
   end
 
   def update_item
-    result = @cart.update_quantity(wine_id: integer_param(:wine_id), serving: params[:serving],
+    result = @cart.update_quantity(wine_id: integer_param(:wine_id), serving: serving_param,
                                     glass_size_ml: integer_param(:glass_size_ml),
                                     quantity: integer_param(:quantity) || 0)
     flash_error(result)
@@ -45,7 +40,7 @@ class CartsController < ApplicationController
   end
 
   def remove_item
-    @cart.remove(wine_id: integer_param(:wine_id), serving: params[:serving],
+    @cart.remove(wine_id: integer_param(:wine_id), serving: serving_param,
                  glass_size_ml: integer_param(:glass_size_ml))
     redirect_to cart_path(restaurant_slug: @restaurant.slug)
   end
@@ -63,6 +58,24 @@ class CartsController < ApplicationController
   # through so Cart's own validation produces a clean Result failure.
   def integer_param(key)
     Integer(params[key], 10, exception: false)
+  end
+
+  # A "serving" key entirely absent from the request is the signature of
+  # stale HTML: a menu page rendered and cached in a diner's browser before
+  # this deploy, whose add-to-cart form never had a serving field to send.
+  # Diners keep a restaurant's menu tab open across a whole meal, so a
+  # mid-service deploy would otherwise break every already-open tab's add
+  # button until the diner manually reloads, with no indication why. Reading
+  # the absent key as "glass" preserves the pre-serving glass-only contract
+  # for exactly that stale request, without weakening validation for any
+  # other client: a request that *does* send the key — blank or bogus — is
+  # passed straight through to Cart unvalidated and still fails closed as
+  # :invalid_serving there, the same as before. This mirrors how a legacy
+  # session line with no "serving" key is read as a glass (see Cart's
+  # normalized_serving) — the same fallback, applied one layer further out,
+  # to the request instead of the stored line.
+  def serving_param
+    params.key?(:serving) ? params[:serving] : "glass"
   end
 
   def flash_error(result)

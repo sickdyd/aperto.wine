@@ -126,6 +126,54 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
     assert_match I18n.t("cart.errors.invalid_glass_size"), response.body
   end
 
+  # --- bottle serving ---
+
+  test "a bottle add shows the wine on the cart page" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "bottle", quantity: 1 }
+    assert_redirected_to published_menu_path(@osteria)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_match @barolo.name, response.body
+  end
+
+  test "an add with a bad serving fails cleanly and adds nothing to the cart" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "keg", glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+    follow_redirect!
+    assert_match I18n.t("cart.errors.invalid_serving"), response.body
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_match I18n.t("cart.empty"), response.body
+  end
+
+  # --- stale pre-deploy forms with no serving field at all ---
+  #
+  # A diner's already-open menu tab, rendered before this deploy, posts an
+  # add with no "serving" key in the request body whatsoever — not blank,
+  # entirely absent. That must keep working as a glass add (see
+  # CartsController#serving_param), unlike a request that names the key and
+  # gets it wrong.
+
+  test "an add with the serving key entirely absent from the request is treated as a glass" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to published_menu_path(@osteria)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_response :success
+    assert_match @barolo.name, response.body
+  end
+
+  test "an add with a present but blank serving still fails as invalid, unlike an absent one" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "", glass_size_ml: 125, quantity: 1 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+    follow_redirect!
+    assert_match I18n.t("cart.errors.invalid_serving"), response.body
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_match I18n.t("cart.empty"), response.body
+  end
+
   # --- Flash layout (Task 5, Part E regression fix) ---
 
   test "the cart page's error flash renders exactly once, in the floating stack" do
@@ -178,6 +226,25 @@ class CartsControllerTest < ActionDispatch::IntegrationTest
   test "removing an item takes it off the cart page" do
     post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
     delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_no_match @barolo.name, response.body
+    assert_match I18n.t("cart.empty"), response.body
+  end
+
+  test "updating quantity with the serving key entirely absent still finds the glass line" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
+    patch cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125, quantity: 3 }
+    assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
+
+    get cart_path(restaurant_slug: @osteria.slug)
+    assert_match format_price(@barolo.price_for_glass(125) * 3), response.body
+  end
+
+  test "removing an item with the serving key entirely absent still finds the glass line" do
+    post cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, serving: "glass", glass_size_ml: 125, quantity: 1 }
+    delete cart_items_path(restaurant_slug: @osteria.slug), params: { wine_id: @barolo.id, glass_size_ml: 125 }
     assert_redirected_to cart_path(restaurant_slug: @osteria.slug)
 
     get cart_path(restaurant_slug: @osteria.slug)
