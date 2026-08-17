@@ -138,6 +138,16 @@ class MenusControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "an upper-cased URL is redirected to the canonical lowercase one" do
+    get wine_list_menu_path(restaurant_slug: "Osteria-Del-Borgo", wine_list_slug: "Wine-List")
+    assert_redirected_to published_menu_path(restaurants(:osteria))
+  end
+
+  test "an upper-cased restaurant URL still reaches the menu" do
+    get restaurant_menu_path(restaurant_slug: "OSTERIA-DEL-BORGO")
+    assert_redirected_to published_menu_path(restaurants(:osteria))
+  end
+
   test "an unknown restaurant slug returns 404" do
     get restaurant_menu_path(restaurant_slug: "no-such-restaurant")
     assert_response :not_found

@@ -48,6 +48,46 @@ class SluggableTest < ActiveSupport::TestCase
     assert_equal "original-name", restaurant.slug
   end
 
+  # --- Long names ---
+  #
+  # Restaurant names carry no length limit, so a generated slug has to be
+  # truncated. Truncation is where a slug most easily comes out invalid:
+  # cutting mid-word leaves a trailing hyphen, and appending a collision
+  # suffix can push it back over the limit.
+
+  test "truncates a long generated restaurant slug to the maximum length" do
+    restaurant = Restaurant.create!(restaurant_attributes(name: "Osteria " * 40))
+
+    assert_operator restaurant.slug.length, :<=, Sluggable::MAX_LENGTH
+    assert_match Sluggable::SLUG_FORMAT, restaurant.slug
+  end
+
+  test "a truncated slug never ends in a hyphen" do
+    # "abc abc …" parameterizes to repeating four-character "abc-" units, so
+    # a naive cut at 100 characters lands exactly on a hyphen — which
+    # SLUG_FORMAT rejects. Guard the premise so this cannot pass vacuously if
+    # MAX_LENGTH changes.
+    name = "abc " * 40
+    assert name.parameterize.first(Sluggable::MAX_LENGTH).end_with?("-"),
+           "fixture no longer exercises a hyphen-boundary truncation"
+
+    restaurant = Restaurant.create!(restaurant_attributes(name: name))
+
+    assert_not restaurant.slug.end_with?("-")
+    assert_match Sluggable::SLUG_FORMAT, restaurant.slug
+  end
+
+  test "a collision suffix keeps a long slug inside the length limit" do
+    name = "Osteria " * 40
+    first = Restaurant.create!(restaurant_attributes(name: name))
+    second = Restaurant.create!(restaurant_attributes(name: name))
+
+    assert_not_equal first.slug, second.slug
+    assert_operator second.slug.length, :<=, Sluggable::MAX_LENGTH
+    assert_match Sluggable::SLUG_FORMAT, second.slug
+    assert second.slug.end_with?("-2")
+  end
+
   # --- Restaurant: owner-supplied slugs ---
 
   test "accepts an explicit restaurant slug" do

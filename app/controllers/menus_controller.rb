@@ -25,7 +25,7 @@ class MenusController < ApplicationController
     # publishing. Availability is driven by the wines/bottles, never by list
     # membership. Nil when nothing is published — the view falls through to
     # its empty state rather than 404ing a QR code someone just scanned.
-    @wine_lists = Array(@wine_list)
+    @wine_lists = [ @wine_list ].compact
     # @cart is set by set_cart above — reused by the view to decide whether
     # the sticky cart bar renders and what it shows.
   end
@@ -54,25 +54,21 @@ class MenusController < ApplicationController
   def redirect_to_canonical_url
     return if params[:table_token].present?
 
-    requested = params[:wine_list_slug]
+    requested = params[:wine_list_slug].presence
+    # Lookups are case-insensitive, but the comparison below is not: a URL
+    # that differs from the stored slug only in case is answered with a
+    # redirect to the canonical one rather than served under both spellings.
+    resolved = requested && normalized_slug(requested)
 
     # A slug belonging to no list of this restaurant is a wrong URL, not a
     # retired menu — 404 rather than quietly landing them somewhere else.
-    raise ActiveRecord::RecordNotFound if requested.present? && !@restaurant.wine_lists.exists?(slug: requested)
+    raise ActiveRecord::RecordNotFound if resolved && !@restaurant.wine_lists.exists?(slug: resolved)
 
-    # Covers all four cases at once, including the one that would otherwise
-    # loop: nothing published and no list requested is nil == nil, so the bare
+    # Covers every case at once, including the one that would otherwise loop:
+    # nothing published and no list requested is nil == nil, so the bare
     # restaurant URL renders its empty state instead of redirecting to itself.
     return if requested == @wine_list&.slug
 
-    redirect_to canonical_menu_path, status: :found
-  end
-
-  def canonical_menu_path
-    if @wine_list
-      wine_list_menu_path(restaurant_slug: @restaurant.slug, wine_list_slug: @wine_list.slug)
-    else
-      restaurant_menu_path(restaurant_slug: @restaurant.slug)
-    end
+    redirect_to menu_path_for(@restaurant, published: @wine_list), status: :found
   end
 end

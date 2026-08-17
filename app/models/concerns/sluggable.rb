@@ -47,16 +47,26 @@ module Sluggable
   end
 
   def generate_slug
-    base = (slug_source.to_s.parameterize.presence || slug_fallback).first(MAX_LENGTH)
-    candidate = base
+    base = slug_source.to_s.parameterize.presence || slug_fallback
+    candidate = clamp(base, MAX_LENGTH)
     suffix = 1
 
     while slug_unavailable?(candidate)
       suffix += 1
-      candidate = "#{base}-#{suffix}"
+      tail = "-#{suffix}"
+      # Trim the base far enough that the suffix fits, rather than appending
+      # past MAX_LENGTH and tripping the length validation on a long name.
+      candidate = "#{clamp(base, MAX_LENGTH - tail.length)}#{tail}"
     end
 
     candidate
+  end
+
+  # Truncating mid-word can leave a trailing hyphen, which SLUG_FORMAT
+  # rejects — and "foo-" + "-2" would produce a double hyphen it also
+  # rejects. Strip them so a long name still yields a valid slug.
+  def clamp(base, length)
+    base.first(length).sub(/-+\z/, "")
   end
 
   def slug_unavailable?(candidate)
