@@ -8,6 +8,10 @@
     restaurant         - the owning Restaurant, for the add-to-cart route (required)
     unavailable_label  - tag text when the wine isn't pourable
                          (defaults to the flat-menu "Sold out" wording)
+  This row only ever renders glass pours, so it deliberately reads
+  Wine#glasses_available? rather than the (now bottle-aware) #available? —
+  a wine with zero glasses but a bottle price is still "sold out" from this
+  row's point of view until a later task adds bottle display here.
 %>
 <% unavailable_label = local_assigns.fetch(:unavailable_label) { t("shared.sold_out") } %>
 <% open_bottle = wine.wine_bottles.find { |b| b.status == "open" } %>
@@ -22,7 +26,7 @@
   meta << tag.span(wine.vintage_year, class: "wine-vintage") if wine.vintage_year.present?
   meta << wine.region if wine.region.present?
 %>
-<li class="<%= class_names("wine-soldout" => !wine.available?) %>"
+<li class="<%= class_names("wine-soldout" => !wine.glasses_available?) %>"
     data-list-filter-target="item"
     data-search-terms="<%= [wine.name, wine.producer, wine.grape_variety, wine.vintage_year, wine.region].compact_blank.join(" ").downcase %>">
   <div class="wine-head">
@@ -30,7 +34,7 @@
     <span class="wine-name"><%= wine.name %></span>
     <%# The leader says nothing — it only carries the eye to the price. %>
     <span class="leader" aria-hidden="true"></span>
-    <% if !wine.available? %>
+    <% if !wine.glasses_available? %>
       <%# shrink / whitespace-normal / max-w-28: the wording is owner-facing
           copy that can run long ("Currently unavailable"), and a shrink-0 tag
           that wide would crowd the wine's own name off a 390px sheet. Capped
@@ -68,7 +72,7 @@
       instead of "Add" repeated once per size (see Task 3's identical fix for
       quantity buttons). min-h-11/min-w-11 hold the 44x44 CSS px WCAG 2.1 AA
       tap target, and gap-2 the 8px between them. %>
-  <% if wine.available? && pours.any? %>
+  <% if wine.glasses_available? && pours.any? %>
     <div class="mt-3 flex flex-wrap gap-2 pl-[var(--indent)]">
       <% pours.each do |size, _price| %>
         <%= button_to cart_items_path(restaurant_slug: restaurant.slug), method: :post,

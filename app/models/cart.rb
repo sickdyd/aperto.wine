@@ -33,7 +33,8 @@ class Cart
   #                          active wine lists (deliberately not distinguished
   #                          from "does not exist" — that would leak which
   #                          wines the owner has chosen not to show)
-  #   :wine_unavailable    - the wine exists but Wine#available? is false
+  #   :wine_unavailable    - the wine exists but Wine#glasses_available? is
+  #                          false (Cart is glass-only today; see #add)
   #   :invalid_glass_size  - glass_size_ml is not one of Wine::GLASS_SIZES
   #   :price_unavailable   - the wine has no positive price for that glass
   #                          size — nil and zero mean the same thing, "not
@@ -85,7 +86,11 @@ class Cart
 
     wine = published_wines.find_by(id: wine_id)
     return failure(:wine_not_found) if wine.nil?
-    return failure(:wine_unavailable) unless wine.available?
+    # #add is glass-only today, so the glass-specific check is the correct
+    # one here — Wine#available? now also reads true for a bottle-only wine,
+    # which would let a glass line through for a wine with zero glasses left.
+    # Task 2 threads `serving` through Cart and will replace this.
+    return failure(:wine_unavailable) unless wine.glasses_available?
     return failure(:price_unavailable) unless positive_price?(wine, glass_size)
 
     lines = stored_lines
@@ -252,7 +257,14 @@ class Cart
   # it was dropped (see DroppedItem).
   def drop_reason(wine, glass_size_ml)
     return :wine_not_found if wine.nil?
-    return :wine_unavailable unless wine.available?
+    # Every stored line is a glass line today (no `serving` in the session
+    # shape yet — see Cart's header comment), so the glass-specific check is
+    # correct here. Wine#available? now also reads true for a wine with zero
+    # glasses but a positive bottle price; using it here would let that line
+    # survive and then get priced from a price_75ml_cents that is still set,
+    # ordering a glass the restaurant cannot pour. Task 2 threads `serving`
+    # through Cart and will replace this with #available_for?.
+    return :wine_unavailable unless wine.glasses_available?
     return :price_unavailable unless positive_price?(wine, glass_size_ml)
 
     nil

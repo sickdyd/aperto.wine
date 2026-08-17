@@ -20,7 +20,7 @@
         nothing. %>
     <div class="min-w-0">
       <span class="wine-name block truncate"><%= item.wine.name %></span>
-      <% unless item.wine.available? %>
+      <% unless item.wine.glasses_available? %>
         <span class="tag-out mt-1 whitespace-nowrap"><%= t("menu.unavailable") %></span>
       <% end %>
     </div>

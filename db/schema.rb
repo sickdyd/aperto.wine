@@ -45,14 +45,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_130000) do
 
   create_table "order_items", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.integer "glass_size_ml", null: false
+    t.integer "glass_size_ml"
     t.bigint "order_id", null: false
     t.integer "quantity", default: 1, null: false
+    t.integer "serving", default: 0, null: false
     t.integer "unit_price_cents", null: false
     t.datetime "updated_at", null: false
     t.bigint "wine_id", null: false
     t.index ["order_id"], name: "index_order_items_on_order_id"
     t.index ["wine_id"], name: "index_order_items_on_wine_id"
+    t.check_constraint "serving = 0 AND glass_size_ml IS NOT NULL OR serving = 1 AND glass_size_ml IS NULL", name: "order_items_serving_glass_size"
   end
 
   create_table "orders", force: :cascade do |t|

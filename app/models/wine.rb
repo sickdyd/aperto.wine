@@ -8,6 +8,7 @@ class Wine < ApplicationRecord
   enum :color, { red: 0, white: 1, rose: 2, sparkling: 3, dessert: 4 }
 
   GLASS_SIZES = [ 75, 100, 125, 150 ].freeze
+  SERVINGS = %w[glass bottle].freeze
   TASTING_SCALE = (0..5).freeze
   TASTING_ATTRIBUTES = %i[tannins acidity sweetness body].freeze
   CERTIFICATION_LABELS = %i[organic natural_wine vegan biodynamic].freeze
@@ -60,7 +61,43 @@ class Wine < ApplicationRecord
     end
   end
 
-  def available?
+  # "Has a glass to pour right now." This used to be #available?'s whole
+  # meaning; it was renamed once #available? widened to cover bottles too.
+  def glasses_available?
     active? && available_glasses.positive?
+  end
+
+  # There is no bottle stock column — a positive bottle price is the owner's
+  # signal that whole bottles are sold. A wine can be bottle-available with
+  # zero glasses left; that's the point of the feature. Zero and nil both
+  # mean "not offered", matching how Cart#positive_price? already treats
+  # glass prices.
+  def bottle_available?
+    active? && price_bottle_cents.to_i.positive?
+  end
+
+  def price_for(serving:, glass_size_ml: nil)
+    case serving.to_s
+    when "bottle" then price_bottle_cents
+    when "glass" then price_for_glass(glass_size_ml)
+    end
+  end
+
+  def available_for?(serving:, glass_size_ml: nil)
+    case serving.to_s
+    when "bottle" then bottle_available?
+    when "glass" then glasses_available?
+    else false
+    end
+  end
+
+  # "Orderable in some form" — by the glass, by the bottle, or both. This is
+  # what the menu's sold-out tag means. It is NOT "has a glass to pour": a
+  # caller that only ever offers glasses (i.e. hasn't been made
+  # serving-aware yet) must use #glasses_available? instead, or a wine with
+  # zero glasses but a bottle price will read as available for glass pours
+  # it cannot actually serve.
+  def available?
+    glasses_available? || bottle_available?
   end
 end
