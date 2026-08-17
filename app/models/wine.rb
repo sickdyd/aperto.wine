@@ -8,6 +8,12 @@ class Wine < ApplicationRecord
   enum :color, { red: 0, white: 1, rose: 2, sparkling: 3, dessert: 4 }
 
   GLASS_SIZES = [ 75, 100, 125, 150 ].freeze
+  # The single source of truth for what a serving can be: Cart#add validates
+  # a requested serving against this array, and OrderItem's `serving` enum is
+  # derived from it (index -> integer), so the two can never disagree. Append
+  # only — reordering or removing an entry renumbers/orphans existing
+  # OrderItem rows. See OrderItem's `enum :serving` for the DB check
+  # constraint this also has to stay in step with.
   SERVINGS = %w[glass bottle].freeze
   TASTING_SCALE = (0..5).freeze
   TASTING_ATTRIBUTES = %i[tannins acidity sweetness body].freeze

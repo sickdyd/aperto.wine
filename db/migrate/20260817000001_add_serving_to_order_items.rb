@@ -12,6 +12,13 @@ class AddServingToOrderItems < ActiveRecord::Migration[8.1]
     # so bulk imports / raw SQL / update_column cannot persist a glass line
     # with no size or a bottle line with one. Follows the wines table's
     # t.check_constraint precedent (see 20260705004500).
+    #
+    # This is an OR of exactly the two conjunctions for serving 0 and 1, so a
+    # future third serving (Wine::SERVINGS grows past glass/bottle) fails
+    # this constraint outright — a CheckViolation, not silent corruption, but
+    # it needs a follow-up migration to widen this constraint before
+    # OrderItem's derived enum can actually persist that value. See
+    # OrderItem's `enum :serving` comment for the fuller version of this.
     add_check_constraint :order_items,
       "(serving = 0 AND glass_size_ml IS NOT NULL) OR (serving = 1 AND glass_size_ml IS NULL)",
       name: "order_items_serving_glass_size"
