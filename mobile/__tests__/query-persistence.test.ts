@@ -3,12 +3,7 @@ import { QueryClient, onlineManager } from "@tanstack/react-query";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { persistQueryClientSave } from "@tanstack/react-query-persist-client";
 
-import {
-  PERSISTED_QUERY_ROOTS,
-  createPersistenceGate,
-  persistOptions,
-  shouldDehydrateMutation,
-} from "@/services/query-persistence";
+import { persistOptions, shouldDehydrateMutation } from "@/services/query-persistence";
 
 /**
  * These tests run the real persistence path into an in-memory stand-in for
@@ -84,14 +79,19 @@ const unthrottled = {
 const save = (options: typeof unthrottled | typeof persistOptions = unthrottled) =>
   persistQueryClientSave({ queryClient: client, ...options });
 
+/** Seeds a successful query carrying `meta`, which `setQueryData` cannot set. */
+function seed(queryKey: unknown[], data: unknown, meta?: { persist?: true }) {
+  return client.fetchQuery({ queryKey, queryFn: async () => data, meta });
+}
+
 describe("the shipped persistence config", () => {
-  it("keeps a personal query out of storage entirely", async () => {
+  it("keeps a query that never opted in out of storage entirely", async () => {
     // The query this whole gate exists for: diner accounts are on the roadmap,
-    // and nothing about them is allowlisted, so nothing about them is written.
+    // and this one never asked to be persisted, so nothing about it is written.
     // Driven through `persistOptions` exactly as shipped — the object the root
-    // layout hands to `PersistQueryClientProvider` — so this one covers the
-    // wiring as well as the policy.
-    client.setQueryData(["account", "bonuses"], {
+    // layout hands to `PersistQueryClientProvider` — so this covers the wiring
+    // as well as the policy.
+    await seed(["account", "bonuses"], {
       diner_email: "diner@example.com",
       bonus_balance_cents: 4500,
       discount_code: "MAGNUM20",
@@ -105,24 +105,102 @@ describe("the shipped persistence config", () => {
     expect(persistedRaw()).not.toContain("4500");
   });
 
-  it("persists nothing at all while the allowlist is empty", async () => {
+  it("persists nothing at all when no query has opted in", async () => {
     // Not a restatement of the test above: this one says the default is deny
-    // for *every* key, not only the ones that look sensitive. A gate that
-    // caught only the keys somebody remembered to worry about would not be a
+    // for *every* query, not only the ones that look sensitive. A gate that
+    // caught only what somebody remembered to worry about would not be a
     // default at all.
-    client.setQueryData(["menu", "table-token"], { wines: [{ name: "Barolo 2016" }] });
-    client.setQueryData(["restaurant", 1], { name: "Osteria" });
-    client.setQueryData(["orders", "history"], [{ id: 7, total_cents: 8200 }]);
+    await seed(["menu", "table-token"], { wines: [{ name: "Barolo 2016" }] });
+    await seed(["restaurant", 1], { name: "Osteria" });
+    await seed(["orders", "history"], [{ id: 7, total_cents: 8200 }]);
 
     await save();
 
-    expect(PERSISTED_QUERY_ROOTS).toEqual([]);
     expect(persistedKeys()).toEqual([]);
     expect(persistedRaw()).not.toContain("Barolo 2016");
     expect(persistedRaw()).not.toContain("8200");
   });
 
-  it("never persists a paused mutation, allowlist or not", async () => {
+  it("persists a query that opted in, so a loaded list survives a dead spot", async () => {
+    await seed(["menu", "table-token"], { wines: [{ name: "Barolo 2016" }] }, { persist: true });
+    await seed(["account", "profile"], { name: "Roberto" });
+
+    await save();
+
+    expect(persistedKeys()).toEqual([["menu", "table-token"]]);
+    expect(persistedRaw()).toContain("Barolo 2016");
+    // One cache, one dehydration: the opted-in query must not carry the
+    // account along with it.
+    expect(persistedRaw()).not.toContain("Roberto");
+  });
+
+  it("persists per query, not per key namespace", async () => {
+    // The reason the flag lives on the query rather than in a list of key
+    // roots. These two share a root; only the one that asked is written. A
+    // list keyed on "menu" would have granted the namespace to both, which is
+    // exactly how a personalised variant would slip onto disk later without
+    // anyone re-deciding.
+    await seed(["menu", "table-token"], { wines: [{ name: "Barolo 2016" }] }, { persist: true });
+    await seed(["menu", "table-token", "diner-7"], { your_discount: "10% off, Roberto" });
+
+    await save();
+
+    expect(persistedKeys()).toEqual([["menu", "table-token"]]);
+    expect(persistedRaw()).not.toContain("10% off");
+  });
+
+  it("treats anything other than an explicit true as no", async () => {
+    // Fails closed on a typo or a truthy stand-in rather than guessing.
+    await seed(["menu", "truthy"], { leaked: "by-truthy" }, { persist: 1 as unknown as true });
+    await seed(["menu", "typo"], { leaked: "by-typo" }, { persits: true } as { persist?: true });
+
+    await save();
+
+    expect(persistedKeys()).toEqual([]);
+    expect(persistedRaw()).not.toContain("leaked");
+  });
+
+  it("decides on the flag, not on the shape of the key", async () => {
+    // Key roots can be objects or numbers. The old design refused those
+    // outright, because it matched roots against a list and could not match
+    // what it could not name. This one does not look at the key to decide at
+    // all: an opted-in query is persisted whatever its key looks like, and one
+    // that never opted in is refused whatever its key looks like.
+    //
+    // Worth pinning down because the persisted payload includes the key, so a
+    // key carrying request parameters carries them to disk — which is a reason
+    // to think before opting in, not a reason for the gate to second-guess a
+    // decision the developer made explicitly.
+    await seed([{ scope: "menu" }, "x"], { public_wine: "Barolo" }, { persist: true });
+    await seed([42], { leaked: "by-number" });
+
+    await save();
+
+    expect(persistedKeys()).toEqual([[{ scope: "menu" }, "x"]]);
+    expect(persistedRaw()).toContain("Barolo");
+    expect(persistedRaw()).not.toContain("leaked");
+  });
+
+  it("still refuses a failed query that opted in", async () => {
+    // Overriding `shouldDehydrateQuery` replaces TanStack's success-only rule.
+    // Composing with it rather than replacing it is what keeps an errored query
+    // — which carries the failure, not the data — off the disk.
+    await client
+      .fetchQuery({
+        queryKey: ["menu", "unreachable"],
+        queryFn: () => Promise.reject(new Error("wifi died mid-service")),
+        meta: { persist: true },
+        retry: false,
+      })
+      .catch(() => undefined);
+
+    await save();
+
+    expect(persistedKeys()).toEqual([]);
+    expect(persistedRaw()).not.toContain("wifi died mid-service");
+  });
+
+  it("never persists a paused mutation, opted in or not", async () => {
     // TanStack's default keeps paused mutations so they can replay on
     // reconnect. An order is not replayable hours later, and its payload would
     // sit in plaintext for the whole wait.
@@ -131,6 +209,7 @@ describe("the shipped persistence config", () => {
     const mutation = client.getMutationCache().build(client, {
       mutationKey: ["orders", "create"],
       mutationFn: async () => ({ ok: true }),
+      meta: { persist: true },
     });
     mutation.execute({ table_token: "abc", diner_phone: "+393331234567" }).catch(() => undefined);
     await Promise.resolve();
@@ -147,85 +226,19 @@ describe("the shipped persistence config", () => {
   it("says out loud, in development, why a query was not persisted", async () => {
     // The gate is only as good as its discoverability: the next developer meets
     // it here, at the moment they hit it, rather than in a security review
-    // months later. A comment left behind by a deleted persister could not.
-    client.setQueryData(["bonuses", "current"], { balance_cents: 100 });
+    // months later. The root is unique to this test because the warning fires
+    // once per key root.
+    await seed(["bonuses", "current"], { balance_cents: 100 });
 
     await save();
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("PERSISTED_QUERY_ROOTS"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("meta: { persist: true }"));
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("bonuses"));
+    // It also has to say the part that matters most, and say it here rather
+    // than only in a file the developer has no reason to open.
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("varies by which diner is asking"));
     // The root is enough to act on; the rest of the key is request parameters
     // and has no business being printed.
     expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("current"));
-  });
-});
-
-describe("the gate itself, against a populated allowlist", () => {
-  // The shipped list is empty, so these drive the same rule with the root a
-  // wine-list query would plausibly claim. Without them the suite could not
-  // tell a working default-deny gate from one that simply refuses everything.
-  const allowlisted = {
-    ...unthrottled,
-    dehydrateOptions: {
-      shouldDehydrateQuery: createPersistenceGate(["menu"]),
-      shouldDehydrateMutation,
-    },
-  };
-
-  it("lets an allowlisted query through, so a loaded list survives a dead spot", async () => {
-    client.setQueryData(["menu", "table-token"], { wines: [{ name: "Barolo 2016" }] });
-    client.setQueryData(["account", "profile"], { name: "Roberto" });
-
-    await save(allowlisted);
-
-    expect(persistedKeys()).toEqual([["menu", "table-token"]]);
-    expect(persistedRaw()).toContain("Barolo 2016");
-    // One cache, one dehydration: the menu's presence must not carry the
-    // account along with it.
-    expect(persistedRaw()).not.toContain("Roberto");
-  });
-
-  it("still refuses a failed query whose root is allowlisted", async () => {
-    // Overriding `shouldDehydrateQuery` replaces TanStack's success-only rule.
-    // Composing with it rather than replacing it is what keeps an errored query
-    // — which carries the failure, not the data — off the disk.
-    await client
-      .fetchQuery({
-        queryKey: ["menu", "unreachable"],
-        queryFn: () => Promise.reject(new Error("wifi died mid-service")),
-        retry: false,
-      })
-      .catch(() => undefined);
-
-    await save(allowlisted);
-
-    expect(persistedKeys()).toEqual([]);
-    expect(persistedRaw()).not.toContain("wifi died mid-service");
-  });
-
-  it("matches the root exactly rather than by prefix", async () => {
-    // `includes` on the array of roots, never on the string: "menus" and
-    // "menu-admin" are different keys, and an allowlist that matched them by
-    // prefix would be a hole opened by nothing more than a plural.
-    client.setQueryData(["menus", "all"], { leaked: "by-prefix" });
-    client.setQueryData(["menu-admin", "1"], { leaked: "by-suffix" });
-
-    await save(allowlisted);
-
-    expect(persistedKeys()).toEqual([]);
-    expect(persistedRaw()).not.toContain("leaked");
-  });
-
-  it("refuses a key whose root is not a string", async () => {
-    // A key root can be an object or a number, and neither can ever be
-    // allowlisted. Coercing one to a string to compare it would be the obvious
-    // way to reopen the hole.
-    client.setQueryData([{ scope: "menu" }, "x"], { leaked: "by-object" });
-    client.setQueryData([42], { leaked: "by-number" });
-
-    await save(allowlisted);
-
-    expect(persistedKeys()).toEqual([]);
-    expect(persistedRaw()).not.toContain("leaked");
   });
 });
