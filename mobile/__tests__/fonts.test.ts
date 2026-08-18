@@ -10,10 +10,12 @@ import { join } from "path";
 // runtime assertion can tell them apart — the difference exists only in the
 // module graph Metro walks. Hence the checks on the import statement itself.
 //
-// What that cannot catch: this reads _layout.tsx and nothing else. A font
-// imported from any other component, or pulled in transitively by a dependency,
-// grows the bundle while every assertion below stays green. Only a real export
-// would see those, and the source-level check was judged the better trade.
+// What this file CANNOT catch, because it only reads this one source file:
+// a font imported from any other module, a font a dependency carries in on its
+// own, or non-font assets bloating the bundle. All of those leave these tests
+// green. `npm run check:bundle` exports a real iOS bundle and asserts on what
+// actually shipped, which is the check that covers those; this file is the
+// fast, precise diagnostic for the common case, not the safety net.
 const FACES = [
   ["@expo-google-fonts/instrument-serif/400Regular", "InstrumentSerif_400Regular"],
   ["@expo-google-fonts/eb-garamond/400Regular", "EBGaramond_400Regular"],
