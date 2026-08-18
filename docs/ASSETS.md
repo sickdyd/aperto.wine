@@ -120,6 +120,131 @@ gzip figure depends on compression at the edge.
 Re-derive rather than hand-edit if it ever needs redoing — tracing is cheap and
 the source is stable.
 
+### The app mark
+
+`script/build_brand_icons.py` — the icon set for the Expo client
+(`mobile/assets/images/`) and the Rails app's own favicon and apple-touch-icon
+(`public/icon.{png,svg}`). Generated, never hand-edited: run the script rather
+than opening a PNG.
+
+**Interim.** This replaced the stock Expo template artwork and the Rails
+scaffold's red circle, which were blocking store submission and were the live
+favicon respectively. It is placeholder-replacement, not a brand exercise — the
+real mark is the owner's to choose. The generation is scripted precisely so
+that swapping in a different concept later is minutes rather than hours.
+
+The mark is **not new artwork**. It is the lowercase `a` of "aperto" lifted
+straight out of EB Garamond at the weight and tracking `.wordmark` already uses
+(600, `-0.012em`), set in `--color-ox-2` over a heavy section rule in
+`--color-ox-1`, on `--color-paper`. So the icon is the masthead compressed into
+a square, and a palette or face change re-derives into a matching icon instead
+of drifting away from one. The splash carries the full `aperto.wine` lockup
+with `.wine` in `--color-ox-3`, the paper-ground counterpart to the masthead's
+soft tone.
+
+A letterform was chosen over the bottle-and-glass engraving deliberately: an
+app icon renders at roughly 40–60px in a home-screen grid, and the engraving is
+fine 19th-century linework that turns to mush at that size. If a more
+distinctive mark is ever wanted, the strongest direction is a **simplified
+solid-shape silhouette** derived from the engraving's bottle and glass — it
+says "wine" in a way a letter cannot, and unlike the engraving itself it
+survives the shrink. Not built; noted so the next person does not re-derive the
+reasoning.
+
+#### Provenance
+
+The face is read out of `@expo-google-fonts/eb-garamond`, a pinned dependency
+of the Expo client — so `mobile/package-lock.json` fixes exactly which cut of
+EB Garamond the outlines came from, and the file is already on disk. Weight 600
+is the wordmark's own: `.wordmark` sets `font-weight: 600` and the web app
+loads that weight from Google Fonts. The npm package ships every weight, so the
+600 file is present regardless of which ones the client bundles — as of #77 it
+loads only 400 and 500, and it never renders the mark anyway, which ships as
+flat PNG. Nothing is downloaded and nothing is vendored: the outlines are baked
+into the output, so nothing at runtime needs the font either.
+
+| | |
+|---|---|
+| **Face** | EB Garamond SemiBold, Version 1.003, 1000 units/em |
+| **File** | `@expo-google-fonts/eb-garamond@0.4.3` → `600SemiBold/EBGaramond_600SemiBold.ttf` |
+| **SHA-256** | `32638f825bcb55d6940914fa0c3facdc81ce50d7761463efc46f3b7d1baf619d` |
+| **Copyright** | Copyright 2017 The EB Garamond Project Authors, <https://github.com/octaviopardo/EBGaramond12> |
+| **Designers** | Georg Duffner and Octavio Pardo |
+| **Licence** | **SIL Open Font License 1.1** |
+
+Licence confirmed **from the font binary itself** on 2026-08-18, not inferred
+from the package: the TTF's `name` table carries it in nameID 13 ("This Font
+Software is licensed under the SIL Open Font License, Version 1.1…") and
+nameID 14 (<https://openfontlicense.org>). Corroborated by the package's own
+`LICENSE_FONT` file, which reproduces the full OFL 1.1 text under the same 2017
+copyright line, and by `package.json`'s `"license": "MIT AND OFL-1.1"` — the
+MIT half covers Expo's wrapper code, the OFL half the font.
+
+Baking glyph outlines into the artwork is explicitly permitted and leaves the
+result unencumbered. Checked against the OFL FAQ at
+<https://openfontlicense.org/ofl-faq/> on 2026-08-18:
+
+- **1.1** — "Can I use the fonts for a book or other print publication, to
+  create logos or other graphics or even to manufacture objects based on their
+  outlines?" — *"Yes. You are very welcome to do so. Authors of fonts released
+  under the OFL allow you to use their font software as such for any kind of
+  design work."*
+- **1.1.1** — "Does that restrict the license or distribution of that artwork?"
+  — *"No. You remain the author and copyright holder of that newly derived
+  graphic or object."*
+- **1.1.2** — acknowledgement is appreciated but **not required**. This entry
+  is the acknowledgement.
+
+The Reserved Font Name provision is closed twice over, so nobody has to
+re-derive this. First, **this face declares no RFN at all**: none of the 29
+records in the TTF's `name` table mentions one, and nameID 0 is a bare
+"Copyright 2017 The EB Garamond Project Authors" with no RFN clause appended
+(checked 2026-08-18). The phrase appears in the package's `LICENSE_FONT` only
+at line 33, where the OFL *defines* the term — a definition, not a
+declaration. Second, and independently: the OFL's RFN and redistribution
+conditions bind the *Font Software*, and nothing here redistributes, bundles or
+modifies it. The repository contains no font file — only PNG and SVG artwork —
+and the generator reads the TTF out of `mobile/node_modules`, which is
+gitignored.
+
+```sh
+npm install --prefix mobile                          # supplies the font
+python3 -m venv /tmp/icons && /tmp/icons/bin/pip install fonttools
+/tmp/icons/bin/python script/build_brand_icons.py    # needs imagemagick + librsvg
+```
+
+The script asserts what it wrote — every file's dimensions, whether it carries
+an alpha channel, and that the art clears the mask circles — because every one
+of these is a silent failure:
+
+| File | Constraint | What breaks otherwise |
+|---|---|---|
+| `icon.png` | 1024², **no alpha channel** | App Store Connect rejects the upload, at the end of a build |
+| `android-icon-foreground.png`, `-monochrome.png` | art inside the inner 72/108 circle | the launcher's mask crops the art, differently per device |
+| `notification-icon.png` | 96², white on transparency | Android reads only the alpha — a colour icon becomes a solid white square in the status bar |
+| `splash-icon.png` | transparent | an opaque image bands its own rectangle across `splash.backgroundColor` |
+| `public/icon-maskable.png` | art inside the 80% circle | the PWA manifest's `purpose: "maskable"` entry is cropped |
+
+CI re-asserts the parts of that contract it can see without the generator:
+`mobile/__tests__/app-icons.test.ts` decodes each PNG and checks its dimensions,
+its colour type, that the transparent layers really are transparent at the
+corners, and that the notification silhouette is white wherever it is not
+transparent; `test/deploy/brand_icons_test.rb` covers the Rails half — the
+manifest renders as JSON, and everything it and the layout name exists. So a
+regenerated-wrong asset fails CI rather than a store submission. **Geometry is
+not** in CI: only the script knows the intended proportions, so the mask-circle
+check runs there and nowhere else.
+
+The PWA manifest itself has no route yet, so `public/icon-maskable.png` is
+provisioned ahead of a consumer. It is generated with the marks rather than
+later, because the trap it exists to avoid — reusing `icon.png`, whose art
+clears the maskable circle by about three pixels — is invisible until someone
+enables the manifest and sees a cropped icon.
+
+There is no `android-icon-background.png`: the adaptive background layer is one
+flat colour, which `adaptiveIcon.backgroundColor` expresses without shipping a
+1024² PNG of it.
+
 ## 4. Avoid (attribution required on free tier)
 
 - **Flaticon** (<https://www.flaticon.com>) — free tier requires visible attribution.
