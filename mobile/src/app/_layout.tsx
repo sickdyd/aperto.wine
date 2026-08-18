@@ -6,14 +6,13 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "expo-font";
 import { InstrumentSerif_400Regular } from "@expo-google-fonts/instrument-serif";
 import { EBGaramond_400Regular, EBGaramond_500Medium } from "@expo-google-fonts/eb-garamond";
 import { JetBrainsMono_400Regular } from "@expo-google-fonts/jetbrains-mono";
 
 import "@/i18n";
+import { persistOptions } from "@/services/query-persistence";
 import { useAuthStore } from "@/stores/auth-store";
 
 SplashScreen.preventAutoHideAsync();
@@ -29,11 +28,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Restaurant wifi is unreliable and a diner who has already loaded a list
-// should keep seeing it through a dead spot. The cache is plain AsyncStorage,
-// never SecureStore — it holds menus, not credentials.
-const persister = createAsyncStoragePersister({ storage: AsyncStorage });
 
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -59,8 +53,12 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
+  // Restaurant wifi is unreliable and a diner who has already loaded a list
+  // should keep seeing it through a dead spot. What is allowed onto disk is
+  // decided per query key by services/query-persistence — default-deny,
+  // because the store is unencrypted AsyncStorage.
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
