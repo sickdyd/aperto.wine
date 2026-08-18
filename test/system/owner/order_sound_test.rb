@@ -187,6 +187,10 @@ module Owner
       assert_equal false, page.evaluate_script("'audioSession' in navigator"),
         "this browser has audioSession, so the legacy branch under test never runs"
 
+      # Patched and never restored, which is safe only because every test here
+      # opens with a fresh `visit` — a new JS realm, so the patch cannot reach
+      # the next case. A test added below that reuses a page across cases would
+      # inherit it; say so rather than leave the invariant implicit.
       page.execute_script(<<~JS)
         window.__played = 0
         const play = HTMLMediaElement.prototype.play

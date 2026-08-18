@@ -105,27 +105,37 @@ let silentClip = null
 // nor Safari this is a 50 ms silent play that changes nothing, which is
 // cheaper than sniffing the platform to find out.
 function releaseRingerSwitch() {
-  // Contained on purpose. This is a courtesy to one platform, and the caller
-  // goes on to bring up the AudioContext that everything else depends on —
-  // a throw escaping here would trade a silenced iPad for a feature that does
-  // not work at all, anywhere.
+  // Both halves are contained, and separately. This is a courtesy to one
+  // platform, while the caller goes on to bring up the AudioContext that
+  // everything else depends on — a throw escaping here would trade a silenced
+  // iPad for a feature that works nowhere at all.
   try {
     if ("audioSession" in navigator) {
       navigator.audioSession.type = "playback"
       return
     }
+  } catch {
+    // The property is there but would not take the assignment. Fall through to
+    // the older remedy rather than treat a half-implemented API as an answer.
+  }
 
+  try {
     silentClip ||= new Audio(silentClipUrl())
-    silentClip.currentTime = 0
+
+    // Deliberately no currentTime reset before this. play() already seeks a
+    // finished element back to the start, and assigning currentTime before
+    // metadata has loaded throws on exactly the old WebKit this branch exists
+    // for — which would abort the remedy one line before it ran, on the only
+    // devices that need it.
     silentClip.play()?.catch(() => {
       // Refused, which means this gesture was not one the browser accepted.
       // Nothing to recover: the state the control reports is read off the
       // AudioContext either way, so it will say "blocked" rather than lie.
     })
   } catch {
-    // Old Safari without the API and without a usable media element is simply
-    // a device that will be silenced by its own ringer switch. The control
-    // still reports what the context says, which is the guarantee that counts.
+    // A device with neither the API nor a usable media element is simply one
+    // its own ringer switch will silence. The control still reports what the
+    // context says, which is the guarantee that actually matters.
   }
 }
 
