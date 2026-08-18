@@ -37,12 +37,17 @@
       quiet — compressed type scale, no display face in headings, denser
       controls, softened grain. The admin should disappear into the task. %>
   <body class="ledger-admin bg-base-100 text-base-content font-body antialiased min-h-screen">
-    <%# The order-sound controller is mounted on the shell rather than on
-        either toggle: there are two toggles, they live in different corners of
-        the page (drawer and top bar), and they are two views of one preference
-        that must never disagree. It is also where the poller's arrival event
-        is caught — the poller sits inside this element, so the event reaches
-        here on its way to the window. %>
+    <%# The order-sound controller is mounted on the shell, and deliberately not
+        on its control. The control is one field on the settings page; the
+        chime has to answer an order arriving on any owner page, and the orders
+        board — the page this whole feature is for — carries no control at all.
+        Mounting here is what makes the two independent: the controller
+        connects on every owner page and reads the preference out of
+        localStorage, whether or not anything on the page can show it.
+
+        It is also where the poller's arrival event is caught — the poller sits
+        inside this element, so the event reaches here on its way to the
+        window. %>
     <div class="drawer lg:drawer-open"
          data-controller="order-sound"
          data-action="order-notifications:new-orders@window->order-sound#announce">
@@ -60,14 +65,8 @@
               tally nobody can see without opening a drawer is not a tally. The
               same badge, on the one piece of chrome a phone always shows. %>
           <% if @restaurant&.persisted? %>
-            <%# Icon only here — the top bar has no room for a word, so each
-                face carries its label to the accessibility tree instead. %>
-            <%= render "owner/shared/sound_toggle",
-                       id: Owner::OrdersHelper::SOUND_TOGGLE_IDS[:mobile],
-                       class_name: "nav-item sound-toggle ml-auto px-3",
-                       label_class: "sr-only" %>
             <%= link_to owner_restaurant_orders_path(@restaurant),
-                  class: "nav-item px-3",
+                  class: "nav-item ml-auto px-3",
                   aria: { label: t("owner.restaurants.orders") } do %>
               <%= icon "receipt", class: "size-4 shrink-0" %>
               <%= render "owner/orders/badge",

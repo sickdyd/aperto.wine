@@ -1,6 +1,8 @@
-<%# The order-sound control, rendered wherever the pending badge is: the
-    sidebar, and the mobile top bar, which is the only one of the two a phone
-    shows without opening the drawer. Same reasoning, same pair of ids.
+<%# The order-sound control. One instance, on the restaurant settings page —
+    it is a per-device preference, set once and then left alone, not a reading
+    that has to be visible from wherever you happen to be standing. The chime
+    itself does not depend on this partial being rendered: order_sound_controller
+    is mounted on the owner shell and announces on every page of it.
 
     All three faces are in the markup at once and the stylesheet shows one of
     them, keyed off data-sound-state. The state is written by

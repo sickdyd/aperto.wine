@@ -394,6 +394,8 @@ it:
       new_order: "Nuovo ordine"
       new_order_detail: "Ordine #%{id} — %{table}"
       sound:
+        section_title: "Suono degli ordini"
+        device_hint: "Ricordato solo da questo dispositivo — non dal tuo account né dal ristorante. Ogni telefono, tablet e computer risponde per conto suo: attivalo dove vuoi sentire arrivare i nuovi ordini."
         enabled: "Suono attivo"
         disabled: "Suono spento"
         blocked: "Consenti suono"

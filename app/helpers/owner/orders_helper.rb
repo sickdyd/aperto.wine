@@ -7,11 +7,17 @@ module Owner
     # quietly stale instead of failing.
     BADGE_IDS = { sidebar: "owner-orders-badge", mobile: "owner-orders-badge-mobile" }.freeze
 
-    # The order-sound toggle sits beside the badge in both places, for the same
-    # reason: a control only reachable behind a drawer is not much of a control
-    # on the floor. Named here so the system tests address the same two ids the
-    # shell renders.
-    SOUND_TOGGLE_IDS = { sidebar: "owner-order-sound", mobile: "owner-order-sound-mobile" }.freeze
+    # The order-sound control, and there is only one of it: it lives on the
+    # restaurant settings page (owner/restaurants/edit), not in the chrome. The
+    # badge is a reading — it has to be visible from wherever you are, hence a
+    # pair. This is a preference, set once per device and then left alone, so it
+    # belongs with the other settings rather than in the column you navigate by.
+    #
+    # Nothing about the chime depends on this element existing: the controller
+    # is mounted on the shell and announces on every owner page, including all
+    # the ones that no longer carry a control. Named here anyway, because the
+    # system tests address the id the settings page renders.
+    SOUND_TOGGLE_ID = "owner-order-sound"
 
     # The tally on the Orders entry: what is still waiting on the owner, not how
     # much has been sold. Re-read on every owner page render and restated by the
