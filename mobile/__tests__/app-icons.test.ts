@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, statSync } from "fs";
 import { join } from "path";
 import { inflateSync } from "zlib";
 
@@ -172,6 +172,44 @@ describe("app icons", () => {
 
   it("ships a 196x196 favicon", () => {
     expect(readPng("favicon.png")).toEqual({ width: 196, height: 196, colorType: RGB });
+  });
+
+  /**
+   * Nothing else in the repo watches how big these files are.
+   * `npm run check:bundle` budgets the assets Metro bundles, and no app icon
+   * has ever been one of them: they are named only in `app.config.js`, which
+   * Expo reads at prebuild to copy them into the native projects, so they never
+   * enter the module graph Metro walks. That is structural, not an oversight —
+   * tightening the bundle budget would still never see them, and this check is
+   * not redundant with it.
+   *
+   * It guards a regression that already happened: `icon.png` was committed at
+   * 799,005 bytes, a full-resolution export nobody noticed, until it was
+   * regenerated from vector at 22,128. Every byte here ships in the binary and
+   * in the case of the favicon on every web page load.
+   *
+   * Each ceiling is roughly double what is committed, rounded up to a whole KiB.
+   * That is deliberately loose: re-running `script/build_brand_icons.py` after
+   * tweaking the mark moves these by a few percent, and a gate that goes red on
+   * an honest re-render is a gate someone deletes. Doubling still catches the
+   * order-of-magnitude case by a factor of sixteen. Raise a number here only
+   * alongside a reason the art genuinely needs the bytes.
+   */
+  it("keeps every icon far below the size an accidental full-res export would take", () => {
+    const KiB = 1024;
+    const CEILINGS: Record<string, number> = {
+      "icon.png": 48 * KiB, //                    22,128 committed
+      "splash-icon.png": 88 * KiB, //             43,441
+      "android-icon-foreground.png": 36 * KiB, // 17,381
+      "android-icon-monochrome.png": 28 * KiB, // 12,623
+      "favicon.png": 8 * KiB, //                   3,623
+      "notification-icon.png": 4 * KiB, //         1,596
+    };
+
+    const oversize = Object.entries(CEILINGS)
+      .map(([name, ceiling]) => ({ name, bytes: statSync(join(IMAGES, name)).size, ceiling }))
+      .filter((file) => file.bytes > file.ceiling);
+    expect(oversize).toEqual([]);
   });
 });
 
