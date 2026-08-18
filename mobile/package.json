@@ -72,6 +72,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest",
+    "check:bundle": "node scripts/check-bundle.mjs",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "audit": "node scripts/audit.js",

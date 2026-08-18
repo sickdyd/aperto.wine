@@ -124,6 +124,13 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # The source-level guard in __tests__/fonts.test.ts only reads the root
+      # layout's import statements. This exports a real bundle and asserts on
+      # what actually shipped, which is the only thing that catches a font
+      # arriving from a dependency or from a module nothing is scanning.
+      - name: Check bundle contents
+        run: npm run check:bundle
+
       # Last, not first: this step is the one most likely to go red for reasons
       # that have nothing to do with the PR — a fresh advisory upstream — and a
       # step that fails stops the job. Running it after the build signals means
