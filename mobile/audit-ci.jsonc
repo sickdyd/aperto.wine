@@ -1,0 +1,73 @@
+// Dependency-vulnerability gate for the Expo client, run in CI (the `mobile`
+// job in .github/workflows/ci.yml) and on commit via lefthook.
+//
+// Why not plain `npm audit`: npm has no way to acknowledge an advisory you have
+// triaged and cannot act on (npm/cli#8886 is still open), so the only lever it
+// offers is turning the whole check off. audit-ci keeps the check on and moves
+// exactly the triaged advisories out of the way, which is what lets this gate
+// stay red-means-red.
+//
+// So the gate is `npm run audit`, not `npm audit`. Running the latter directly
+// still prints those three and still exits non-zero; that is expected and is
+// not the gate failing.
+{
+  // Matches the Rails side (`npm audit --audit-level=moderate` at the repo
+  // root). Anything at moderate or above that is not allowlisted below fails.
+  "moderate": true,
+
+  // Audit the whole tree, devDependencies included. Expo's build toolchain is
+  // all devDependency-shaped from npm's point of view, and a compromised
+  // bundler is still a compromise — it just lands on a developer machine and in
+  // the bundle it produces rather than at runtime.
+  "skip-dev": false,
+
+  // ---------------------------------------------------------------------
+  // ALLOWLIST
+  //
+  // Every entry is a GitHub advisory ID that has been triaged and accepted.
+  // Rules for adding one:
+  //
+  //   1. Say which package it is in and how it reaches us.
+  //   2. Say why it is not exploitable *for this app*, not why it is
+  //      inconvenient to fix.
+  //   3. Say what removes it, so a future reader knows when to delete the
+  //      entry instead of guessing.
+  //
+  // Nothing here expires on its own: re-check the list whenever the Expo SDK is
+  // bumped, and delete any entry `npm audit` no longer reports.
+  // ---------------------------------------------------------------------
+  "allowlist": [
+    // image-size <= 2.0.2 — infinite loops in the ICNS parser (w3rx) and in the
+    // JXL/HEIF parsers (5p2g). Denial of service on whatever process parses the
+    // image.
+    //
+    // Reaches us only as metro's image dimension probe:
+    //   expo > @expo/metro-config > @expo/metro > metro > image-size
+    // That runs on a developer machine (or a CI/EAS builder) while bundling, on
+    // image assets that are already in this repository. It is not in the
+    // shipped JS bundle and never sees an image supplied by a diner.
+    //
+    // Not fixable without regressing: `npm audit fix --force` "resolves" both by
+    // installing expo@53 — four SDKs back from the 57 this app is on.
+    //
+    // Remove when: a metro release depends on image-size >= 2.0.3 and the Expo
+    // SDK we are on picks it up.
+    "GHSA-w3rx-r6r6-pgpr",
+    "GHSA-5p2g-fcmc-qvqq",
+
+    // uuid < 11.1.1 — v3/v5/v6 write past the end of a caller-supplied `buf`
+    // without a bounds check.
+    //
+    // Reaches us only through Expo's iOS project writer:
+    //   expo > @expo/config-plugins > xcode > uuid
+    // xcode generates the .pbxproj during `expo prebuild`. It calls uuid to mint
+    // project object ids and passes no `buf`, so the vulnerable branch is not
+    // reachable at all. Build-time only, and absent from the shipped bundle.
+    //
+    // Not fixable without regressing: same expo@53 downgrade as above.
+    //
+    // Remove when: xcode depends on uuid >= 11.1.1 (or @expo/config-plugins
+    // stops depending on xcode).
+    "GHSA-w5hq-g745-h8pq"
+  ]
+}

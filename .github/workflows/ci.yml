@@ -124,6 +124,19 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # Last, not first: this step is the one most likely to go red for reasons
+      # that have nothing to do with the PR — a fresh advisory upstream — and a
+      # step that fails stops the job. Running it after the build signals means
+      # a PR that trips it still reports whether it typechecks and passes.
+      #
+      # `npm audit` on its own cannot be used: it fails today on three
+      # advisories in Expo's own build toolchain that have no non-regressing
+      # fix, and npm offers no way to acknowledge one (npm/cli#8886). audit-ci
+      # keeps the check on and moves only those three aside — see
+      # mobile/audit-ci.jsonc, which carries the justification for each.
+      - name: Scan for security vulnerabilities in the Expo client's dependencies
+        run: npm run audit
+
   test:
     runs-on: ubuntu-latest
 
