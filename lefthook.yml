@@ -35,9 +35,26 @@ pre-commit:
 
     npm-audit:
       tags: security
-      # Scan npm dependencies for known vulnerabilities.
+      # Scan the Rails app's npm dependencies for known vulnerabilities.
+      #
+      # This glob is deliberately root-only: a bare `package.json` pattern does
+      # not match `mobile/package.json`, and widening it would run *this* audit
+      # (repo root, Rails dependencies) against a change to the Expo client's
+      # lockfile — the wrong tree, and still no gate on the right one. The Expo
+      # client gets its own command below instead.
       glob: "{package.json,package-lock.json}"
       run: npm audit --audit-level=moderate
+
+    mobile-npm-audit:
+      tags: security
+      # Same scan for the Expo client, which has its own tree and its own
+      # lockfile. Not plain `npm audit`: three advisories in Expo's build
+      # toolchain have no non-regressing fix and npm cannot acknowledge an
+      # advisory (npm/cli#8886), so the gate runs through audit-ci with the
+      # justified allowlist in mobile/audit-ci.jsonc.
+      root: "mobile/"
+      glob: "mobile/{package.json,package-lock.json}"
+      run: npm run audit
 
 # Unit + integration tests are heavier than the lint/security scans, so they run
 # on push rather than on every commit. System tests (bin/test --system) spin up a
