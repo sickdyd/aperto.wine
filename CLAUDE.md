@@ -9,6 +9,8 @@ aperto.wine is a Rails 8.1 app that turns a restaurant's wine cellar into a QR-a
 - **Diners** scan a per-table QR, browse the menu on a phone, build a cart, and place an order — all **unauthenticated**.
 - **Restaurant owners** manage restaurants, wines, wine lists, tables/QRs, and incoming orders from the `Owner::` admin area.
 
+`mobile/` is an Expo/React Native client for the same product, scaffolded but **not yet connected**: there is no `api/v1` namespace, so nothing in it talks to this app yet. See "The Expo client" below before touching it.
+
 `PRODUCT.md` holds the product brief and the "Sommelier's Ledger" brand/design direction (print typography, oxblood ramp, zero radius, no shadows). Read it before touching UI. `docs/ASSETS.md` is the reference for icons/SVGs — check it before hunting for an asset. `docs/superpowers/{specs,plans}/` holds per-feature design docs.
 
 ## Commands
@@ -35,6 +37,17 @@ bin/rails tailwindcss:build   # rebuild app/assets/builds/tailwind.css after CSS
 bin/rails generate rails_icons:sync --library=phosphor --force   # restore gitignored icon SVGs
 bin/rails wine_references:import[path/to.csv]                    # X-Wines catalogue import
 bin/rails db:seed             # loads db/seeds/demo.rb in development (demo owner/admin, password "password")
+```
+
+The Expo client has its own toolchain; none of the above reaches it.
+
+```sh
+cd mobile
+npm start                     # API URL derived from this machine's LAN IP on :4010
+npm test                      # jest-expo
+npm run typecheck             # tsc --noEmit
+npm run check:bundle          # real `expo export`, asserts what actually ships
+npm run audit                 # dependency gate (see below — not plain `npm audit`)
 ```
 
 Git hooks are managed by lefthook (`bundle exec lefthook install`): lint + security scans on commit, `bin/test` on push. CI (`.github/workflows/ci.yml`) additionally builds the production Docker image and runs system tests.
@@ -108,6 +121,31 @@ The browser holds the state, not the server. It sends back the window of order i
 
 Consequences elsewhere: `owner/shared/_flash` now renders its `.toast-stack` **unconditionally** (it is the append target for arriving orders, and a stream with no target is dropped silently), and the pending badge is rendered twice per page — sidebar and mobile top bar, ids in `Owner::OrdersHelper::BADGE_IDS` — because the sidebar is behind a drawer on a phone.
 
+**The chime is a separate concern from the poll.** `order_sound_controller.js` announces arrivals audibly, using the poller's *existing* window of known ids rather than a second notion of newness — `rememberWindow` returns the ids absent from the window the tab was holding and dispatches `order-notifications:new-orders`. The tone is synthesised (two oscillators, G4→D5), so no audio asset exists. The preference is per **device** in `localStorage`, not per account: the tablet at the pass wants sound and the same owner's laptop at 23:00 does not.
+
+Three states, not two — `off` / `on` / `blocked` — because "the owner switched sound on" and "this device can be heard" are separate facts. A browser grants audio only after a gesture, so `on` requires the preference *and* `audioContext.state === "running"`; a toggle reading ON over a silent room is the failure this design exists to prevent. On iOS the hardware ringer switch mutes Web Audio but not `<audio>`, so `releaseRingerSwitch()` declares `navigator.audioSession.type = "playback"` where that exists and plays a generated 444-byte silent clip through a media element where it does not. **It alerts a visible dashboard, not a backgrounded one** — the poller does not poll a hidden tab, by design.
+
+### The Expo client (`mobile/`)
+
+Expo SDK 57 on the stack `../jeero` settled on — expo-router, NativeWind, TanStack Query, zustand, react-hook-form + zod, i18next, Sentry, EAS, jest-expo, Maestro. It builds, bundles, typechecks and tests, and **does nothing else yet**: this app is entirely HTML controllers on session-cookie auth, so `src/services/api.ts` is written against the contract jeero's `Api::V1` established (bearer token, `X-Locale`, a `{ error: { code, message } }` envelope) for a server that does not exist.
+
+**The QR handoff needs no change to any QR code.** A table tent encodes `https://aperto.wine/t/TOKEN`, and universal links key off exactly that: app installed, the OS opens the app; app absent, the browser opens the web menu. Three things must agree, and nothing fails loudly when they drift — the link merely stops opening the app, on codes already glued to tables:
+
+| Where | What |
+|---|---|
+| `config/routes.rb` | `get "t/:table_token"` under `scope "(:locale)"` |
+| `mobile/app.config.js` | `associatedDomains` + `intentFilters` claiming `/t/` |
+| `mobile/src/app/t/[token].tsx` | the expo-router file that renders it |
+
+`mobile/__tests__/universal-links.test.ts` asserts the second against the first. **Still missing on the server**: `/.well-known/apple-app-site-association` and `assetlinks.json`, which need an Apple Team ID and an Android signing cert. iOS caches the AASA at install, so a placeholder needs an App Store update to correct — absent beats wrong.
+
+Two gates guard it, both of which fail the build:
+
+- **`npm run check:bundle`** runs a real `expo export` and asserts the shipped bundle contains exactly the typefaces `_layout.tsx` imports, plus a byte budget on other Metro-bundled assets. It exists because a source-level check cannot see what Metro actually walks.
+- **`npm run audit`** is `mobile/scripts/audit.js`, not `npm audit`. Three advisories in Expo's own build-time tooling cannot be fixed at SDK 57 (npm's only remedy is downgrading to `expo@53`), so they are allowlisted in `audit-allowlist.jsonc`, each with a `Remove when:` condition. The script **fails closed** on anything it cannot fully parse — an earlier `audit-ci` implementation failed *open* on four of six degraded inputs, which is worse than no gate because the green check asserted safety nobody was checking.
+
+`mobile/tailwind.config.js` is a hand-port of the ledger tokens, not an import: the web is on Tailwind 4 and NativeWind 4 pins Tailwind 3.4, so one config cannot serve both. Change a token on the web and change it here too.
+
 ### Services
 
 Plain objects with a single `.call`: `PlaceOrder`, `QrSvgRenderer`, `Geocoding`, `WineReferences::{Importer,Lookup,PythonList}`. `WineReference` is a read-only global catalogue (public-domain X-Wines, CC0) powering the owner's wine type-ahead — it belongs to no restaurant. Address autocomplete proxies Photon (OpenStreetMap) via `Owner::AddressSuggestionsController`; `Restaurant` geocodes as a best-effort `after_validation` fallback that never blocks a save.
@@ -127,6 +165,10 @@ Hotwire (Turbo + Stimulus via importmap) — no build step for JS. Tailwind 4 + 
 - **Duplicate test class names.** The same class name in `test/models/` and `test/integration/` makes the whole suite fail to boot. `test/system/` is exempt.
 - **No network in tests.** WebMock is on with `allow_localhost: true`; `test_helper.rb` stubs Photon to return nothing by default. Declare `stub_photon(...)` in tests that need suggestions.
 - **System tests are retried twice** (`minitest-retry`, system tests only) to absorb Selenium/Turbo nondeterminism. A real regression fails all three attempts; local flakiness is usually a chromedriver/Chrome version mismatch, not a regression.
+- **Brakeman scans `mobile/node_modules`** unless told not to. React Native vendors CocoaPods helper scripts in Ruby that shell out with interpolated paths, which reads as 28 command-injection warnings in third-party build tooling that never runs on a request path. `config/brakeman.yml` skips `mobile/`; without it the report is noise, and a Brakeman nobody reads is worse than no Brakeman.
+- **`expo lint` silently generates an untracked `eslint.config.js`** on first run, while `npx eslint` refuses outright because ESLint 9 requires a config and none is committed. Two people running "the linter" therefore get contradictory results and both are right. Nothing runs lint in CI, so the `lint` script is currently decorative.
+- **App icons never enter the Metro asset graph.** They are referenced only from `app.config.js` and consumed by Expo at prebuild into the native projects, so `check:bundle` is structurally blind to them — which is why `mobile/__tests__/app-icons.test.ts` carries its own per-file byte ceilings. `icon.png` was 799,005 bytes before it was regenerated from vector at 22,128, and nothing but that test stops it going back.
+- **The PWA manifest has no route.** `app/views/pwa/manifest.json.erb` exists and is now valid JSON, but `config/routes.rb` never uncommented the Rails 8 scaffold routes and no layout carries a `<link rel="manifest">`. Nothing has ever requested it, so the site is not installable on any platform — a prerequisite for anything PWA-shaped, including web push.
 - **`gssencmode: disable`** in `database.yml` is load-bearing on macOS — libpq's Kerberos calls aren't fork-safe and segfault under parallel tests.
 
 ## Deployment
