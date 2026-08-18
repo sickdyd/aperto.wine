@@ -9,6 +9,11 @@ import { join } from "path";
 // Both import forms hand `useFonts` the identical asset id at runtime, so no
 // runtime assertion can tell them apart — the difference exists only in the
 // module graph Metro walks. Hence the checks on the import statement itself.
+//
+// What that cannot catch: this reads _layout.tsx and nothing else. A font
+// imported from any other component, or pulled in transitively by a dependency,
+// grows the bundle while every assertion below stays green. Only a real export
+// would see those, and the source-level check was judged the better trade.
 const FACES = [
   ["@expo-google-fonts/instrument-serif/400Regular", "InstrumentSerif_400Regular"],
   ["@expo-google-fonts/eb-garamond/400Regular", "EBGaramond_400Regular"],

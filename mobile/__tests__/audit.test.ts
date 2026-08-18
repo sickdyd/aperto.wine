@@ -186,6 +186,22 @@ describe("readConfig", () => {
     });
   });
 
+  // Being unable to read the allowlist is the gate failing just as much as
+  // being unable to read the audit is, so it reports itself the same framed way
+  // rather than surfacing a raw SyntaxError and a stack trace.
+  it("refuses a malformed allowlist without spilling a stack trace", () => {
+    withConfig('{ "failOnSeverity": "moderate", "allowlist": [ }', (file) => {
+      expect(() => readConfig(file)).toThrow(AuditGateError);
+      expect(() => readConfig(file)).toThrow(/could not read audit-allowlist\.jsonc/);
+    });
+  });
+
+  it("refuses an allowlist that is not there at all", () => {
+    expect(() => readConfig(path.join(__dirname, "no-such-allowlist.jsonc"))).toThrow(
+      AuditGateError,
+    );
+  });
+
   it("strips whole-line comments without touching the JSON", () => {
     withConfig(
       '// a note\n{\n  // another\n  "failOnSeverity": "high",\n  "allowlist": []\n}\n',

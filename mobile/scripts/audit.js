@@ -43,13 +43,21 @@ class AuditGateError extends Error {}
  * @param {string} file
  */
 function readConfig(file) {
-  const source = fs.readFileSync(file, "utf8");
-  const config = JSON.parse(
-    source
-      .split("\n")
-      .filter((line) => !/^\s*\/\//.test(line))
-      .join("\n"),
-  );
+  // Reading the allowlist is as much a way for this to fail as reading the
+  // audit is — a missing or malformed file is still the gate being unable to
+  // reach a verdict, so it reports that rather than surfacing a raw stack.
+  let config;
+  try {
+    const source = fs.readFileSync(file, "utf8");
+    config = JSON.parse(
+      source
+        .split("\n")
+        .filter((line) => !/^\s*\/\//.test(line))
+        .join("\n"),
+    );
+  } catch (error) {
+    throw new AuditGateError(`could not read ${path.basename(file)}: ${error.message}`);
+  }
 
   if (!SEVERITIES.includes(config.failOnSeverity)) {
     throw new AuditGateError(
