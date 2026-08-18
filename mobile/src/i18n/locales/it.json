@@ -1,23 +1,23 @@
 {
   "common": {
     "appName": "aperto.wine",
-    "retry": "Riprova",
-    "cancel": "Annulla",
-    "close": "Chiudi",
-    "loading": "Caricamento…"
+    "loading": "Caricamento…",
+    "back": "Indietro"
   },
   "errors": {
     "network": "Nessuna connessione. Controlla la rete e riprova.",
     "server": "Qualcosa è andato storto. Riprova tra poco.",
-    "notFound": "Non trovato.",
-    "unauthorized": "Sessione scaduta. Accedi di nuovo.",
-    "apiUnavailable": "Il servizio non è ancora disponibile."
+    "notFound": "Non trovato."
   },
   "table": {
     "title": "Il tuo tavolo",
     "scanning": "Inquadra il codice QR sul tavolo",
-    "invalidToken": "Questo codice non è più valido. Chiedi al personale.",
-    "openingList": "Apertura della carta dei vini…"
+    "openingList": "Apertura della carta dei vini…",
+    "permissionTitle": "Accesso alla fotocamera",
+    "permissionBody": "Serve la fotocamera per leggere il codice QR sul tuo tavolo. Non viene salvata nessuna immagine.",
+    "permissionGrant": "Consenti",
+    "permissionDeniedBody": "L'accesso alla fotocamera è disattivato. Puoi riattivarlo dalle impostazioni del telefono.",
+    "permissionOpenSettings": "Apri impostazioni"
   },
   "home": {
     "title": "La carta dei vini",

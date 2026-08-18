@@ -1,3 +1,6 @@
+import * as fs from "fs";
+import * as path from "path";
+
 import { resources, resolveLocale, DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/i18n";
 
 /** Every leaf key path in an object, as dot-joined strings. */
@@ -26,6 +29,32 @@ describe("locale parity", () => {
       const flat = JSON.stringify(resources[locale].translation);
       expect(flat).not.toContain('""');
     }
+  });
+});
+
+describe("unused keys", () => {
+  // The Rails suite fails on keys defined but never referenced (i18n-tasks, see
+  // config/i18n-tasks.yml). Dead copy is worse here than there: a translator is
+  // paid to render strings that ship to nobody, and a key that looks live is a
+  // key nobody deletes.
+  function sourceFiles(dir: string): string[] {
+    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) return sourceFiles(full);
+      return /\.tsx?$/.test(entry.name) ? [full] : [];
+    });
+  }
+
+  it("references every key it defines", () => {
+    const src = path.join(__dirname, "..", "src");
+    const corpus = sourceFiles(src)
+      .map((file) => fs.readFileSync(file, "utf8"))
+      .join("\n");
+
+    const defined = keyPaths(resources[DEFAULT_LOCALE].translation);
+    const unused = defined.filter((key) => !corpus.includes(`"${key}"`));
+
+    expect(unused).toEqual([]);
   });
 });
 
