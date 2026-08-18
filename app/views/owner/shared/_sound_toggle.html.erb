@@ -1,0 +1,41 @@
+<%# The order-sound control, rendered wherever the pending badge is: the
+    sidebar, and the mobile top bar, which is the only one of the two a phone
+    shows without opening the drawer. Same reasoning, same pair of ids.
+
+    All three faces are in the markup at once and the stylesheet shows one of
+    them, keyed off data-sound-state. The state is written by
+    order_sound_controller.js, which never builds markup or assembles a class
+    name — Tailwind only emits rules for literal strings it can find in these
+    files, so anything stitched together at runtime would silently get no CSS.
+
+    display:none takes the two inactive faces out of the accessibility tree as
+    well as out of the layout, so the button's accessible name is whichever one
+    is showing. That is deliberate: it is the state the label has to carry,
+    which is why aria-pressed alone is not enough here. There are three states
+    and aria-pressed only has two useful values — "blocked" (the owner asked
+    for sound, the browser has not granted this document audio yet) reports
+    aria-pressed="false", because no sound would in fact be made, and says so
+    in words instead.
+
+    `class_name` and `label_class` are passed whole from the call sites rather
+    than built here, for the same Tailwind reason. %>
+<button type="button"
+        id="<%= id %>"
+        class="<%= class_name %>"
+        data-order-sound-target="toggle"
+        data-action="order-sound#toggle"
+        data-sound-state="off"
+        aria-pressed="false">
+  <span class="sound-face sound-face-on">
+    <%= icon "speaker-simple-high", class: "size-4 shrink-0" %>
+    <span class="<%= label_class %>"><%= t("owner.orders.sound.enabled") %></span>
+  </span>
+  <span class="sound-face sound-face-off">
+    <%= icon "speaker-simple-slash", class: "size-4 shrink-0" %>
+    <span class="<%= label_class %>"><%= t("owner.orders.sound.disabled") %></span>
+  </span>
+  <span class="sound-face sound-face-blocked">
+    <%= icon "speaker-simple-x", class: "size-4 shrink-0" %>
+    <span class="<%= label_class %>"><%= t("owner.orders.sound.blocked") %></span>
+  </span>
+</button>

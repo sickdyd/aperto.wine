@@ -393,6 +393,10 @@ it:
       empty_filtered_description: "Nessun ordine con questo stato. Prova un altro filtro."
       new_order: "Nuovo ordine"
       new_order_detail: "Ordine #%{id} — %{table}"
+      sound:
+        enabled: "Suono attivo"
+        disabled: "Suono spento"
+        blocked: "Consenti suono"
       pending_count:
         one: "%{count} ordine in attesa di approvazione"
         other: "%{count} ordini in attesa di approvazione"

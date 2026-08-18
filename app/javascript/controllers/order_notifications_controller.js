@@ -67,12 +67,22 @@ export default class extends Controller {
         credentials: "same-origin"
       })
 
+      let arrived = []
+
       if (response.ok) {
-        this.rememberWindow(response.headers.get(WINDOW_HEADER))
+        arrived = this.rememberWindow(response.headers.get(WINDOW_HEADER))
       }
       // 204 is the server saying nothing has moved; only a 200 carries markup.
       if (response.status === 200) {
         Turbo.renderStreamMessage(await response.text())
+      }
+      // Announced after the stream has been applied, so the sound and the
+      // toast it belongs to land together. The ids are carried on the event
+      // even though the only listener today just counts them: a subscriber
+      // that has to know *which* orders arrived should not have to reopen
+      // this exchange to find out.
+      if (arrived.length > 0) {
+        this.dispatch("new-orders", { detail: { ids: arrived } })
       }
     } catch {
       // See the note above: a dropped poll is not news.
@@ -91,10 +101,20 @@ export default class extends Controller {
   // An empty header is a restaurant with no orders at all, which is a real
   // answer; a missing one means the response never got that far, so the window
   // this tab is holding stands.
+  //
+  // Returns the ids that were not in the window this tab was holding — the
+  // same subtraction the server does against the `known` list this tab sent
+  // it, over the same two sets, so "new" means one thing on both sides.
+  // Anything that wants to react to an arriving order (the chime, today) hangs
+  // off this rather than off a second notion of newness that could drift.
   rememberWindow(header) {
-    if (header === null) return
+    if (header === null) return []
 
-    this.known = header.split(",").filter(Boolean).map(Number)
+    const current = header.split(",").filter(Boolean).map(Number)
+    const arrived = current.filter((id) => !this.known.includes(id))
+
+    this.known = current
+    return arrived
   }
 
   // Read back off the page rather than tracked here, so a badge replaced by any

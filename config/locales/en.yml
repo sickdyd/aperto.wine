@@ -396,6 +396,15 @@ en:
       # itself, which is also the link to it.
       new_order: "New order"
       new_order_detail: "Order #%{id} — %{table}"
+      # The order-sound control in the owner shell. Three labels, not two: the
+      # browser will not let a page make a sound until it has been interacted
+      # with, so "the owner switched sound on" and "this device will actually
+      # be heard" are separate facts. `blocked` is the second one failing while
+      # the first holds, and it is phrased as the action that fixes it.
+      sound:
+        enabled: "Sound on"
+        disabled: "Sound off"
+        blocked: "Allow sound"
       # Read out in place of the sidebar badge's bare figure, which says
       # nothing on its own beside a nav label.
       pending_count:
