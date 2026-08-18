@@ -35,6 +35,10 @@ module.exports = {
       backgroundColor: "#F6F2E9", // paper, not white
     },
 
+    web: {
+      favicon: "./assets/images/favicon.png",
+    },
+
     ios: {
       supportsTablet: false,
       bundleIdentifier,
@@ -55,6 +59,13 @@ module.exports = {
       edgeToEdgeEnabled: true,
       adaptiveIcon: {
         foregroundImage: "./assets/images/android-icon-foreground.png",
+        // Android 13+ themed icons: the same mark as one flat colour on
+        // transparency, which the launcher re-tints from the wallpaper. Without
+        // it a themed home screen falls back to shrinking the full-colour icon
+        // into a grey circle.
+        monochromeImage: "./assets/images/android-icon-monochrome.png",
+        // A flat token rather than a background PNG: the ground is one colour,
+        // and `backgroundImage` would only be a 1024² image of it.
         backgroundColor: "#F6F2E9",
       },
       // Android's App Links, the counterpart to iOS associatedDomains.
@@ -94,11 +105,11 @@ module.exports = {
       [
         "expo-notifications",
         {
-          // No `icon:` yet. Android's notification icon must be a white
-          // silhouette on transparency; pointing this at the full-colour app
-          // icon renders a solid white square on the status bar, which looks
-          // like a bug rather than a placeholder. Add the asset and the key
-          // together, not separately.
+          // Android reads nothing but the alpha channel of this file, so it is
+          // the mark as a 96x96 white-on-transparent silhouette, not the app
+          // icon. Pointing this at the full-colour icon is what renders the
+          // notorious solid white square on the status bar.
+          icon: "./assets/images/notification-icon.png",
           color: "#6E1F2A",
         },
       ],
