@@ -131,9 +131,14 @@ jobs:
       #
       # `npm audit` on its own cannot be used: it fails today on three
       # advisories in Expo's own build toolchain that have no non-regressing
-      # fix, and npm offers no way to acknowledge one (npm/cli#8886). audit-ci
-      # keeps the check on and moves only those three aside — see
-      # mobile/audit-ci.jsonc, which carries the justification for each.
+      # fix, and npm offers no way to acknowledge one (npm/cli#8886).
+      # mobile/scripts/audit.js keeps the check on and moves only those three
+      # aside — see mobile/audit-allowlist.jsonc for the justification for each.
+      #
+      # It is hand-rolled because the off-the-shelf option, audit-ci, fails
+      # *open*: given a report in a schema it does not know, or an npm that
+      # errored out, it prints "Passed npm security audit" and exits 0. This
+      # step going green has to mean something.
       - name: Scan for security vulnerabilities in the Expo client's dependencies
         run: npm run audit
 
