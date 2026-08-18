@@ -1175,6 +1175,37 @@
     border-left-color: var(--color-ox-3);
   }
 
+  /* The order-sound control: a nav row that reports one of three states.
+     "off", "on", and — the one that has to exist — "blocked", meaning the
+     owner asked for sound and the browser has not yet granted this document
+     audio. All three faces are in the markup and this picks one, so the
+     controller writes a single attribute and never builds markup or a class
+     name (see owner/shared/_sound_toggle).
+
+     display: contents rather than a flex wrapper: the icon and its label
+     become direct children of .nav-item, so they take its gap and alignment
+     exactly as the anchors above them do. */
+  .sound-toggle {
+    text-align: left;
+  }
+
+  .sound-toggle .sound-face {
+    display: none;
+  }
+
+  .sound-toggle[data-sound-state="on"] .sound-face-on,
+  .sound-toggle[data-sound-state="off"] .sound-face-off,
+  .sound-toggle[data-sound-state="blocked"] .sound-face-blocked {
+    display: contents;
+  }
+
+  /* Blocked is the state that needs answering, so it carries ink rather than
+     the quiet grey of a row at rest. Not an alarm — nothing is broken, the
+     dashboard just has not been touched yet. */
+  .sound-toggle[data-sound-state="blocked"] {
+    color: var(--color-ox-2);
+  }
+
   /* A struck-through annotation tag — sold out, archived, draft. */
   .tag-out {
     @apply inline-flex shrink-0 items-center;

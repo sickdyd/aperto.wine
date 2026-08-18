@@ -7,6 +7,12 @@ module Owner
     # quietly stale instead of failing.
     BADGE_IDS = { sidebar: "owner-orders-badge", mobile: "owner-orders-badge-mobile" }.freeze
 
+    # The order-sound toggle sits beside the badge in both places, for the same
+    # reason: a control only reachable behind a drawer is not much of a control
+    # on the floor. Named here so the system tests address the same two ids the
+    # shell renders.
+    SOUND_TOGGLE_IDS = { sidebar: "owner-order-sound", mobile: "owner-order-sound-mobile" }.freeze
+
     # The tally on the Orders entry: what is still waiting on the owner, not how
     # much has been sold. Re-read on every owner page render and restated by the
     # poller, so a badge is never older than one poll.
