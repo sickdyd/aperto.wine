@@ -9,9 +9,13 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "expo-font";
-import { InstrumentSerif_400Regular } from "@expo-google-fonts/instrument-serif";
-import { EBGaramond_400Regular, EBGaramond_500Medium } from "@expo-google-fonts/eb-garamond";
-import { JetBrainsMono_400Regular } from "@expo-google-fonts/jetbrains-mono";
+// Per-weight subpaths, never the package root. Metro has no tree shaking, so
+// a root import pulls in that family's whole index — every weight and italic —
+// and ships ~5.5MB of typefaces this app can never render.
+import { InstrumentSerif_400Regular } from "@expo-google-fonts/instrument-serif/400Regular";
+import { EBGaramond_400Regular } from "@expo-google-fonts/eb-garamond/400Regular";
+import { EBGaramond_500Medium } from "@expo-google-fonts/eb-garamond/500Medium";
+import { JetBrainsMono_400Regular } from "@expo-google-fonts/jetbrains-mono/400Regular";
 
 import "@/i18n";
 import { useAuthStore } from "@/stores/auth-store";
