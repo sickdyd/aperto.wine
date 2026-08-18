@@ -8,14 +8,15 @@ require "test_helper"
 # quietly widened until it allows everything still reports green. These
 # assertions are what makes that visible.
 class MobileAuditGateTest < ActiveSupport::TestCase
-  CONFIG = Rails.root.join("mobile/audit-ci.jsonc")
+  CONFIG = Rails.root.join("mobile/audit-allowlist.jsonc")
+  SCRIPT = Rails.root.join("mobile/scripts/audit.js")
   PACKAGE = Rails.root.join("mobile/package.json")
   WORKFLOW = Rails.root.join(".github/workflows/ci.yml")
   LEFTHOOK = Rails.root.join("lefthook.yml")
 
-  # audit-ci treats a bare GitHub advisory id as "this specific finding", but a
-  # bare module name as "anything ever reported against this package". Only the
-  # former is a triage decision.
+  # A bare GitHub advisory id means "this specific finding"; a bare module name
+  # would mean "anything ever reported against this package". Only the former is
+  # a triage decision.
   ADVISORY_ID = /\AGHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}\z/
 
   setup do
@@ -29,11 +30,18 @@ class MobileAuditGateTest < ActiveSupport::TestCase
     @lefthook = YAML.safe_load_file(LEFTHOOK, aliases: true)
   end
 
-  test "the gate is declared as an npm script backed by an installed tool" do
-    assert_equal "audit-ci --config audit-ci.jsonc --report-type summary",
-      @package.dig("scripts", "audit")
-    assert @package.dig("devDependencies", "audit-ci"),
-      "the audit script is unrunnable in CI unless audit-ci is in devDependencies"
+  test "the gate is declared as an npm script backed by a committed program" do
+    assert_equal "node scripts/audit.js", @package.dig("scripts", "audit")
+    assert SCRIPT.exist?, "the audit script is wired up but not committed"
+  end
+
+  # The gate is hand-rolled rather than audit-ci precisely because audit-ci
+  # answers "passed" to an audit it cannot read. Reintroducing a dependency on
+  # it would quietly restore that behaviour; mobile/__tests__/audit.test.ts is
+  # what holds the replacement to failing closed.
+  test "the gate does not lean on a tool that fails open" do
+    refute @package.dig("devDependencies", "audit-ci"),
+      "audit-ci exits 0 on a report it cannot parse — see the comment in mobile/audit-allowlist.jsonc"
   end
 
   test "CI runs the gate for the Expo client" do
@@ -61,14 +69,8 @@ class MobileAuditGateTest < ActiveSupport::TestCase
   end
 
   test "the gate fails at moderate, matching the Rails side" do
-    assert @config["moderate"],
-      "audit-ci names its threshold as the lowest severity that fails; without this key " \
-      "the gate has been relaxed to high or above"
-  end
-
-  test "development dependencies are audited too" do
-    refute @config["skip-dev"],
-      "Expo's whole build toolchain is a devDependency — skipping dev audits nothing that matters"
+    assert_equal "moderate", @config["failOnSeverity"],
+      "the Rails side audits at moderate; the Expo client relaxing that would be a silent divergence"
   end
 
   test "every allowlist entry names one advisory rather than a whole package" do

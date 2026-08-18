@@ -57,7 +57,6 @@
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
-    "audit-ci": "7.1.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "^57.0.1",
     "jest": "^29.7.0",
@@ -75,7 +74,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
-    "audit": "audit-ci --config audit-ci.jsonc --report-type summary",
+    "audit": "node scripts/audit.js",
     "lint": "expo lint"
   },
   "private": true

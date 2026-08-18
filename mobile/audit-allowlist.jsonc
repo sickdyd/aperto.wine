@@ -1,25 +1,25 @@
-// Dependency-vulnerability gate for the Expo client, run in CI (the `mobile`
-// job in .github/workflows/ci.yml) and on commit via lefthook.
+// Dependency-vulnerability gate for the Expo client: the advisories that have
+// been triaged and accepted. Read by scripts/audit.js, which runs in CI (the
+// `mobile` job in .github/workflows/ci.yml) and on commit via lefthook.
 //
-// Why not plain `npm audit`: npm has no way to acknowledge an advisory you have
-// triaged and cannot act on (npm/cli#8886 is still open), so the only lever it
-// offers is turning the whole check off. audit-ci keeps the check on and moves
-// exactly the triaged advisories out of the way, which is what lets this gate
-// stay red-means-red.
+// Why a hand-rolled gate rather than `npm audit` or audit-ci: npm has no way to
+// acknowledge an advisory you have triaged and cannot act on (npm/cli#8886 is
+// still open), so its only lever is turning the whole check off. audit-ci adds
+// the allowlist but fails *open* — hand it a report in a schema it does not
+// know, or an npm that errored out, and it prints "Passed npm security audit"
+// and exits 0. scripts/audit.js treats every unrecognised condition as a
+// failure instead, which is what lets a green check here mean something.
 //
 // So the gate is `npm run audit`, not `npm audit`. Running the latter directly
-// still prints those three and still exits non-zero; that is expected and is
-// not the gate failing.
+// still prints the advisories below and still exits non-zero; that is expected
+// and is not the gate failing.
 {
   // Matches the Rails side (`npm audit --audit-level=moderate` at the repo
-  // root). Anything at moderate or above that is not allowlisted below fails.
-  "moderate": true,
-
-  // Audit the whole tree, devDependencies included. Expo's build toolchain is
-  // all devDependency-shaped from npm's point of view, and a compromised
-  // bundler is still a compromise — it just lands on a developer machine and in
-  // the bundle it produces rather than at runtime.
-  "skip-dev": false,
+  // root). Anything at this severity or above that is not allowlisted below
+  // fails. Dev dependencies are in scope and not configurable: Expo's build
+  // toolchain is all devDependency-shaped, so excluding them would exclude
+  // almost everything worth seeing.
+  "failOnSeverity": "moderate",
 
   // ---------------------------------------------------------------------
   // ALLOWLIST
@@ -33,8 +33,10 @@
   //   3. Say what removes it, so a future reader knows when to delete the
   //      entry instead of guessing.
   //
-  // Nothing here expires on its own: re-check the list whenever the Expo SDK is
-  // bumped, and delete any entry `npm audit` no longer reports.
+  // Nothing here expires on a date, but nothing lingers either: an entry that
+  // npm audit no longer reports fails the gate, so a fix landing upstream forces
+  // the entry out rather than leaving it to rot. That same rule is what makes an
+  // empty or unreadable audit go red instead of quietly green.
   // ---------------------------------------------------------------------
   "allowlist": [
     // image-size <= 2.0.2 — infinite loops in the ICNS parser (w3rx) and in the

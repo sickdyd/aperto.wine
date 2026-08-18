@@ -50,8 +50,8 @@ pre-commit:
       # Same scan for the Expo client, which has its own tree and its own
       # lockfile. Not plain `npm audit`: three advisories in Expo's build
       # toolchain have no non-regressing fix and npm cannot acknowledge an
-      # advisory (npm/cli#8886), so the gate runs through audit-ci with the
-      # justified allowlist in mobile/audit-ci.jsonc.
+      # advisory (npm/cli#8886), so the gate runs through mobile/scripts/audit.js
+      # with the justified allowlist in mobile/audit-allowlist.jsonc.
       root: "mobile/"
       glob: "mobile/{package.json,package-lock.json}"
       run: npm run audit
