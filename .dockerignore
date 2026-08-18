@@ -30,6 +30,12 @@
 /tmp/storage/*
 !/tmp/storage/.keep
 
+# Ignore the Expo client. Nothing in the Rails production image needs it, and
+# its node_modules is ~1GB — without this every docker build ships that to the
+# daemon as build context. The root-anchored /node_modules/ rule below does not
+# cover a nested one.
+/mobile/
+
 # Ignore assets.
 /node_modules/
 /app/assets/builds/*

@@ -1,0 +1,27 @@
+{
+  "common": {
+    "appName": "aperto.wine",
+    "loading": "Loading…",
+    "back": "Back"
+  },
+  "errors": {
+    "network": "No connection. Check your network and try again.",
+    "server": "Something went wrong. Please try again shortly.",
+    "notFound": "Not found."
+  },
+  "table": {
+    "title": "Your table",
+    "scanning": "Point the camera at the QR code on your table",
+    "openingList": "Opening the wine list…",
+    "permissionTitle": "Camera access",
+    "permissionBody": "We need the camera to read the QR code on your table. No images are stored.",
+    "permissionGrant": "Allow",
+    "permissionDeniedBody": "Camera access is turned off. You can turn it back on in your phone's settings.",
+    "permissionOpenSettings": "Open settings"
+  },
+  "home": {
+    "title": "The wine list",
+    "subtitle": "Scan the code on your table to begin.",
+    "scan": "Scan the code"
+  }
+}

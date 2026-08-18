@@ -1,0 +1,27 @@
+{
+  "common": {
+    "appName": "aperto.wine",
+    "loading": "Caricamento…",
+    "back": "Indietro"
+  },
+  "errors": {
+    "network": "Nessuna connessione. Controlla la rete e riprova.",
+    "server": "Qualcosa è andato storto. Riprova tra poco.",
+    "notFound": "Non trovato."
+  },
+  "table": {
+    "title": "Il tuo tavolo",
+    "scanning": "Inquadra il codice QR sul tavolo",
+    "openingList": "Apertura della carta dei vini…",
+    "permissionTitle": "Accesso alla fotocamera",
+    "permissionBody": "Serve la fotocamera per leggere il codice QR sul tuo tavolo. Non viene salvata nessuna immagine.",
+    "permissionGrant": "Consenti",
+    "permissionDeniedBody": "L'accesso alla fotocamera è disattivato. Puoi riattivarlo dalle impostazioni del telefono.",
+    "permissionOpenSettings": "Apri impostazioni"
+  },
+  "home": {
+    "title": "La carta dei vini",
+    "subtitle": "Scansiona il codice sul tuo tavolo per iniziare.",
+    "scan": "Scansiona il codice"
+  }
+}
