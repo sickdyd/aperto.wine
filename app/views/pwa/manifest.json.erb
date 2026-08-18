@@ -4,10 +4,11 @@
     {
       "src": "/icon.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
     },
     {
-      "src": "/icon.png",
+      "src": "/icon-maskable.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
@@ -16,7 +17,11 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": <%= t("pwa.description").to_json %>,
-  "theme_color": "red",
-  "background_color": "red"
+<%# `raw` because ERB HTML-escapes <%= even in a .json.erb template, which turns
+    to_json's quotes into &quot; and the document into invalid JSON. to_json has
+    already done the escaping that matters here — including </>/&
+    for the HTML metacharacters — so there is nothing left for ERB to protect. %>
+  "description": <%= raw t("pwa.description").to_json %>,
+  "theme_color": "#4A1219",
+  "background_color": "#F6F2E9"
 }
