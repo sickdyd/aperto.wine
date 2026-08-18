@@ -1,0 +1,18 @@
+# Maestro drives the real app on a real simulator, which is the only place the
+# universal-link handoff can actually be observed — Jest can assert the config
+# claims match the Rails routes, but not that the OS honours them.
+#
+# Run with: maestro test .maestro/table-scan-flow.yaml
+appId: wine.aperto.app.dev
+---
+- launchApp:
+    clearState: true
+
+- assertVisible: "La carta dei vini"
+
+# The deep link the OS delivers when a diner scans a table QR. Exercising it
+# this way covers the routing without needing a camera in the simulator.
+- openLink: https://aperto.wine/t/demo-table-token
+
+- assertVisible: "Il tuo tavolo"
+- assertVisible: "demo-table-token"

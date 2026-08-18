@@ -1,0 +1,12 @@
+---
+# Brakeman walks every .rb file under the app root, which now includes the Expo
+# client's node_modules — React Native and its native modules ship CocoaPods
+# helper scripts in Ruby, and those shell out to curl, tar and node with
+# interpolated paths. Brakeman reads that as 28 command-injection warnings.
+#
+# They are real shell interpolation, but in vendored third-party build tooling
+# that runs on a developer's machine during `pod install`, not in this
+# application and not on any request path. Auditing them is upstream's job;
+# leaving them in the report only trains us to ignore Brakeman output.
+:skip_files:
+  - mobile/

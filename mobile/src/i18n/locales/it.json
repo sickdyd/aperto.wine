@@ -1,0 +1,27 @@
+{
+  "common": {
+    "appName": "aperto.wine",
+    "retry": "Riprova",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "loading": "Caricamento…"
+  },
+  "errors": {
+    "network": "Nessuna connessione. Controlla la rete e riprova.",
+    "server": "Qualcosa è andato storto. Riprova tra poco.",
+    "notFound": "Non trovato.",
+    "unauthorized": "Sessione scaduta. Accedi di nuovo.",
+    "apiUnavailable": "Il servizio non è ancora disponibile."
+  },
+  "table": {
+    "title": "Il tuo tavolo",
+    "scanning": "Inquadra il codice QR sul tavolo",
+    "invalidToken": "Questo codice non è più valido. Chiedi al personale.",
+    "openingList": "Apertura della carta dei vini…"
+  },
+  "home": {
+    "title": "La carta dei vini",
+    "subtitle": "Scansiona il codice sul tuo tavolo per iniziare.",
+    "scan": "Scansiona il codice"
+  }
+}

@@ -95,6 +95,35 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  # The Expo client has its own toolchain and its own test suite; neither is
+  # reachable from the Rails jobs above. Without this job nothing in mobile/ is
+  # ever executed in CI and the suite quietly rots.
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
   test:
     runs-on: ubuntu-latest
 

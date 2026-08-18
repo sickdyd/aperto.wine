@@ -1,0 +1,27 @@
+{
+  "common": {
+    "appName": "aperto.wine",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "close": "Close",
+    "loading": "Loading…"
+  },
+  "errors": {
+    "network": "No connection. Check your network and try again.",
+    "server": "Something went wrong. Please try again shortly.",
+    "notFound": "Not found.",
+    "unauthorized": "Your session expired. Please sign in again.",
+    "apiUnavailable": "This service isn't available yet."
+  },
+  "table": {
+    "title": "Your table",
+    "scanning": "Point the camera at the QR code on your table",
+    "invalidToken": "This code is no longer valid. Please ask a member of staff.",
+    "openingList": "Opening the wine list…"
+  },
+  "home": {
+    "title": "The wine list",
+    "subtitle": "Scan the code on your table to begin.",
+    "scan": "Scan the code"
+  }
+}
