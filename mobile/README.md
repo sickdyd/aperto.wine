@@ -65,26 +65,72 @@ opt-out, and opt-out is the wrong shape here: diner accounts, bonuses, discounts
 and order history are on the roadmap, and the day those queries exist they would
 land in plaintext silently, with nobody having decided they should.
 
-So `src/services/query-persistence.ts` inverts it. A query key root has to appear
-in `PERSISTED_QUERY_ROOTS` before any of its data touches the disk, and no
-mutation is ever persisted — an order replayed off disk hours later would be a
-different order than the diner built, against a cellar that has moved.
+So `src/services/query-persistence.ts` inverts it. A query reaches the disk only
+by saying so itself, and no mutation is ever persisted — an order replayed off
+disk hours later would be a different order than the diner built, against a
+cellar that has moved.
 
-`PERSISTED_QUERY_ROOTS` is **empty**, because the app has no queries yet. The
-first query that wants to survive a dead spot adds its own root there in the
-same change, with the query in front of the reviewer — which is the decision the
-file exists to force. The test to apply to a candidate root: **would we be
-relaxed about this sitting in an unencrypted backup of a phone we do not
-control?** A published wine list, yes — the QR hands it to anyone who scans it.
-Anything about a person, no; that belongs in memory for the session, or in
-SecureStore if it must outlive the process.
+```ts
+useQuery({
+  queryKey: ["menu", tableToken],
+  queryFn: fetchMenu,
+  meta: { persist: true }, // public wine list; safe in a plaintext backup
+})
+```
 
-A key that is not listed is dropped, and says so in the console in development,
-naming the root and this file. That failure is safe in the direction that
-matters: less on disk, never more.
-`__tests__/query-persistence.test.ts` drives the real persister into an in-memory
-AsyncStorage and asserts on the bytes that land there rather than on the option
-being set.
+### Before you write that flag
+
+**Would we be relaxed about this sitting in an unencrypted backup of a phone we
+do not control?**
+
+A restaurant's published wine list is already public — it is what the QR code
+hands to anyone who scans it. The answer is yes, and that is roughly the only
+thing it is yes for.
+
+The trap is not the obviously-sensitive query; nobody persists an order history
+by accident. It is **personalisation**, because a personalised screen looks like
+the same screen. A menu showing "your 10% off", a price adjusted for a returning
+regular, a list reordered by what this diner drank last time — same route, same
+component, often the same query key, and now the response varies by *who is
+asking*. That is not public, and it must not be persisted.
+
+So the real test is narrower than "does this contain PII": **does the response
+vary by which diner is asking?** If yes, it does not get the flag. It belongs in
+memory for the session, or in SecureStore if it genuinely has to outlive the
+process.
+
+**If a persisted query later becomes diner-specific, remove the flag.** That is
+the change, and it is one line.
+
+### Why the flag lives on the query
+
+An allowlist of query key roots kept in `query-persistence.ts` would be easier
+to audit, and was the first design. It was replaced because it grants a
+*namespace* once and forever: allowlist `menu`, and the day a menu becomes
+diner-specific the payload changes, the key does not, and the list cannot see it
+happen. Nobody edits that file, so nobody re-decides.
+
+Written on the query, `persist: true` sits three lines from the `queryFn` whose
+response just gained a discount — same object, same diff, same reviewer. The
+flag is typed through TanStack's `Register` augmentation, so `meta: { persist:
+true }` is checked rather than a loose string bag, and anything that is not
+literally `true` fails closed.
+
+The trade is auditability. The array answered "what leaves this device?" in one
+file; the answer is now `grep -rn "persist: true" src/`, which is a convention
+rather than a mechanism — a shared constant or a spread would satisfy the type
+and defeat a literal grep. That is worth a lint rule or an inventory test once
+there is an inventory; with zero opted-in queries today there is nothing for
+one to check, and a tripwire guarding an empty set is how the previous design
+got into trouble. Add it alongside the first `persist: true`.
+
+A query that has not opted in is dropped, and says so in the console in
+development, naming the key root and the personalisation question. That failure
+is safe in the direction that matters: less on disk, never more.
+`__tests__/query-persistence.test.ts` drives the real persister into an
+in-memory AsyncStorage and asserts on the bytes that land there rather than on
+the option being set — including that two queries sharing a key root do not
+share a decision.
 
 ## Design
 
@@ -104,7 +150,7 @@ src/
   components/   ledger primitives (Rule, …)
   constants/    build-time configuration
   i18n/         it (default) + en, kept at parity by a test
-  services/     api client, table-link parsing, the offline-cache allowlist
+  services/     api client, table-link parsing, the offline-cache gate
   stores/       zustand; tokens live in SecureStore, never AsyncStorage
   types/        zod schemas for API payloads
 ```
