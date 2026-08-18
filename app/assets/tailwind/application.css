@@ -1175,16 +1175,20 @@
     border-left-color: var(--color-ox-3);
   }
 
-  /* The order-sound control: a nav row that reports one of three states.
+  /* The order-sound control: a button that reports one of three states.
      "off", "on", and — the one that has to exist — "blocked", meaning the
      owner asked for sound and the browser has not yet granted this document
      audio. All three faces are in the markup and this picks one, so the
      controller writes a single attribute and never builds markup or a class
      name (see owner/shared/_sound_toggle).
 
-     display: contents rather than a flex wrapper: the icon and its label
-     become direct children of .nav-item, so they take its gap and alignment
-     exactly as the anchors above them do. */
+     Deliberately no box of its own. `display: contents` on the showing face
+     dissolves the wrapper, so the icon and its label become direct children of
+     whatever flex row the button already is — and the button's own face comes
+     from a class passed whole at the call site. That was `.nav-item` while it
+     lived in the sidebar; it is `.btn-wine-outline` now that it is a field on
+     the settings page. Adding a bespoke variant here would have been a second
+     button style for one control, when an existing one already fits. */
   .sound-toggle {
     text-align: left;
   }
@@ -1200,8 +1204,10 @@
   }
 
   /* Blocked is the state that needs answering, so it carries ink rather than
-     the quiet grey of a row at rest. Not an alarm — nothing is broken, the
-     dashboard just has not been touched yet. */
+     the quiet grey of a control at rest. Not an alarm — nothing is broken, the
+     page just has not been touched yet, and the label says as much in words.
+     Restated rather than left to the host class, because a face that reads
+     "Allow sound" must not go quiet wherever the button is dropped. */
   .sound-toggle[data-sound-state="blocked"] {
     color: var(--color-ox-2);
   }

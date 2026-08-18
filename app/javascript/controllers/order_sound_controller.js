@@ -19,6 +19,28 @@ import { Controller } from "@hotwired/stimulus"
 //     control shows the second one, because a toggle reading ON over a
 //     silent room is the worst outcome this feature has available.
 //
+// THE CONTROL AND THE CHIME ARE SEPARATE, and that separation is the thing to
+// be careful with when editing this file. There is exactly one control — a
+// field on the restaurant settings page — and every other owner page has none,
+// including the orders board, which is the screen this whole feature exists
+// for. So the chime cannot be conditional on a toggle target being present.
+// This controller is mounted on the owner shell, connects on every page of it,
+// and takes its answer from localStorage; the toggle target is only ever a
+// display of that answer, and `render()` over zero of them is a no-op by
+// design, not by accident.
+//
+// Which is why connect() has no early return for a page without one. The
+// pages with no control are precisely the ones that must still arm the gesture
+// listener, repair a suspended context and answer announce() — that early
+// return, kept unchanged, would have silenced everything except the settings
+// page. Outside a restaurant (the restaurant index, the new-restaurant form)
+// there is genuinely nothing to announce, and arming there is pointless; it is
+// left armed anyway, because the AudioContext is per document and survives the
+// Turbo visit into a restaurant, so a click on the index is a gesture already
+// spent — and the alternative guard, sniffing for the poller's element in a
+// sibling of this one, would couple the two controllers by page shape to save
+// three listeners that disconnect() already removes.
+//
 // And one limitation to know before deploying this, inherited from the poller
 // and deliberately not worked around here: this alerts a *visible* dashboard,
 // not a backgrounded one. order_notifications_controller does not poll a
@@ -219,10 +241,9 @@ export default class extends Controller {
     }
     this.onGesture = (event) => this.liftBlock(event)
 
-    // Outside a restaurant the owner shell renders no toggle and there are no
-    // orders to announce, so there is nothing for this controller to do.
-    if (!this.hasToggleTarget) return
-
+    // No guard on hasToggleTarget: see the head of this file. Almost every
+    // owner page has no control, and those are exactly the pages that still
+    // have to be able to make a noise.
     if (audioContext) audioContext.addEventListener("statechange", this.onStateChange)
     if (this.enabled) this.watchForGesture()
     this.render()
@@ -330,11 +351,16 @@ export default class extends Controller {
   // ── Recovering from a blocked context ────────────────────────────────────
 
   // With the preference on, the first interaction anywhere in the dashboard is
-  // enough for the browser, so staff should not have to hunt for the toggle
-  // after every full page load. Gestures on the toggle itself are ignored:
-  // pointerdown precedes click, and lifting the block from here would leave
-  // toggle() looking at an already-running context and reading the tap as
-  // "turn it off" — the opposite of what was asked.
+  // enough for the browser, so staff should not have to hunt for the settings
+  // page after every full page load — which, now that the control lives there
+  // and nowhere else, is the difference between a working feature and one that
+  // has to be re-armed from another screen before the pass can hear anything.
+  //
+  // Gestures on the control itself are ignored: pointerdown precedes click, and
+  // lifting the block from here would leave toggle() looking at an already-
+  // running context and reading the tap as "turn it off" — the opposite of what
+  // was asked. On the pages that carry no control there is nothing to exclude
+  // and `some` over no targets is false, so every gesture counts.
   liftBlock(event) {
     if (this.toggleTargets.some((toggle) => toggle.contains(event.target))) return
     if (!this.enabled) return
@@ -365,6 +391,11 @@ export default class extends Controller {
   // One attribute, and the stylesheet picks the face. No markup is built here
   // and no class name is assembled anywhere — Tailwind only emits rules for
   // literal strings it can find in the source.
+  //
+  // On every owner page but the settings one there is no target and this loops
+  // over nothing. That is the right answer rather than a case to guard: the
+  // state is held in localStorage and in the AudioContext, so a page with
+  // nothing to draw has nothing to do here and everything else still works.
   render() {
     this.toggleTargets.forEach((toggle) => {
       toggle.dataset.soundState = this.state

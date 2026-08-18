@@ -122,16 +122,6 @@
             <% end %>
           </li>
           <li>
-            <%# Directly under the entry it belongs to: this is whether the
-                arrival of one of those orders makes a noise, not a setting
-                about the dashboard at large. Full width so it reads as a row
-                in the same column, not as a button dropped into it. %>
-            <%= render "owner/shared/sound_toggle",
-                       id: Owner::OrdersHelper::SOUND_TOGGLE_IDS[:sidebar],
-                       class_name: "nav-item sound-toggle w-full px-4 #{focus_ring}",
-                       label_class: "" %>
-          </li>
-          <li>
             <%= link_to owner_restaurant_tables_path(@restaurant), **nav_link_attrs.call(owner_nav_active?("restaurant_tables")) do %>
               <%= icon "picnic-table", class: "size-4 shrink-0" %>
               <%= t("owner.restaurants.tables") %>

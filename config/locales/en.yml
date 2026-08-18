@@ -396,12 +396,20 @@ en:
       # itself, which is also the link to it.
       new_order: "New order"
       new_order_detail: "Order #%{id} — %{table}"
-      # The order-sound control in the owner shell. Three labels, not two: the
-      # browser will not let a page make a sound until it has been interacted
-      # with, so "the owner switched sound on" and "this device will actually
-      # be heard" are separate facts. `blocked` is the second one failing while
-      # the first holds, and it is phrased as the action that fixes it.
+      # The order-sound control, on the restaurant settings page. Three labels,
+      # not two: the browser will not let a page make a sound until it has been
+      # interacted with, so "the owner switched sound on" and "this device will
+      # actually be heard" are separate facts. `blocked` is the second one
+      # failing while the first holds, and it is phrased as the action that
+      # fixes it.
+      #
+      # `device_hint` is load-bearing copy, not decoration. Every other field on
+      # that page is saved to the account; this one is remembered by the browser
+      # in front of you, so the tablet at the pass can want sound while the same
+      # owner's laptop at 23:00 does not. Nothing else on the page says so.
       sound:
+        section_title: "Order sound"
+        device_hint: "Remembered by this device only — not by your account or your restaurant. Each phone, tablet and computer is answered separately, so turn it on wherever you want to hear new orders arrive."
         enabled: "Sound on"
         disabled: "Sound off"
         blocked: "Allow sound"

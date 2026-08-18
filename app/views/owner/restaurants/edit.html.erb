@@ -8,3 +8,36 @@
 </div>
 
 <%= render "form", restaurant: @restaurant %>
+
+<%# Below the form, and pointedly outside it. Everything in that form is a
+    column on `restaurants`, saved to the server by the Save button and true for
+    every device the account is signed in on. This is a localStorage flag on
+    this one browser, written the instant it is pressed — dropped inside the
+    form_with it would sit under a Save button with nothing to save for it, and
+    would have taken effect already whether that button was pressed or not.
+
+    Pressing it is also the point: a browser grants a document audio only inside
+    a user gesture, so the control both records the preference and proves the
+    device can be heard. That is why it is a button rather than a checkbox the
+    form would submit.
+
+    Same max-w-xl measure as the form, so the two read as one column. %>
+<%# fieldset/legend rather than section/h2, to read as a third peer of Details
+    and Service rather than as something bolted on underneath. Not only for the
+    look: `.ledger-admin :is(h1, h2)` sets the body face and outranks
+    `.form-section-title` — same layer, one component more specific — so an h2
+    here silently loses the mono caps every other section title carries. A
+    legend is what the form's own sections use, and it is announced as this
+    group's label besides. %>
+<fieldset class="form-section max-w-xl mt-8">
+  <legend class="form-section-title mb-4"><%= t("owner.orders.sound.section_title") %></legend>
+
+  <%# self-start: .form-section is a flex column, which would otherwise stretch
+      the button across the whole measure. %>
+  <%= render "owner/shared/sound_toggle",
+             id: Owner::OrdersHelper::SOUND_TOGGLE_ID,
+             class_name: "btn-wine-outline sound-toggle self-start",
+             label_class: "" %>
+
+  <p class="field-hint"><%= t("owner.orders.sound.device_hint") %></p>
+</fieldset>
