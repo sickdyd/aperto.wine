@@ -18,6 +18,16 @@ import { Controller } from "@hotwired/stimulus"
 //     noise" are two different facts. They are tracked separately and the
 //     control shows the second one, because a toggle reading ON over a
 //     silent room is the worst outcome this feature has available.
+//
+// And one limitation to know before deploying this, inherited from the poller
+// and deliberately not worked around here: this alerts a *visible* dashboard,
+// not a backgrounded one. order_notifications_controller does not poll a
+// hidden tab — read its reasoning, it is sound — so a dashboard behind another
+// tab, minimised, or on a locked screen produces no toast and no chime, and
+// returning to it announces the backlog in one round. The tablet at the pass,
+// which is the deployment this serves, is visible; a laptop with the dashboard
+// buried behind other windows is not, and must not be relied on to make a
+// noise.
 
 const STORAGE_KEY = "aperto.order-sound"
 
@@ -43,6 +53,90 @@ const CHIME = {
   decay: 0.55,
   peak: 0.16,
   cutoffHz: 2600
+}
+
+// Safari before the Audio Session API has no way to say "this is playback, not
+// ambient", so its Web Audio output stays tied to the ringer switch — an iPad
+// in silent mode at the pass hears nothing, which is the exact failure the
+// three-state control exists to prevent, arriving by a route the control
+// cannot detect.
+//
+// The pre-API workaround still works and is what feross/unmute-ios-audio does:
+// play a few milliseconds of silence through an <audio> element inside the
+// user's gesture. Media elements are not governed by the ringer switch, and
+// starting one moves the page's audio session off "ambient" — after which Web
+// Audio plays through the switch too.
+//
+// The clip is built here rather than pasted in as a base64 blob so that "this
+// is silence and nothing else" can be read rather than taken on trust: a WAV
+// header followed by 50 ms of the 8-bit zero line.
+const SILENCE_RATE_HZ = 8000
+const SILENCE_SAMPLES = SILENCE_RATE_HZ / 20
+
+function silentClipUrl() {
+  const bytes = new Uint8Array(44 + SILENCE_SAMPLES)
+  const view = new DataView(bytes.buffer)
+  const ascii = (at, text) => [...text].forEach((char, i) => view.setUint8(at + i, char.charCodeAt(0)))
+
+  ascii(0, "RIFF")
+  view.setUint32(4, 36 + SILENCE_SAMPLES, true)
+  ascii(8, "WAVEfmt ")
+  view.setUint32(16, 16, true)   // PCM header length
+  view.setUint16(20, 1, true)    // format: uncompressed PCM
+  view.setUint16(22, 1, true)    // mono
+  view.setUint32(24, SILENCE_RATE_HZ, true)
+  view.setUint32(28, SILENCE_RATE_HZ, true)
+  view.setUint16(32, 1, true)    // block align
+  view.setUint16(34, 8, true)    // bits per sample
+  ascii(36, "data")
+  view.setUint32(40, SILENCE_SAMPLES, true)
+  bytes.fill(128, 44)            // 8-bit unsigned PCM: 128 is the zero line
+
+  return `data:audio/wav;base64,${btoa(String.fromCharCode(...bytes))}`
+}
+
+// Built once per document and reused: the element is cheap to keep and
+// rebuilding it would throw away whatever activation it has already earned.
+let silentClip = null
+
+// Called inside a user gesture, and only ever there. Answers the ringer switch
+// by whichever route this browser offers: the standard one where it exists,
+// the media-element trick where it does not. Everywhere that is neither iOS
+// nor Safari this is a 50 ms silent play that changes nothing, which is
+// cheaper than sniffing the platform to find out.
+function releaseRingerSwitch() {
+  // Both halves are contained, and separately. This is a courtesy to one
+  // platform, while the caller goes on to bring up the AudioContext that
+  // everything else depends on — a throw escaping here would trade a silenced
+  // iPad for a feature that works nowhere at all.
+  try {
+    if ("audioSession" in navigator) {
+      navigator.audioSession.type = "playback"
+      return
+    }
+  } catch {
+    // The property is there but would not take the assignment. Fall through to
+    // the older remedy rather than treat a half-implemented API as an answer.
+  }
+
+  try {
+    silentClip ||= new Audio(silentClipUrl())
+
+    // Deliberately no currentTime reset before this. play() already seeks a
+    // finished element back to the start, and assigning currentTime before
+    // metadata has loaded throws on exactly the old WebKit this branch exists
+    // for — which would abort the remedy one line before it ran, on the only
+    // devices that need it.
+    silentClip.play()?.catch(() => {
+      // Refused, which means this gesture was not one the browser accepted.
+      // Nothing to recover: the state the control reports is read off the
+      // AudioContext either way, so it will say "blocked" rather than lie.
+    })
+  } catch {
+    // A device with neither the API nor a usable media element is simply one
+    // its own ringer switch will silence. The control still reports what the
+    // context says, which is the guarantee that actually matters.
+  }
 }
 
 // One AudioContext per document, deliberately outside the controller. Turbo
@@ -181,19 +275,12 @@ export default class extends Controller {
     this.enabling = true
 
     try {
-      // On iOS the hardware silent switch mutes Web Audio — but not <audio>
-      // elements — because a page's audio session defaults to "ambient", which
-      // respects the ringer. That is the difference between a chime and
-      // silence on an iPad left face-up at the pass in silent mode, and it
-      // fails the worst way available: the toggle would read "Sound on" while
-      // the room hears nothing.
-      //
-      // Declaring the session as "playback" opts out of the ringer switch, the
-      // same way a native app selects an AVAudioSession category. Only Safari
-      // implements this today — which is exactly the browser that needs it —
-      // and the spec is still an Editor's Draft, so it is feature-detected
-      // rather than assumed.
-      if ("audioSession" in navigator) navigator.audioSession.type = "playback"
+      // First, and inside the gesture: the ringer switch. On iOS it mutes Web
+      // Audio while leaving <audio> alone, so an iPad face-up at the pass in
+      // silent mode would otherwise hear nothing while the toggle read "Sound
+      // on" — the worst outcome available here, arriving by a route the
+      // control cannot detect.
+      releaseRingerSwitch()
 
       audioContext ||= new (window.AudioContext || window.webkitAudioContext)()
       audioContext.addEventListener("statechange", this.onStateChange)

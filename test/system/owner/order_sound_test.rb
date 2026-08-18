@@ -169,6 +169,44 @@ module Owner
       assert_sound_state "on"
     end
 
+    # The iPad-at-the-pass case, as far as a browser test can carry it.
+    #
+    # On iOS the hardware ringer switch mutes Web Audio while leaving <audio>
+    # alone. Safari answers that with navigator.audioSession; older Safari has
+    # no such API, and there the only remedy is to start a media element inside
+    # the gesture, which shifts the page off the "ambient" session. Chrome does
+    # not implement audioSession, so headless Chrome takes exactly that legacy
+    # branch — which makes this assertable here even though the platform it
+    # exists for is not.
+    #
+    # What this cannot show is the effect: that the switch is actually released
+    # on an iPad in silent mode. Only a human holding one can say that.
+    test "enabling sound starts a silent clip for browsers without the audio session API" do
+      visit_dashboard
+
+      assert_equal false, page.evaluate_script("'audioSession' in navigator"),
+        "this browser has audioSession, so the legacy branch under test never runs"
+
+      # Patched and never restored, which is safe only because every test here
+      # opens with a fresh `visit` — a new JS realm, so the patch cannot reach
+      # the next case. A test added below that reuses a page across cases would
+      # inherit it; say so rather than leave the invariant implicit.
+      page.execute_script(<<~JS)
+        window.__played = 0
+        const play = HTMLMediaElement.prototype.play
+        HTMLMediaElement.prototype.play = function (...args) {
+          window.__played += 1
+          return play.apply(this, args)
+        }
+      JS
+
+      find("##{SIDEBAR}", visible: :all).click
+      assert_sound_state "on"
+
+      assert_operator page.evaluate_script("window.__played"), :>=, 1,
+        "nothing was played through a media element, so an old iPad would stay silenced"
+    end
+
     # The seam between the poller and the chime, which is the part that can
     # actually break: an order that raises a toast has to raise exactly one
     # announcement, from the poller's own window of known ids rather than from
