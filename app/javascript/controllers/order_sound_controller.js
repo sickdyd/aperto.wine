@@ -113,7 +113,16 @@ export default class extends Controller {
 
   connect() {
     this.lastChimeAt = 0
-    this.onStateChange = () => this.render()
+    // A running context can be suspended again without anybody touching this
+    // page — an iPad locking at the pass, a tab backgrounded on iOS. That is
+    // the same predicament as a document that has never been interacted with,
+    // so it gets the same answer: say so, and arm the listener that will lift
+    // it on the next tap. Re-rendering alone would leave a control reading
+    // "Allow sound" that only a direct press could ever repair.
+    this.onStateChange = () => {
+      this.watchForGesture()
+      this.render()
+    }
     this.onGesture = (event) => this.liftBlock(event)
 
     // Outside a restaurant the owner shell renders no toggle and there are no
@@ -163,6 +172,14 @@ export default class extends Controller {
   }
 
   async enable({ confirm }) {
+    // Bringing a context up is asynchronous, and until it settles the state
+    // still reads "blocked" — so a second press would run this whole body
+    // again and, after its own await, pass the same confirmation check. Two
+    // chimes for one activation. announce()'s debounce does not cover this
+    // path, because a deliberate press should always be answered.
+    if (this.enabling) return
+    this.enabling = true
+
     try {
       // On iOS the hardware silent switch mutes Web Audio — but not <audio>
       // elements — because a page's audio session defaults to "ambient", which
@@ -184,6 +201,8 @@ export default class extends Controller {
     } catch {
       // No Web Audio, or the browser declined. render() below reports what is
       // true rather than what was asked for, which is the entire point.
+    } finally {
+      this.enabling = false
     }
 
     // The confirmation chime is not decoration. Whether this dashboard, on
@@ -237,7 +256,7 @@ export default class extends Controller {
   }
 
   watchForGesture() {
-    if (this.state === "on") {
+    if (!this.enabled || this.state === "on") {
       this.stopWatchingForGesture()
       return
     }
