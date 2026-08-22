@@ -45,7 +45,7 @@ gem "image_processing", "~> 2.0"
 gem "ruby-vips", require: false
 
 # Validate Active Storage attachments (content type, size) at the model boundary
-gem "active_storage_validations", "~> 3.0"
+gem "active_storage_validations", "~> 4.1"
 
 # Geocoding (address → coordinates) via OpenStreetMap/Photon [https://github.com/alexreisner/geocoder]
 gem "geocoder", "~> 1.8"
