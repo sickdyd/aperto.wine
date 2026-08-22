@@ -2,6 +2,6 @@
   "name": "aperto-wine",
   "private": true,
   "dependencies": {
-    "daisyui": "^5.6.13"
+    "daisyui": "^5.7.19"
   }
 }
